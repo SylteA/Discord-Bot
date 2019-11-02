@@ -8,8 +8,8 @@ from discord.utils import get
 
 token = ""
 
-client = discord.Client()
-bot = commands.Bot(command_prefix="t.")
+#client = discord.Client()
+client = commands.Bot(command_prefix="t.")
 
 # -------------------------------------------------------
 # FUNCTI0ONS
