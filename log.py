@@ -9,7 +9,7 @@ from discord.utils import get
 token = ""
 
 client = discord.Client()
-bot = commands.Bot(command_prefix="$")
+bot = commands.Bot(command_prefix="t.")
 
 # -------------------------------------------------------
 # FUNCTI0ONS
@@ -119,6 +119,7 @@ async def on_member_join(member):
 @client.event
 async def on_message(message):
     global db
+    await client.process_commands(message)
     server_id = client.get_guild(501090983539245061)
     commandChannels = ["commands", "bot-commands"]
     voteChannel = ["polls"]
@@ -154,159 +155,6 @@ async def on_message(message):
                     '''if message.mentions[0].id == 518054642979045377:
                         await message.channel.send("```" + chat(msg) + "```")'''
 
-        elif str(message.channel) in voteChannel:
-            msgSplit = msg.split(" ")
-
-            if msg == "tim.help" or msg == "help":
-                if mod:
-                    embed = discord.Embed(title="MOD Poll Help", description="Commands for Creating Poll")
-                    embed.add_field(name="create [description], [options separated by commas]",value="Creates a new poll, will end any existing polls")
-                    #embed.add_field(name="tim.end", value="End the current poll")
-                    embed.add_field(name="Example Use", value="create What series would you like to see next?, Kivy, Python Tutorial, Java Basics")
-                    embed.add_field(name="view", value="View the current poll")
-                    embed.add_field(name="vote [option]", value="Vote for one of the given options, use integers as the option(ex. 1,2,3,4,5,...)")
-                    await message.channel.send(content=None, embed=embed)
-                else:
-                    embed = discord.Embed(title="Tim Bot Help", description="Commands for Voting")
-                    embed.add_field(name="view", value="View the current poll")
-                    embed.add_field(name="vote [option]", value="Vote for one of the given options, use integers as the option(ex. 1,2,3,4,5,...)")
-                    await message.channel.send(content=None, embed=embed)
-
-            elif msg == "view":
-                try:
-                    count = -1
-                    async for _ in message.channel.history(limit=None):
-                        count += 1
-
-                    if count > 0:
-                        await message.channel.purge(limit=count)
-
-                    # LAST POLL PARSING
-                    desc, options, votes = poll.get_last_poll()
-
-                    optionStr = ""
-                    for x, option in enumerate(options):
-                        optionStr = optionStr + str(x + 1) + ". " + option.strip() + " (votes: " + str(
-                            votes[x]) + ")" + "\n"
-
-                    optionStr = optionStr[:-1]
-
-                    await message.channel.send(f"```LAST POLL RESULTS\n{desc}\n\n{optionStr}\n```")
-                    # LAST POLL ENDING
-
-                    # CURRENT POLL PARSING
-                    desc, options, votes = poll.get_current_poll()
-
-                    optionStr = ""
-                    for x, option in enumerate(options):
-                        optionStr = optionStr + str(x + 1) + ". " + option.strip() + " (votes: " + str(
-                            votes[x]) + ")" + "\n"
-
-                    optionStr = optionStr[:-1]
-
-                    await message.channel.send(f"```CURRENT POLL\n{desc}\n\n{optionStr}\n```")
-                    # CURRENT POLL ENDING
-                except:
-                    await message.channel.send("```No active poll```")
-
-            elif len(msgSplit) > 1:
-                if mod:
-                    if msgSplit[0] == "create":
-                        try:
-                            nMsg = ""
-
-                            for s in msgSplit[1:]:
-                                nMsg = nMsg + s + " "
-
-                            nMsg = nMsg.split(",")
-                            desc = msgg.replace("create", "").split(",")[0]
-                            args = nMsg[1:]
-                            poll.add_poll(desc, args)
-
-                            count = -1
-                            async for _ in message.channel.history(limit=None):
-                                count += 1
-
-                            if count > 0:
-                                await message.channel.purge(limit=count)
-
-                            # LAST POLL PARSING
-                            desc, options, votes = poll.get_last_poll()
-
-                            optionStr = ""
-                            for x, option in enumerate(options):
-                                optionStr = optionStr + str(x + 1) + ". " + option.strip() + " (votes: " + str(
-                                    votes[x]) + ")" + "\n"
-
-                            optionStr = optionStr[:-1]
-
-                            await message.channel.send(f"```LAST POLL RESULTS\n{desc}\n\n{optionStr}\n```")
-                            # LAST POLL ENDING
-
-                            # CURRENT POLL PARSING
-                            desc, options, votes = poll.get_current_poll()
-
-                            optionStr = ""
-                            for x, option in enumerate(options):
-                                optionStr = optionStr + str(x+1) + ". " + option.strip() + " (votes: " + str(votes[x]) + ")" + "\n"
-
-                            optionStr = optionStr[:-1]
-
-                            await message.channel.send(f"```CURRENT POLL\n{desc}\n\n{optionStr}\n```")
-                            # CURRENT POLL ENDING
-                        except:
-                            await message.channel.send("```Invalid arguments```")
-
-                if msgSplit[0] == "vote":
-                    try:
-                        option = msgSplit[1]
-                        option = int(option)
-                        if 0 < option <= len(poll):
-                            valid = poll.add_vote(option, message.author)
-
-                            if valid != -1:
-                                # DELETING MESSAGES
-                                count = -1
-                                async for _ in message.channel.history(limit=None):
-                                    count += 1
-
-                                if count > 0:
-                                    await message.channel.purge(limit=count)
-
-                                # LAST POLL PARSING
-                                desc, options, votes = poll.get_last_poll()
-
-                                optionStr = ""
-                                for x, option in enumerate(options):
-                                    optionStr = optionStr + str(x + 1) + ". " + option.strip() + " (votes: " + str(
-                                        votes[x]) + ")" + "\n"
-
-                                optionStr = optionStr[:-1]
-
-                                await message.channel.send(f"```LAST POLL RESULTS\n{desc}\n\n{optionStr}\n```")
-                                # LAST POLL ENDING
-
-                                # CURRENT POLL PARSING
-                                desc, options, votes = poll.get_current_poll()
-
-                                optionStr = ""
-                                for x, option in enumerate(options):
-                                    optionStr = optionStr + str(x+1) + ". " + option.strip() + " (votes: " + str(votes[x]) +")" +"\n"
-
-
-                                optionStr = optionStr[:-1]
-                                # END CURRENT POLL PARSING
-
-                                await message.channel.send(f"```CURRENT POLL\n{desc}\n\n{optionStr}\n```")
-                            else:
-                                await message.channel.send(f"```You cannot vote more than once.```")
-
-                        else:
-                            await message.channel.send("```Not a valid option```")
-                    except: await message.channel.send("```Unknown Error Occurred```")
-
-            else:
-                await message.channel.send("```Invalid command or arguments. Use the \"vote\" command as follows\nvote [option]\nwhere option is an integer in the appropriate range```")
         if mod:
             if msg == "tim.post_question":
                 await message.channel.purge(limit=1)
@@ -436,5 +284,153 @@ async def on_message(message):
                 await message.channel.send(f"```{data}```")
         else:
             db.update_messages(message.author, 1)
+
+            
+            
+            
+            
+            
+@client.command()
+@commands.has_permissions(administrator=True)
+async def poll(ctx, *, description):
+    try:
+        nMsg = description.split(",")
+        desc = nMsg[0]
+        args = nMsg[1:]
+        poll.add_poll(desc, args)
+
+        emojiopt = [f"{x+1}\N{combining enclosing keycap}" for x in range(9)]
+
+        #DELETE PREVIOUS POLL
+        async for msg in ctx.channel.history(limit=5):
+            if msg.embeds and "previous poll" in msg.embeds[0].title.lower():
+                await msg.delete()
+        #END DELETE PREVIOUS POLL
+
+        #EDIT CURRENT POLL TO PREVIOUS POLL
+        async for msg in ctx.channel.history(limit=5):
+            if msg.embeds and "current poll" in msg.embeds[0].title.lower():
+                #CURRENT POLL PARSING
+                desc, options, votes = poll.get_last_poll()
+                optionStr = ""
+                emojiopt1 = emojiopt = [f"{x+1}\N{combining enclosing keycap}" for x in range(9)]
+                del emojiopt1[len(options):]
+                num = 0
+                for x, option in enumerate(options):
+                    numtoemoji = emojiopt1[num]
+                    optionStr = optionStr + numtoemoji + " - " + option.strip() + " (votes: " + str(votes[x]) + ")" + "\n"
+                    num = x + 1
+                optionStr = optionStr[:-1]
+                em = discord.Embed(title = "**Previous Poll:**", description = f"{desc}\n\n{optionStr}", color=0x32363C)
+                #END PREVIOUS POLL PARSING
+
+                await msg.clear_reactions()
+
+
+        #END EDIT CURRENT POLL TO PREVIOUS POLL
+
+
+        desc, options, votes = poll.get_current_poll()
+        votes = [0 for x in range(len(options))]
+
+        numvotes = len(options) # Find the number of options.
+        del emojiopt[numvotes:]
+
+
+        optionStr = ""
+        num = 0
+        for x, option in enumerate(options):
+            numtoemoji = emojiopt[num]
+            optionStr = optionStr + numtoemoji + " - " + option.strip() + " (votes: " + str(votes[x]) + ")" + "\n"
+            num = x + 1
+
+        optionStr = optionStr[:-1]
+
+        em = discord.Embed(title = "**Current Poll:**", description = f"{desc}\n\n{optionStr}", color=0x32363C)
+
+
+        currentpoll = await ctx.send(embed=em)
+        for emoji in emojiopt:
+            await currentpoll.add_reaction(emoji)
+    except:
+        em = discord.Embed(title = "**Error**", description = "Something went wrong!", color=0x32363C)
+        await ctx.send(embed=em)
+
+
+@client.event
+async def on_raw_reaction_add(payload):
+    emoji = payload.emoji
+    ruser = client.get_user(payload.user_id)
+    reactionmessage = await client.get_channel(payload.channel_id).fetch_message(payload.message_id)
+    
+    emojiopt = [f"{x+1}\N{combining enclosing keycap}" for x in range(9)]
+
+    voteChannel = ["polls"]
+    if "current poll" in reactionmessage.embeds[0].title.lower():
+        if ruser == client.user:
+            return
+        else:
+            if str(reactionmessage.channel) in voteChannel and str(emoji) in emojiopt:
+                optionnum = emojiopt.index(str(emoji)) + 1
+                
+                valid = poll.add_vote(optionnum, reactionmessage.author) 
+                
+                if valid == -1:
+                    await reactionmessage.remove_reaction(member = ruser, emoji=emoji)
+                else:
+                    #CURRENT POLL PARSING
+                    desc, options, votes = poll.get_current_poll()
+
+                    optionStr = ""
+                    num = 0
+                    for x, option in enumerate(options):
+                        numtoemoji = emojiopt[num]
+                        optionStr = optionStr + numtoemoji + " - " + option.strip() + " (votes: " + str(votes[x]) + ")" + "\n"
+                        num = x + 1
+
+                    optionStr = optionStr[:-1]
+                    em = discord.Embed(title = "**Current Poll:**", description = f"{desc}\n\n{optionStr}", color=0x32363C)
+                    #END CURRENT POLL PARSING
+
+                    msg = await reactionmessage.channel.history().get(author__name=client.user.name)
+                    if "current poll" in msg.embeds[0].title.lower():  #checking if the last message is the current poll
+                        await msg.edit(embed=em) #updated votes
+
+                
+                
+        
+            
+
+            
+@client.event
+async def on_raw_reaction_remove(payload):
+    emoji = payload.emoji
+    ruser = client.get_user(payload.user_id)
+    reactionmessage = await client.get_channel(payload.channel_id).fetch_message(payload.message_id)
+
+    emojiopt = [f"{x+1}\N{combining enclosing keycap}" for x in range(9)]
+
+    voteChannel = ["polls"]
+    if "current poll" in reactionmessage.embeds[0].title.lower():
+        if str(reactionmessage.channel) in voteChannel and str(emoji) in emojiopt:
+            optionnum = emojiopt.index(str(emoji)) + 1
+            valid = poll.remove_vote(optionnum, reactionmessage.author) 
+
+            #CURRENT POLL PARSING
+            desc, options, votes = poll.get_current_poll()
+            if valid != -1:
+                optionStr = ""
+                num = 0
+                for x, option in enumerate(options):
+                    numtoemoji = emojiopt[num]
+                    optionStr = optionStr + numtoemoji + " - " + option.strip() + " (votes: " + str(votes[x]) + ")" + "\n"
+                    num = x + 1
+                optionStr = optionStr[:-1]
+                em = discord.Embed(title = "**Current Poll:**", description = f"{desc}\n\n{optionStr}", color=0x32363C)
+
+                msg = await reactionmessage.channel.history().get(author__name=client.user.name)
+                if "current poll" in msg.embeds[0].title.lower():  #checking if the last message is the current poll
+                    await msg.edit(embed=em) #updated votes        
+            #END CURRENT POLL PARSING      
 
 client.run(token)
