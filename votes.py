@@ -66,6 +66,23 @@ class Vote():
             self.database.find_one_and_update({"id": id}, {"$set": {"users": voted_users,"votes": poll_votes}})
         else:
             return -1
+    def remove_vote(self, option, user):
+        """
+        :param option: int
+        :return: None
+        """
+        id = self.count_polls()
+        poll = self.load_poll(id)
+        poll_votes = poll["votes"]
+        option = option - 1
+        poll_votes[option] = poll_votes[option] - 1
+        voted_users = poll["users"]
+
+        if str(user) in voted_users:
+            voted_users.remove(str(user))
+            self.database.find_one_and_update({"id": id}, {"$set": {"users": voted_users,"votes": poll_votes}})
+        else:
+            return -1
 
     def add_poll(self, desc, options):
         """
