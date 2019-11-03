@@ -126,7 +126,6 @@ async def on_message(message):
     botChannel = ["faq"]
 
     mod_roles = ["mod", "admin", "helper", "tim"]
-    poll = Vote()
 
     
     print(f"{message.channel}: {message.author}: {message.author.name}: {message.content}")
@@ -287,12 +286,12 @@ async def on_message(message):
 
             
             
-            
+poll = Vote()            
             
             
 @client.command()
 @commands.has_permissions(administrator=True)
-async def poll(ctx, *, description):
+async def poll_(ctx, *, description):
     try:
         nMsg = description.split(",")
         desc = nMsg[0]
@@ -359,6 +358,7 @@ async def poll(ctx, *, description):
 
 @client.event
 async def on_raw_reaction_add(payload):
+    
     emoji = payload.emoji
     ruser = client.get_user(payload.user_id)
     reactionmessage = await client.get_channel(payload.channel_id).fetch_message(payload.message_id)
