@@ -322,6 +322,7 @@ async def poll_(ctx, *, description):
                 optionStr = optionStr[:-1]
                 em = discord.Embed(title = "**Previous Poll:**", description = f"{desc}\n\n{optionStr}", color=0x32363C)
                 #END PREVIOUS POLL PARSING
+                await msg.edit(embed=em)
 
                 await msg.clear_reactions()
 
@@ -355,6 +356,7 @@ async def poll_(ctx, *, description):
         em = discord.Embed(title = "**Error**", description = "Something went wrong!", color=0x32363C)
         await ctx.send(embed=em)
 
+reactiondel = []
 
 @client.event
 async def on_raw_reaction_add(payload):
@@ -376,7 +378,9 @@ async def on_raw_reaction_add(payload):
                 valid = poll.add_vote(optionnum, reactionmessage.author) 
                 
                 if valid == -1:
+                    reactiondel.append((ruser, emoji))
                     await reactionmessage.remove_reaction(member = ruser, emoji=emoji)
+                    
                 else:
                     #CURRENT POLL PARSING
                     desc, options, votes = poll.get_current_poll()
@@ -413,24 +417,27 @@ async def on_raw_reaction_remove(payload):
     voteChannel = ["polls"]
     if "current poll" in reactionmessage.embeds[0].title.lower():
         if str(reactionmessage.channel) in voteChannel and str(emoji) in emojiopt:
-            optionnum = emojiopt.index(str(emoji)) + 1
-            valid = poll.remove_vote(optionnum, reactionmessage.author) 
-
-            #CURRENT POLL PARSING
-            desc, options, votes = poll.get_current_poll()
-            if valid != -1:
-                optionStr = ""
-                num = 0
-                for x, option in enumerate(options):
-                    numtoemoji = emojiopt[num]
-                    optionStr = optionStr + numtoemoji + " - " + option.strip() + " (votes: " + str(votes[x]) + ")" + "\n"
-                    num = x + 1
-                optionStr = optionStr[:-1]
-                em = discord.Embed(title = "**Current Poll:**", description = f"{desc}\n\n{optionStr}", color=0x32363C)
-
-                msg = await reactionmessage.channel.history().get(author__name=client.user.name)
-                if "current poll" in msg.embeds[0].title.lower():  #checking if the last message is the current poll
-                    await msg.edit(embed=em) #updated votes        
-            #END CURRENT POLL PARSING      
+            if (ruser, emoji) in reactiondel:
+                reactiondel.remove((ruser, emoji))
+            else:
+                optionnum = emojiopt.index(str(emoji)) + 1
+                valid = poll.remove_vote(optionnum, ruser) 
+    
+                #CURRENT POLL PARSING
+                desc, options, votes = poll.get_current_poll()
+                if valid != -1:
+                    optionStr = ""
+                    num = 0
+                    for x, option in enumerate(options):
+                        numtoemoji = emojiopt[num]
+                        optionStr = optionStr + numtoemoji + " - " + option.strip() + " (votes: " + str(votes[x]) + ")" + "\n"
+                        num = x + 1
+                    optionStr = optionStr[:-1]
+                    em = discord.Embed(title = "**Current Poll:**", description = f"{desc}\n\n{optionStr}", color=0x32363C)
+    
+                    msg = await reactionmessage.channel.history().get(author__name=client.user.name)
+                    if "current poll" in msg.embeds[0].title.lower():  #checking if the last message is the current poll
+                        await msg.edit(embed=em) #updated votes        
+                #END CURRENT POLL PARSING      
 
 client.run(token)
