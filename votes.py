@@ -14,9 +14,7 @@ class Vote():
         """
         query = self.database.find({})
         data = await query.to_list(length=1000)
-        count = 0
-        for _ in data:
-            count += 1
+        count = len(data)
         return count
 
     async def load_current_poll(self):
@@ -92,6 +90,7 @@ class Vote():
         """
         id = await self.count_polls() + 1
         poll = {"id": id, "desc": desc, "options": options, "votes": [0 for x in range(len(options))],"users":[],"created":DataBase.get_date()}
-        id = await self.database.insert_one(poll).inserted_id
+        document = await self.database.insert_one(poll)
+        id = document._id
         return id
 
