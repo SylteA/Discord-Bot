@@ -90,7 +90,7 @@ class Vote():
         :param desc: string
         :param options: list
         """
-        id = self.count_polls() + 1
+        id = await self.count_polls() + 1
         poll = {"id": id, "desc": desc, "options": options, "votes": [0 for x in range(len(options))],"users":[],"created":DataBase.get_date()}
         id = await self.database.insert_one(poll).inserted_id
         return id
