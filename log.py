@@ -132,10 +132,10 @@ async def on_message(message):
     print(f"{message.channel}: {message.author}: {message.author.name}: {message.content}")
 
     mod = False
-    for role in message.author.roles:
+    '''for role in message.author.roles:
         if str(role).lower() in mod_roles:
             mod = True
-            break
+            break'''
      
     '''if not(valid_url(find_urls(message.content.lower()))) and not(mod) and not(message.author.bot):
         await message.channel.purge(limit=1)
