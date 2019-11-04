@@ -73,8 +73,8 @@ class Voting(commands.Cog):
             currentpoll = await ctx.send(embed=em)
             for emoji in emojiopt:
                 await currentpoll.add_reaction(emoji)
-        except:
-            em = discord.Embed(title = "**Error**", description = "Something went wrong!", color=0x32363C)
+        except Exception as err:
+            em = discord.Embed(title = "**Error**", description = f"Something went wrong! ```{err}```", color=0x32363C)
             await ctx.send(embed=em)
 
 
