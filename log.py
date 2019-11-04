@@ -1,15 +1,16 @@
-import discord
-import pandas as pd
-from database import DataBase
-import datetime
-from discord.ext import commands
-from votes import Vote
-from discord.utils import get
+import discord # the main discord.py libarary
+import pandas as pd # pandas libarary for text adjustments
+from database import DataBase # our database file
+import datetime # datetime (for time operations)
+from discord.ext import commands # commands (where discord handles all the commands)
+from votes import Vote # voting class that we made in vote.py
+from discord.utils import get # for getting things from discord
+from glob import glob # this is for listing spesific files to load our cogs.
 
-token = ""
+token = "" # add your token here
 
 #client = discord.Client()
-client = commands.Bot(command_prefix="t.")
+bot = commands.Bot(command_prefix="t.")
 
 # -------------------------------------------------------
 # FUNCTI0ONS
@@ -58,10 +59,10 @@ def valid_url(urls):
 # COMMANDS AND EVENTS
 db = DataBase()
 
-@client.event
+@bot.event
 async def on_ready():
     try:
-        server_id = client.get_guild(501090983539245061)
+        server_id = bot.get_guild(501090983539245061)
         for channel in server_id.channels:
             if channel.name == 'faq':
                 count = 0
@@ -71,14 +72,14 @@ async def on_ready():
     except Exception as e:
         print(e)
         print("failed to clear")
-    await client.change_presence(activity=discord.Game(name='use the prefix "tim"'))
+    await bot.change_presence(activity=discord.Game(name='use the prefix "tim"'))
 
 
 async def get_reacted_users():
     import random
     try:
         names = []
-        server_id = client.get_guild(501090983539245061)
+        server_id = bot.get_guild(501090983539245061)
         for channel in server_id.channels:
             if channel.name == 'announcements':
                 await channel.send("```The draw has begun!```")
@@ -106,21 +107,21 @@ async def get_reacted_users():
     except Exception as e:
         print(e)
 
-@client.event
+@bot.event
 async def on_member_join(member):
     global db
-    server_id = client.get_guild(501090983539245061)
+    server_id = bot.get_guild(501090983539245061)
     db.update_server_stats(1)
     for channel in member.guild.channels:
         if channel.name == 'welcomes':
             await channel.send(f"Welcome to the Tech With Tim Community {member.mention}!\nMembers+=1\nCurrent Members: {server_id.member_count}")
             await channel.edit(topic="Current # of Members = " + str(server_id.member_count))
 
-@client.event
+@bot.event
 async def on_message(message):
     global db
-    await client.process_commands(message)
-    server_id = client.get_guild(501090983539245061)
+    await bot.process_commands(message)
+    server_id = bot.get_guild(501090983539245061)
     commandChannels = ["commands", "bot-commands"]
     voteChannel = ["polls"]
     botChannel = ["faq"]
@@ -285,159 +286,22 @@ async def on_message(message):
             db.update_messages(message.author, 1)
 
             
-            
-poll = Vote()            
-            
-            
-@client.command()
-@commands.has_permissions(administrator=True)
-async def poll_(ctx, *, description):
-    try:
-        nMsg = description.split(",")
-        desc = nMsg[0]
-        args = nMsg[1:]
-        poll.add_poll(desc, args)
-
-        emojiopt = [f"{x+1}\N{combining enclosing keycap}" for x in range(9)]
-
-        #DELETE PREVIOUS POLL
-        async for msg in ctx.channel.history(limit=5):
-            if msg.embeds and "previous poll" in msg.embeds[0].title.lower():
-                await msg.delete()
-        #END DELETE PREVIOUS POLL
-
-        #EDIT CURRENT POLL TO PREVIOUS POLL
-        async for msg in ctx.channel.history(limit=5):
-            if msg.embeds and "current poll" in msg.embeds[0].title.lower():
-                #CURRENT POLL PARSING
-                desc, options, votes = poll.get_last_poll()
-                optionStr = ""
-                emojiopt1 = emojiopt = [f"{x+1}\N{combining enclosing keycap}" for x in range(9)]
-                del emojiopt1[len(options):]
-                num = 0
-                for x, option in enumerate(options):
-                    numtoemoji = emojiopt1[num]
-                    optionStr = optionStr + numtoemoji + " - " + option.strip() + " (votes: " + str(votes[x]) + ")" + "\n"
-                    num = x + 1
-                optionStr = optionStr[:-1]
-                em = discord.Embed(title = "**Previous Poll:**", description = f"{desc}\n\n{optionStr}", color=0x32363C)
-                #END PREVIOUS POLL PARSING
-                await msg.edit(embed=em)
-
-                await msg.clear_reactions()
-
-
-        #END EDIT CURRENT POLL TO PREVIOUS POLL
-
-
-        desc, options, votes = poll.get_current_poll()
-        votes = [0 for x in range(len(options))]
-
-        numvotes = len(options) # Find the number of options.
-        del emojiopt[numvotes:]
-
-
-        optionStr = ""
-        num = 0
-        for x, option in enumerate(options):
-            numtoemoji = emojiopt[num]
-            optionStr = optionStr + numtoemoji + " - " + option.strip() + " (votes: " + str(votes[x]) + ")" + "\n"
-            num = x + 1
-
-        optionStr = optionStr[:-1]
-
-        em = discord.Embed(title = "**Current Poll:**", description = f"{desc}\n\n{optionStr}", color=0x32363C)
-
-
-        currentpoll = await ctx.send(embed=em)
-        for emoji in emojiopt:
-            await currentpoll.add_reaction(emoji)
-    except:
-        em = discord.Embed(title = "**Error**", description = "Something went wrong!", color=0x32363C)
-        await ctx.send(embed=em)
-
-reactiondel = []
-
-@client.event
-async def on_raw_reaction_add(payload):
+     
+                
+#time for running the bot
+if __name__ == "__main__":
+    #makes sure that were running the file
     
-    emoji = payload.emoji
-    ruser = client.get_user(payload.user_id)
-    reactionmessage = await client.get_channel(payload.channel_id).fetch_message(payload.message_id)
-    
-    emojiopt = [f"{x+1}\N{combining enclosing keycap}" for x in range(9)]
-
-    voteChannel = ["polls"]
-    if "current poll" in reactionmessage.embeds[0].title.lower():
-        if ruser == client.user:
-            return
-        else:
-            if str(reactionmessage.channel) in voteChannel and str(emoji) in emojiopt:
-                optionnum = emojiopt.index(str(emoji)) + 1
-                
-                valid = poll.add_vote(optionnum, reactionmessage.author) 
-                
-                if valid == -1:
-                    reactiondel.append((ruser, emoji))
-                    await reactionmessage.remove_reaction(member = ruser, emoji=emoji)
-                    
-                else:
-                    #CURRENT POLL PARSING
-                    desc, options, votes = poll.get_current_poll()
-
-                    optionStr = ""
-                    num = 0
-                    for x, option in enumerate(options):
-                        numtoemoji = emojiopt[num]
-                        optionStr = optionStr + numtoemoji + " - " + option.strip() + " (votes: " + str(votes[x]) + ")" + "\n"
-                        num = x + 1
-
-                    optionStr = optionStr[:-1]
-                    em = discord.Embed(title = "**Current Poll:**", description = f"{desc}\n\n{optionStr}", color=0x32363C)
-                    #END CURRENT POLL PARSING
-
-                    msg = await reactionmessage.channel.history().get(author__name=client.user.name)
-                    if "current poll" in msg.embeds[0].title.lower():  #checking if the last message is the current poll
-                        await msg.edit(embed=em) #updated votes
-
-                
-                
+    for path in glob("cogs/*.py"): #lists every python file in our cogs folder
+        #time to load this cog
+        path = path.replace(".py", "") # remove the .py because we dont need that when loading the cog
+        path = path.replace("/", ".") # change the / to a .
+        path = path.replace("\\", ".") # this is for some operating systems where / is a \.
         
-            
-
-            
-@client.event
-async def on_raw_reaction_remove(payload):
-    emoji = payload.emoji
-    ruser = client.get_user(payload.user_id)
-    reactionmessage = await client.get_channel(payload.channel_id).fetch_message(payload.message_id)
-
-    emojiopt = [f"{x+1}\N{combining enclosing keycap}" for x in range(9)]
-
-    voteChannel = ["polls"]
-    if "current poll" in reactionmessage.embeds[0].title.lower():
-        if str(reactionmessage.channel) in voteChannel and str(emoji) in emojiopt:
-            if (ruser, emoji) in reactiondel:
-                reactiondel.remove((ruser, emoji))
-            else:
-                optionnum = emojiopt.index(str(emoji)) + 1
-                valid = poll.remove_vote(optionnum, ruser) 
-    
-                #CURRENT POLL PARSING
-                desc, options, votes = poll.get_current_poll()
-                if valid != -1:
-                    optionStr = ""
-                    num = 0
-                    for x, option in enumerate(options):
-                        numtoemoji = emojiopt[num]
-                        optionStr = optionStr + numtoemoji + " - " + option.strip() + " (votes: " + str(votes[x]) + ")" + "\n"
-                        num = x + 1
-                    optionStr = optionStr[:-1]
-                    em = discord.Embed(title = "**Current Poll:**", description = f"{desc}\n\n{optionStr}", color=0x32363C)
-    
-                    msg = await reactionmessage.channel.history().get(author__name=client.user.name)
-                    if "current poll" in msg.embeds[0].title.lower():  #checking if the last message is the current poll
-                        await msg.edit(embed=em) #updated votes        
-                #END CURRENT POLL PARSING      
-
-client.run(token)
+        #try:
+        #    bot.load_extension(path)
+        bot.load_extension(path) #loads the cog
+        #except Exception as err:
+        #   print(f"Failed to load cog at {path}, error \n {err}")
+        
+    bot.run(token) # starts the bot so its online in discord now
