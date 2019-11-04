@@ -12,7 +12,7 @@ class Voting(commands.Cog):
             
     @commands.command(name="poll")
     @commands.has_permissions(administrator=True)
-    async def poll_(ctx, *args, description):
+    async def poll_(self, ctx, *args, description):
         try:
             nMsg = description.split(",")
             desc = nMsg[0]
@@ -79,7 +79,7 @@ class Voting(commands.Cog):
 
 
     @commands.Cog.listener()
-    async def on_raw_reaction_add(payload):
+    async def on_raw_reaction_add(self, payload):
     
         emoji = payload.emoji
         ruser = bot.get_user(payload.user_id)
@@ -130,7 +130,7 @@ class Voting(commands.Cog):
 
             
     @commands.Cog.listener()
-    async def on_raw_reaction_remove(payload):
+    async def on_raw_reaction_remove(self, payload):
         emoji = payload.emoji
         ruser = self.bot.get_user(payload.user_id)
         reactionmessage = await self.bot.get_channel(payload.channel_id).fetch_message(payload.message_id)
