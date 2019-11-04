@@ -1,6 +1,7 @@
 import discord #imports discord 
 from discord.ext import commands # and commands
 from votes import Vote
+import asyncio
 
 class Voting(commands.Cog): 
     #creats a cog
