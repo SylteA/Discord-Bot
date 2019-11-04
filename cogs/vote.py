@@ -119,7 +119,7 @@ class Voting(commands.Cog):
                         em = discord.Embed(title = "**Current Poll:**", description = f"{desc}\n\n{optionStr}", color=0x32363C)
                         #END CURRENT POLL PARSING
 
-                        msg = await reactionmessage.channel.history().get(author__name=bot.user.name)
+                        msg = await reactionmessage.channel.history().get(author__name=self.bot.user.name)
                         if "current poll" in msg.embeds[0].title.lower():  #checking if the last message is the current poll
                             await msg.edit(embed=em) #updated votes
 
