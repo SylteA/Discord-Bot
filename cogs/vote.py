@@ -82,14 +82,14 @@ class Voting(commands.Cog):
     async def on_raw_reaction_add(self, payload):
     
         emoji = payload.emoji
-        ruser = bot.get_user(payload.user_id)
-        reactionmessage = await bot.get_channel(payload.channel_id).fetch_message(payload.message_id)
+        ruser = self.bot.get_user(payload.user_id)
+        reactionmessage = await self.bot.get_channel(payload.channel_id).fetch_message(payload.message_id)
     
         emojiopt = [f"{x+1}\N{combining enclosing keycap}" for x in range(9)]
 
         voteChannel = ["polls"]
         if "current poll" in reactionmessage.embeds[0].title.lower():
-            if ruser == bot.user:
+            if ruser == self.bot.user:
                 return
             else:
                 if str(reactionmessage.channel) in voteChannel and str(emoji) in emojiopt:
