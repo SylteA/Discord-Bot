@@ -23,7 +23,7 @@ class Vote():
         """
         :return: database document
         """
-        await id = self.count_polls()
+        id = await self.count_polls()
         return await self.load_poll(id)
 
     async def get_len(self):
