@@ -5,14 +5,14 @@ from votes import Vote
 class Voting(commands.Cog): 
     #creats a cog
     def __init__(self, bot):
-        self.bot = bot # makes self.bot be our bot variable
+        self.bot = bot # makes self.bot be our bot variable
         self.poll = Vote()
         self.removing = []
             
             
     @commands.command(name="poll")
     @commands.has_permissions(administrator=True)
-    async def poll_(ctx, *, description):
+    async def poll_(ctx, *args, description):
         try:
             nMsg = description.split(",")
             desc = nMsg[0]
