@@ -63,7 +63,7 @@ class Vote():
         voted_users = poll["users"]
 
         if user.id not in voted_users:
-            voted_users.append(user.id))
+            voted_users.append(user.id)
             await self.database.find_one_and_update({"id": id}, {"$set": {"users": voted_users,"votes": poll_votes}})
         else:
             return -1
@@ -92,6 +92,6 @@ class Vote():
         """
         id = self.count_polls() + 1
         poll = {"id": id, "desc": desc, "options": options, "votes": [0 for x in range(len(options))],"users":[],"created":DataBase.get_date()}
-        id = self.database.insert_one(poll).inserted_id
+        id = await self.database.insert_one(poll).inserted_id
         return id
 
