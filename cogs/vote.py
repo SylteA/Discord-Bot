@@ -12,7 +12,7 @@ class Voting(commands.Cog):
             
     @commands.command(name="poll")
     @commands.has_permissions(administrator=True)
-    async def poll_(self, ctx, *args, description):
+    async def poll_(self, ctx, *, description):
         try:
             nMsg = description.split(",")
             desc = nMsg[0]
