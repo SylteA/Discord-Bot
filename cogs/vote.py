@@ -120,9 +120,10 @@ class Voting(commands.Cog):
                         em = discord.Embed(title = "**Current Poll:**", description = f"{desc}\n\n{optionStr}", color=0x32363C)
                         #END CURRENT POLL PARSING
 
-                        msg = await reactionmessage.channel.history().get(author__name=self.bot.user.name)
-                        if "current poll" in msg.embeds[0].title.lower():  #checking if the last message is the current poll
-                            await msg.edit(embed=em) #updated votes
+                        '''msg = await reactionmessage.channel.history().get(author__name=self.bot.user.name)'''
+                        async for msg in ctx.channel.history(limit=5):
+                            if msg.embeds and "current poll" in msg.embeds[0].title.lower():
+                                await msg.edit(embed=em) #updated votes
 
                 
                 
@@ -159,9 +160,10 @@ class Voting(commands.Cog):
                         optionStr = optionStr[:-1]
                         em = discord.Embed(title = "**Current Poll:**", description = f"{desc}\n\n{optionStr}", color=0x32363C)
     
-                        msg = await reactionmessage.channel.history().get(author__name=self.bot.user.name)
-                        if "current poll" in msg.embeds[0].title.lower():  #checking if the last message is the current poll
-                            await msg.edit(embed=em) #updated votes        
+                        '''msg = await reactionmessage.channel.history().get(author__name=self.bot.user.name)'''
+                        async for msg in ctx.channel.history(limit=5):
+                            if msg.embeds and "current poll" in msg.embeds[0].title.lower():
+                                await msg.edit(embed=em) #updated votes        
                 #END CURRENT POLL PARSING      
 
 def setup(bot): #this gets called when we start load this extension
