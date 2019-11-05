@@ -96,7 +96,7 @@ class Voting(commands.Cog):
                 if str(reactionmessage.channel) in voteChannel and str(emoji) in emojiopt:
                     optionnum = emojiopt.index(str(emoji)) + 1
                 
-                    valid = await self.poll.add_vote(optionnum, reactionmessage.author) 
+                    valid = await self.poll.add_vote(optionnum, ruser) 
                 
                     if valid == -1:
                         self.removing.append((ruser, emoji))
