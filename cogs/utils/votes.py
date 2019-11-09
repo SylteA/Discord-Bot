@@ -1,8 +1,9 @@
 from motor.motor_asyncio import AsyncIOMotorClient
 from cogs.utils.database import DataBase
+from discord import User
 
 
-class Vote():
+class Vote:
     def __init__(self):
         self.client = AsyncIOMotorClient("")
         self.database = self.client.heroku_2d7ckb75.votes
@@ -11,7 +12,7 @@ class Vote():
         """
         :return: amount of polls in database
         """
-        query = self.database.find({})
+        query = await self.database.find({})
         data = await query.to_list(length=1000)
         count = len(data)
         return count
@@ -24,10 +25,10 @@ class Vote():
         return await self.load_poll(id)
 
     async def get_len(self):
-        poll = self.load_current_poll()
+        poll = await self.load_current_poll()
         return len(poll["options"])
 
-    async def load_poll(self, id):
+    async def load_poll(self, id: int):
         """
         :param id: int
         :return: database document
@@ -36,7 +37,6 @@ class Vote():
         return found
 
     async def get_last_poll(self):
-        print("run")
         id = await self.count_polls()
         if id > 0:
             id = id -1
@@ -47,10 +47,11 @@ class Vote():
         poll = await self.load_current_poll()
         return poll["desc"], poll["options"], poll["votes"]
 
-    async def add_vote(self, option, user):
+    async def add_vote(self, option, user: User):
         """
-        :param option: int
-        :return: None
+        :param option:
+        :param user:
+        :return:
         """
         id = await self.count_polls()
         poll = await self.load_poll(id)
@@ -64,10 +65,12 @@ class Vote():
             await self.database.find_one_and_update({"id": id}, {"$set": {"users": voted_users,"votes": poll_votes}})
         else:
             return -1
-    async def remove_vote(self, option, user):
+
+    async def remove_vote(self, option, user: User):
         """
-        :param option: int
-        :return: None
+        :param option:
+        :param user:
+        :return:
         """
         id = await self.count_polls()
         poll = await self.load_poll(id)
