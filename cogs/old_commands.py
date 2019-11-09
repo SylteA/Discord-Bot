@@ -125,7 +125,7 @@ class OldCommands(commands.Cog, name='Commands'):
             return await ctx.send('You cannot rep yourself.')
 
         self.bot.db.add_rep(member)
-        await ctx.send(f"```{member} has received a rep! ```")
+        await ctx.send(f"```{member} has received a rep!```")
 
     @commands.command(name='help')
     async def help_(self, ctx):
