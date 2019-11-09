@@ -1,16 +1,16 @@
-import discord #imports discord 
-from discord.ext import commands # and commands
-from votes import Vote
+from discord.ext import commands
+import discord
+
+from cogs.utils.votes import Vote
 import asyncio
 
-class Voting(commands.Cog): 
-    #creats a cog
+
+class Voting(commands.Cog):
     def __init__(self, bot):
-        self.bot = bot # makes self.bot be our bot variable
+        self.bot = bot
         self.poll = Vote()
         self.removing = []
-            
-            
+
     @commands.command(name="poll")
     @commands.has_permissions(administrator=True)
     async def poll_(self, ctx, *, description):
@@ -22,16 +22,16 @@ class Voting(commands.Cog):
 
             emojiopt = [f"{x+1}\N{combining enclosing keycap}" for x in range(9)]
 
-            #DELETE PREVIOUS POLL
+            # DELETE PREVIOUS POLL
             async for msg in ctx.channel.history(limit=5):
                 if msg.embeds and "previous poll" in msg.embeds[0].title.lower():
                     await msg.delete()
-            #END DELETE PREVIOUS POLL
+            # END DELETE PREVIOUS POLL
 
-            #EDIT CURRENT POLL TO PREVIOUS POLL
+            # EDIT CURRENT POLL TO PREVIOUS POLL
             async for msg in ctx.channel.history(limit=5):
                 if msg.embeds and "current poll" in msg.embeds[0].title.lower():
-                    #CURRENT POLL PARSING
+                    # CURRENT POLL PARSING
                     desc, options, votes = await self.poll.get_last_poll()
                     optionStr = ""
                     emojiopt1 = emojiopt = [f"{x+1}\N{combining enclosing keycap}" for x in range(9)]
@@ -43,21 +43,18 @@ class Voting(commands.Cog):
                         num = x + 1
                     optionStr = optionStr[:-1]
                     em = discord.Embed(title = "**Previous Poll:**", description = f"{desc}\n\n{optionStr}", color=0x32363C)
-                    #END PREVIOUS POLL PARSING
+                    # END PREVIOUS POLL PARSING
                     await msg.edit(embed=em)
 
                     await msg.clear_reactions()
 
-
-            #END EDIT CURRENT POLL TO PREVIOUS POLL
-
+            # END EDIT CURRENT POLL TO PREVIOUS POLL
 
             desc, options, votes = await self.poll.get_current_poll()
             votes = [0 for x in range(len(options))]
 
             numvotes = len(options) # Find the number of options.
             del emojiopt[numvotes:]
-
 
             optionStr = ""
             num = 0
@@ -70,14 +67,12 @@ class Voting(commands.Cog):
 
             em = discord.Embed(title = "**Current Poll:**", description = f"{desc}\n\n{optionStr}", color=0x32363C)
 
-
             currentpoll = await ctx.send(embed=em)
             for emoji in emojiopt:
                 await currentpoll.add_reaction(emoji)
         except Exception as err:
-            em = discord.Embed(title = "**Error**", description = f"Something went wrong! ```{err}```", color=0x32363C)
+            em = discord.Embed(title="**Error**", description=f"Something went wrong! ```{err}```", color=0x32363C)
             await ctx.send(embed=em)
-
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
@@ -125,12 +120,6 @@ class Voting(commands.Cog):
                             if msg.embeds and "current poll" in msg.embeds[0].title.lower():
                                 await msg.edit(embed=em) #updated votes
 
-                
-                
-        
-            
-
-            
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload):
         emoji = payload.emoji
@@ -163,8 +152,10 @@ class Voting(commands.Cog):
                         '''msg = await reactionmessage.channel.history().get(author__name=self.bot.user.name)'''
                         async for msg in reactionmessage.channel.history(limit=5):
                             if msg.embeds and "current poll" in msg.embeds[0].title.lower():
-                                await msg.edit(embed=em) #updated votes        
-                    #END CURRENT POLL PARSING      
+                                await msg.edit(embed=em) # updated votes
+                    # END CURRENT POLL PARSING
 
-def setup(bot): #this gets called when we start load this extension
-    bot.add_cog(Voting(bot)) # adds the cog voting with our bot variable.
+
+def setup(bot):
+    """Adds cog: Voting to bot"""
+    bot.add_cog(Voting(bot))
