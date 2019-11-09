@@ -1,8 +1,9 @@
 from discord.ext import commands
 import discord
 
-from cogs.utils.votes import Vote
 import asyncio
+
+from cogs.utils.votes import Vote
 
 
 class Voting(commands.Cog):

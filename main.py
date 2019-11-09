@@ -22,7 +22,7 @@ class Tim(commands.AutoShardedBot):
         self.db = DataBase()
 
         # Guild and Channels
-        # TODO: Hopefully a temporary solution before moving over to a webhook
+        # TODO: Hopefully a temporary solution before maybe moving over to a webhook?
         self.guild = self.get_guild(501090983539245061)
         self.welcomes = self.guild.get_channel(511344843247845377)
 
