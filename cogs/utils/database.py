@@ -16,7 +16,7 @@ class DataBase:
         except:
             id = None
         old, date = self.get_msgs(user)
-        if id != None:
+        if id is not None:
             self.users.find_one_and_update({"_id":id}, {"$set":{"messages": old + msgs}})
         else:
             self.create_new_messages(user, 1)
@@ -96,7 +96,7 @@ class DataBase:
         except:
             id = None
         old, date = self.get_rep(user)
-        if id != None:
+        if id is not None:
           self.users.update_one({"_id":id}, {"$set":{"reps": old + 1}})
           self.users.update_one({"_id": id}, {"$set": {"last_rep": self.get_date()}})
 
