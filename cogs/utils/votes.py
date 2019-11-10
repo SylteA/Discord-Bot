@@ -5,7 +5,9 @@ from discord import User
 
 class Vote:
     def __init__(self):
-        self.client = AsyncIOMotorClient("")
+        with open('tokens.json') as json_file:
+            data = json.load(json_file)
+        self.client = AsyncIOMotorClient(data["database"])
         self.database = self.client.heroku_2d7ckb75.votes
 
     async def count_polls(self):

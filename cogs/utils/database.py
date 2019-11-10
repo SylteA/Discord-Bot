@@ -1,11 +1,13 @@
 from pymongo import MongoClient
 import datetime
 import pandas as pd
-
+import json
 
 class DataBase:
     def __init__(self):
-        self.client = MongoClient("")
+        with open('tokens.json') as json_file:
+            data = json.load(json_file)
+        self.client = MongoClient(data["database"])
         self.users = self.client.heroku_2d7ckb75.users
         self.logs = self.client.heroku_2d7ckb75.logs
         self.stats = self.client.heroku_2d7ckb75.server_stats
