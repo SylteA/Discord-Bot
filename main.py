@@ -21,15 +21,18 @@ class Tim(commands.AutoShardedBot):
         self.start_time = datetime.datetime.utcnow()
         self.db = DataBase()
 
-        # Guild and Channels
-        # TODO: Hopefully a temporary solution before maybe moving over to a webhook?
-        self.guild = self.get_guild(501090983539245061)
-        self.welcomes = self.guild.get_channel(511344843247845377)
+        # Guilds and Channels
+        # Loaded in `self.on_ready`
+        # These could easily be avoided with a webhook
+        self.guild = None
+        self.welcomes = None
 
     """  Events   """
 
     async def on_ready(self):
         print(f'Successfully logged in as {self.user}\nSharded to {len(self.guilds)} guilds')
+        self.guild = self.get_guild(501090983539245061)
+        self.welcomes = self.guild.get_channel(511344843247845377)
         await self.change_presence(activity=discord.Game(name='use the prefix "tim"'))
         await self.load_extensions()
 
@@ -40,7 +43,7 @@ class Tim(commands.AutoShardedBot):
 
     async def on_message(self, message):
         print(f"{message.channel}: {message.author}: {message.author.name}: {message.content}")
-        if message.author.bot:
+        if message.author.bot or not message.guild:
             return
 
         if self.find_url(message.content) and not self.is_mod(message.author):
