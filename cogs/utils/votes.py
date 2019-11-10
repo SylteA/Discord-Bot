@@ -1,6 +1,7 @@
 from motor.motor_asyncio import AsyncIOMotorClient
 from cogs.utils.database import DataBase
 from discord import User
+import json
 
 
 class Vote:
