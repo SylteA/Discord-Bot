@@ -9,12 +9,15 @@ import datetime
 import pathlib
 import asyncio
 import re
+import json
 
 from cogs.utils.time import human_timedelta
 from cogs.utils.database import DataBase
 
 
-TOKEN = "INSERT TOKEN HERE"
+with open('tokens.json') as json_file:
+    data = json.load(json_file)
+TOKEN = data["token"]
 
 
 class Tim(commands.AutoShardedBot):
@@ -22,12 +25,6 @@ class Tim(commands.AutoShardedBot):
         super().__init__(command_prefix='tim.', case_insensitive=True, **kwargs)
         self.start_time = datetime.datetime.utcnow()
         self.db = DataBase()
-
-        # Guilds and Channels
-        # Loaded in `self.on_ready`
-        # These could easily be avoided with a webhook
-        self.guild = None
-        self.welcomes = None
 
     """  Events   """
 
@@ -125,4 +122,3 @@ class Tim(commands.AutoShardedBot):
 
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(Tim.setup())

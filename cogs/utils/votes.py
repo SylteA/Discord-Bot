@@ -1,11 +1,14 @@
 from motor.motor_asyncio import AsyncIOMotorClient
 from cogs.utils.database import DataBase
 from discord import User
+import json
 
 
 class Vote:
     def __init__(self):
-        self.client = AsyncIOMotorClient("")
+        with open('tokens.json') as json_file:
+            data = json.load(json_file)
+        self.client = AsyncIOMotorClient(data["database"])
         self.database = self.client.heroku_2d7ckb75.votes
 
     async def count_polls(self):
