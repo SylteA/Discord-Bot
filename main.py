@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from discord.ext import commands
 import discord
 
@@ -23,19 +25,13 @@ class Tim(commands.AutoShardedBot):
         super().__init__(command_prefix='tim.', case_insensitive=True, **kwargs)
         self.start_time = datetime.datetime.utcnow()
         self.db = DataBase()
-        self.setup()
 
-    async def setup(self):
-        # Guild and Channels
-        # TODO: Hopefully a temporary solution before maybe moving over to a webhook?
-        await self.wait_until_ready()
-        self.guild = self.get_guild(501090983539245061)
-        self.welcomes = self.guild.get_channel(511344843247845377)
-    
     """  Events   """
 
     async def on_ready(self):
         print(f'Successfully logged in as {self.user}\nSharded to {len(self.guilds)} guilds')
+        self.guild = self.get_guild(501090983539245061)
+        self.welcomes = self.guild.get_channel(511344843247845377)
         await self.change_presence(activity=discord.Game(name='use the prefix "tim"'))
         await self.load_extensions()
 
@@ -46,13 +42,19 @@ class Tim(commands.AutoShardedBot):
 
     async def on_message(self, message):
         print(f"{message.channel}: {message.author}: {message.author.name}: {message.content}")
-        if message.author.bot:
+        if message.author.bot or not message.guild:
             return
 
-        if self.find_url(message.content) and not self.is_mod(message.author):
-            await message.delete()
-            await message.channel.send(f"```The link you sent is not allowed on this server. {message.author.mention} "
-                                       f"If you believe this is a mistake contact a staff member.```")
+        for url in self.find_url(message.content):
+            if url is not False:
+                for name in ("hastebin", "pastebin", "youtube", "github", "techwithtim"):
+                    if name in url.netloc:
+                        pass
+                    else:
+                        await message.delete()
+                        await message.channel.send(
+                            f"```The link you sent is not allowed on this server. {message.author.mention} "
+                            f"If you believe this is a mistake contact a staff member.```")
 
         self.db.update_server_stats()
         self.db.update_messages(message.author)
@@ -87,17 +89,21 @@ class Tim(commands.AutoShardedBot):
     def find_url(message: str):
         """First uses re.findall to find URL's in `message` uses `urllib.parse.urlparse` to confirm URL.
 
-        If this finds a URL, it returns a namedtuple: `namedtuple('SyltesUrl', ['netloc', 'full_url'])`
+        If this finds a URL, it yields a namedtuple: `namedtuple('SyltesUrl', ['netloc', 'full_url'])`
         If no URLs are found returns False."""
 
-        url = re.findall(r'([--:\w?@%&+~#=]*\.[a-z]{2,4}\/{0,2})((?:[?&](?:\w+)=(?:\w+))+|[--:\w?@%&+~#=]+)?', message)
-        result = urlparse(url)
+        urls = re.findall(r'([--:\w?@%&+~#=]*\.[a-z]{2,4}\/{0,2})((?:[?&](?:\w+)=(?:\w+))+|[--:\w?@%&+~#=]+)?', message)
+        for url in urls:
+            try:
+                result = urlparse(url)
 
-        if all([result.scheme, result.netloc, result.path]):
-            SyltesUrl = namedtuple('SyltesUrl', ['netloc', 'full_url'])
-            return SyltesUrl(result.netloc, url)
-        else:
-            return False
+                if all([result.scheme, result.netloc, result.path]):
+                    SyltesUrl = namedtuple('SyltesUrl', ['netloc', 'full_url'])
+                    yield SyltesUrl(result.netloc, url)
+                else:
+                    yield False
+            except:
+                yield False
 
     async def load_extensions(self):
         """Loads all extensions in Path('./cogs')"""
@@ -116,4 +122,3 @@ class Tim(commands.AutoShardedBot):
 
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(Tim.setup())
