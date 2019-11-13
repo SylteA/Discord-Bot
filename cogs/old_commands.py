@@ -11,11 +11,10 @@ class OldCommands(commands.Cog, name='Commands'):
     def __init__(self, bot):
         self.bot = bot
         self.bot.remove_command('help')
-        self.is_mod = self.bot.is_mod
 
     @commands.command()
     async def post_question(self, ctx):
-        if self.is_mod(ctx.author):
+        if self.bot.is_mod(ctx.author):
             await ctx.message.delete()
             await ctx.send("```Please post your question, rather than asking for help. "
                            "It's much easier and less time consuming.```")
@@ -78,7 +77,7 @@ class OldCommands(commands.Cog, name='Commands'):
 
     @commands.command()
     async def member_count(self, ctx):
-        await ctx.send(f"```Members: {self.bot.guild.member_count}```")
+        await ctx.send(f"```Members: {ctx.guild.member_count}```")
 
     @commands.command()
     async def top_user(self, ctx):
