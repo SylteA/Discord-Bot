@@ -9,41 +9,46 @@ import asyncio
 import json
 
 from cogs.utils.time import human_timedelta
-from cogs.utils.database import DataBase
+from cogs.utils.DataBase import DataBase, Message, User
 
 
 with open('tokens.json') as json_file:
     data = json.load(json_file)
 TOKEN = data["token"]
+POSTGRES = data["postgres"]
 
 
 class Tim(commands.AutoShardedBot):
     def __init__(self, **kwargs):
         super().__init__(command_prefix='tim.', case_insensitive=True, **kwargs)
         self.start_time = datetime.datetime.utcnow()
-        self.db = DataBase()
 
     """  Events   """
 
     async def on_ready(self):
         print(f'Successfully logged in as {self.user}\nSharded to {len(self.guilds)} guilds')
-        self.guild = self.get_guild(501090983539245061)
-        self.welcomes = self.guild.get_channel(511344843247845377)
+        self.db = await DataBase.create_pool(bot=self, uri=POSTGRES, loop=self.loop)
+        print([Message(bot=self, **record) for record in await self.db.fetch('SELECT * FROM messages')])
+        print([User(bot=self, **record) for record in await self.db.fetch('SELECT * FROM users')])
+        # self.guild = self.get_guild(501090983539245061)
+        # self.welcomes = self.guild.get_channel(511344843247845377)
         await self.change_presence(activity=discord.Game(name='use the prefix "tim"'))
         await self.load_extensions()
 
     async def on_member_join(self, member):
+        await self.wait_until_ready()
         if member.guild.id == 501090983539245061:
             await self.welcomes.send(f"Welcome to the Tech With Tim Community {member.mention}!\n"
                                      f"Members += 1\nCurrent # of members: {self.guild.member_count}")
 
     async def on_message(self, message):
+        await self.wait_until_ready()
         print(f"{message.channel}: {message.author}: {message.author.name}: {message.content}")
         if message.author.bot or not message.guild:
             return
 
-        self.db.update_server_stats()
-        self.db.update_messages(message.author)
+        await Message.on_message(bot=self, message=message)
+
         await self.process_commands(message)
 
     async def process_commands(self, message):
@@ -60,6 +65,7 @@ class Tim(commands.AutoShardedBot):
             if ctx.channel.id not in (511344208955703306, 536199577284509696):
                 return await message.channel.send("**Please use #bot-commands channel**")
 
+        await User.on_command(bot=self, user=message.author)
         await self.invoke(ctx)
 
     """   Functions   """
@@ -68,6 +74,13 @@ class Tim(commands.AutoShardedBot):
     def is_mod(member: discord.Member) -> bool:
         for role in member.roles:
             if role.name.lower() in ('helper', 'mod', 'admin', 'tim'):
+                return True
+        return False
+
+    @staticmethod
+    def is_admin(member: discord.Member) -> bool:
+        for role in member.roles:
+            if role.name.lower() in ('admin', 'tim'):
                 return True
         return False
 

@@ -3,6 +3,35 @@ import datetime
 import pandas as pd
 import json
 
+from motor.motor_asyncio import AsyncIOMotorClient
+from typing import Union
+import discord
+
+
+class Database:
+    def __init__(self):
+        with open('tokens.json') as json_file:
+            data = json.load(json_file)
+        self.client = AsyncIOMotorClient(data["database"])
+        self.users = self.client.heroku_2d7ckb75.users
+        self.logs = self.client.heroku_2d7ckb75.logs
+        self.stats = self.client.heroku_2d7ckb75.server_stats
+
+    async def update_messages(self, member: Union[discord.User, discord.Member], value: int = 1):
+        user = await self.get_user(member=member)
+        await self.users.find_one_and_update({'id': member.id}, {"$inc": {"messages": value}})
+
+    async def get_user(self, member: Union[discord.User, discord.Member]):
+        user = await self.users.find_one({"id": member.id})
+        if user is None:
+            user = await self.new_user(member)
+
+    async def new_user(self, member: Union[discord.User, discord.Member]):
+        _dict = {"id": member.id, "messages": 0, "joined": datetime.datetime.utcnow()}
+        id = await self.users.insert_one()
+        return id.inserted_id
+
+
 class DataBase:
     def __init__(self):
         with open('tokens.json') as json_file:
