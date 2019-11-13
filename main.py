@@ -3,12 +3,9 @@
 from discord.ext import commands
 import discord
 
-from collections import namedtuple
-from urllib.parse import urlparse
 import datetime
 import pathlib
 import asyncio
-import re
 import json
 
 from cogs.utils.time import human_timedelta
@@ -45,17 +42,6 @@ class Tim(commands.AutoShardedBot):
         if message.author.bot or not message.guild:
             return
 
-        for url in self.find_url(message.content):
-            if url is not False:
-                for name in ("hastebin", "pastebin", "youtube", "github", "techwithtim"):
-                    if name in url.netloc:
-                        pass
-                    else:
-                        await message.delete()
-                        await message.channel.send(
-                            f"```The link you sent is not allowed on this server. {message.author.mention} "
-                            f"If you believe this is a mistake contact a staff member.```")
-
         self.db.update_server_stats()
         self.db.update_messages(message.author)
         await self.process_commands(message)
@@ -85,37 +71,17 @@ class Tim(commands.AutoShardedBot):
                 return True
         return False
 
-    @staticmethod
-    def find_url(message: str):
-        """First uses re.findall to find URL's in `message` uses `urllib.parse.urlparse` to confirm URL.
-
-        If this finds a URL, it yields a namedtuple: `namedtuple('SyltesUrl', ['netloc', 'full_url'])`
-        If no URLs are found returns False."""
-
-        urls = re.findall(r'([--:\w?@%&+~#=]*\.[a-z]{2,4}\/{0,2})((?:[?&](?:\w+)=(?:\w+))+|[--:\w?@%&+~#=]+)?', message)
-        for url in urls:
-            try:
-                result = urlparse(url)
-
-                if all([result.scheme, result.netloc, result.path]):
-                    SyltesUrl = namedtuple('SyltesUrl', ['netloc', 'full_url'])
-                    yield SyltesUrl(result.netloc, url)
-                else:
-                    yield False
-            except:
-                yield False
-
     async def load_extensions(self):
         """Loads all extensions in Path('./cogs')"""
         for extension in [file.stem for file in pathlib.Path('./cogs').glob('*.py')]:
             self.load_extension(f'cogs.{extension}')
-        print(f'Loaded all extensions after {human_timedelta(self.start_time, brief=True)}')
+        print(f'Loaded all extensions after {human_timedelta(self.start_time, brief=True, suffix=False)}')
 
     @classmethod
-    async def setup(cls, *args, **kwargs):
+    async def setup(cls, **kwargs):
         bot = cls()
         try:
-            await bot.start(TOKEN, *args, **kwargs)
+            await bot.start(TOKEN, **kwargs)
         except KeyboardInterrupt:
             await bot.close()
 
