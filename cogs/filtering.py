@@ -10,7 +10,8 @@ class Filtering(commands.Cog):
         self.bot = bot
         self._allowed_urls = [
             "hasteb.in", "hastebin", "pastebin", "mystb.in"
-            "youtube", "github", "techwithtim"
+            "youtube", "youtu.be", "github", "techwithtim", "gyazo", "tenor",
+            "anaconda"
         ]
 
     @commands.Cog.listener()
@@ -27,15 +28,15 @@ class Filtering(commands.Cog):
             try:
                 result = urlparse(url)
                 if all([result.scheme, result.netloc]):
-                    if not await self._allowed_url(result.netloc):
+                    if not await self._allowed_url(result.netloc) and not self.bot.is_mod(message.author):
                         if not self.bot.is_mod(message.author):
                             await message.delete()
                             return await message.channel.send(
-                                f"```The link you sent is not allowed on this server. {message.author.mention} "
+                                f"```The link you sent is not allowed on this server. {message.author.display_name} "
                                 f"If you believe this is a mistake contact a staff member.```")
             except Exception as e:
                 raise e
-                # I dont know what error could be raised, let me know if one occurs please
+                # I dont know what error could be raised, let me know an error occurs please
 
     async def _allowed_url(self, netloc: str) -> bool:
         """Checks if the provided url `netloc` is an allowed url."""
