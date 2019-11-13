@@ -28,10 +28,11 @@ class Filtering(commands.Cog):
                 result = urlparse(url)
                 if all([result.scheme, result.netloc]):
                     if not await self._allowed_url(result.netloc):
-                        await message.delete()
-                        return await message.channel.send(
-                            f"```The link you sent is not allowed on this server. {message.author.mention} "
-                            f"If you believe this is a mistake contact a staff member.```")
+                        if not self.bot.is_mod(message.author):
+                            await message.delete()
+                            return await message.channel.send(
+                                f"```The link you sent is not allowed on this server. {message.author.mention} "
+                                f"If you believe this is a mistake contact a staff member.```")
             except Exception as e:
                 raise e
                 # I dont know what error could be raised, let me know if one occurs please
