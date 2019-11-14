@@ -1,5 +1,5 @@
 # placeholder for future db
 
 
-class Polls:
+class Poll(object):
     pass

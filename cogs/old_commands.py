@@ -1,7 +1,11 @@
 from discord.ext import commands
 import discord
 
+from datetime import datetime
+import pandas
 import typing
+
+from .utils.time import human_timedelta
 
 # TODO: Checks for different commands
 # TODO: Change cog name?
@@ -81,52 +85,100 @@ class OldCommands(commands.Cog, name='Commands'):
 
     @commands.command()
     async def top_user(self, ctx):
-        users, count = self.bot.db.get_top_users()
-        formatted = ""
-        for user in users:
-            formatted += str(user.split("#")[0]) + ", "
+        users = await self.bot.db.get_all_users(get_messages=True)
+        users = sorted(users, key=lambda m: len(m.messages), reverse=True)
+        # we need a way better way to resolve this.
+        # Either we store a message_count per user already,
+        # Or someone might know a faster query to fetch users + messages
 
-        formatted = formatted[:-2]
-
-        await ctx.send(f"```Top User(s): {formatted}\nNumber of Messages: {count}```")
+        user = self.bot.get_user(users[0].id)
+        if not isinstance(user, discord.User):
+            return await ctx.send(f'Couldn\'t find the top user, but his ID is {user.id}'
+                                  f'\n And he has `{len(users[0].messages)}`` messages')
+        await ctx.send(f'Top User: {user} \nMessages: `{len(users[0].messages)}`')
 
     @commands.command()
     async def server_messages(self, ctx):
-        count, day = self.bot.db.get_all_messages()
-        await ctx.send(f"```Messages: {count}\nDays: {day}```")
+        messages = await self.bot.db.fetchrow('SELECT COUNT(*) FROM messages')
+        count = messages['count']
+        started_counting = datetime(year=2019, month=11, day=13)
+        await ctx.send(f"I have read `{count}` messages after "
+                       f"{human_timedelta(started_counting, suffix=False, brief=True, accuracy=2)}")
 
     @commands.command(name='messages', aliases=['my_messages'])
     async def messages_(self, ctx, member: typing.Optional[commands.MemberConverter]):
         member = member or ctx.author
-        count, date = self.bot.db.get_msgs(member)
-        await ctx.send(f"```Messages: {count}\nSince: {date}```")
+        user = await self.bot.db.get_user(member.id, get_messages=True)
+        await ctx.send(f"Messages: {len(user.messages)}"
+                       f"\nSince: {human_timedelta(user.joined_at, suffix=False, brief=True, accuracy=2)}")
+
+    def user__repr__(self, id: int) -> str:
+        user = self.bot.get_user(id)
+        if isinstance(user, discord.User):
+            return f'{user.name}#{user.discriminator}'
+        return f'(ID: {id})'
 
     @commands.command()
     async def scoreboard(self, ctx):
-        data = self.bot.db.scoreboard()
-        await ctx.send(f"```{data}```")
+        # TODO: Improve the fetch.
+        # Refer to to-do sentence in `.utils.DataBase.client`
+        users = await self.bot.db.get_all_users(get_messages=True, get_reps=False)
+
+        users_ = []
+        for user in users:
+            users_.append((self.user__repr__(user.id), len(user.messages)))
+
+        users_.sort(key=lambda x: x[1], reverse=True)
+        users_ = users_[:10]
+
+        frame = pandas.DataFrame(users_, columns=["user", "messages"])
+        frame.sort_values(by=['messages'], ascending=False)
+
+        await ctx.send(f'```{frame.head().to_string(index=False)}```')
 
     @commands.command(name='reps', aliases=['my_reps'])
     async def reps_(self, ctx, member: typing.Optional[commands.MemberConverter]):
-        member = member or ctx.author
-        count, date = self.bot.db.get_rep(member)
-        await ctx.send(f"```Reps: {count}\nLast Rep: {date}```")
+        user = await self.bot.db.get_user(get_reps=True)
+
+        reps = len(user.reps)
+        ret = f'{member.display_name} has received `{reps}` reps'
+        if reps > 0:
+            ret += f'\nLast rep: {human_timedelta(max(user.reps, key=lambda r: r.repped_at))}'
+
+        await ctx.send(f'{member.display_name} has received {len(user.reps)}')
 
     @commands.command()
     async def rep_scoreboard(self, ctx):
-        data = self.bot.db.rep_scoreboard()
-        await ctx.send(f"```{data}```")
+        users = await self.bot.db.get_all_users(get_reps=True, get_messages=False)
+
+        users_ = []
+        for user in users:
+            users_.append((self.user__repr__(user.id), len(user.reps)))
+
+        users_.sort(key=lambda x: x[1], reverse=True)
+        users_ = users_[:10]
+
+        frame = pandas.DataFrame(users_, columns=["user", "reps"])
+        frame.sort_values(by=['messages'], ascending=False)
+
+        await ctx.send(f'```{frame.head().to_string(index=False)}```')
 
     @commands.command(name='rep')
-    @commands.cooldown(1, 60*60*24, commands.BucketType.member)
     async def rep(self, ctx, member: commands.MemberConverter):
         if member.id == ctx.author.id:
             return await ctx.send('You cannot rep yourself.')
 
-        self.bot.db.add_rep(member)
-        await ctx.send(f"```{member} has received a rep!```")
+        user = await self.bot.db.get_user(member.id)
 
-    @commands.command(name='help')
+        result = await user.add_rep(message_id=ctx.message.id, author_id=ctx.author.id,
+                                    extra_info={"channel_id": ctx.channel.id})
+
+        if result is not None:
+            return await ctx.send(f'You can rep that user again in {human_timedelta(result)}')
+        else:
+            await ctx.send(f"**{member.display_name}** has received a rep!")
+
+    @commands.command(name='help')  # TODO: This needs updating.
     async def help_(self, ctx):
         embed = discord.Embed(title="Tim Bot Help", description="A list of bot commands...")
         embed.add_field(name="tim.users", value="Gives status update on members of the server")
