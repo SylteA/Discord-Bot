@@ -28,10 +28,9 @@ class Tim(commands.AutoShardedBot):
     async def on_ready(self):
         print(f'Successfully logged in as {self.user}\nSharded to {len(self.guilds)} guilds')
         self.db = await DataBase.create_pool(bot=self, uri=POSTGRES, loop=self.loop)
-        print([Message(bot=self, **record) for record in await self.db.fetch('SELECT * FROM messages')])
-        print([User(bot=self, **record) for record in await self.db.fetch('SELECT * FROM users')])
         # self.guild = self.get_guild(501090983539245061)
         # self.welcomes = self.guild.get_channel(511344843247845377)
+        # Commented out for testing purposes
         await self.change_presence(activity=discord.Game(name='use the prefix "tim"'))
         await self.load_extensions()
 
@@ -60,13 +59,16 @@ class Tim(commands.AutoShardedBot):
         if ctx.command is None:
             return
 
-        if ctx.command.name in ('help', 'scoreboard', 'rep_scoreboard', 'reps', 'member_count', 'top_user', 'users',
-                                'server_messages', 'messages'):
-            if ctx.channel.id not in (511344208955703306, 536199577284509696):
-                return await message.channel.send("**Please use #bot-commands channel**")
+        # Commented out for testing purposes
+        # if ctx.command.name in ('help', 'scoreboard', 'rep_scoreboard', 'reps', 'member_count', 'top_user', 'users',
+        #                         'server_messages', 'messages'):
+        #     if ctx.channel.id not in (511344208955703306, 536199577284509696):
+        #         return await message.channel.send("**Please use #bot-commands channel**")
 
-        await User.on_command(bot=self, user=message.author)
-        await self.invoke(ctx)
+        try:
+            await self.invoke(ctx)
+        finally:
+            await User.on_command(bot=self, user=message.author)
 
     """   Functions   """
 

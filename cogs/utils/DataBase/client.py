@@ -5,6 +5,7 @@ from typing import List
 import asyncpg
 import asyncio
 
+from .rep import Rep
 from .user import User
 from .message import Message
 
@@ -40,7 +41,7 @@ class DataBase(object):
             async with self._pool.acquire() as con:
                 return await con.execute(query, *args, timeout=self.timeout)
 
-    async def get_user(self, user_id: int, get_messages: bool = True):
+    async def get_user(self, user_id: int, get_messages: bool = False, get_reps: bool = False):
         """Not excepting errors here as it would only be good for raising a different error.
         When using this you want to try: except TimeoutError.
         Timeout is set at `self.timeout`"""
@@ -58,9 +59,41 @@ class DataBase(object):
         else:
             messages = []
 
-        return User(bot=self.bot, messages=messages, **record)
+        if get_reps:
+            reps = await self.get_reps(user_id)
+        else:
+            reps = []
+
+        return User(bot=self.bot, messages=messages, reps=reps, **record)
+
+    async def get_all_users(self, get_messages: bool = False, get_reps: bool = False):
+        records = await self.fetch('SELECT * FROM users')
+        users = [User(bot=self.bot, **record) for record in records]
+        if get_messages:
+            # Not a very efficient way to get messages for ALL users.
+            # TODO: Fetch all messages at once and add them to the correct user
+            # Do this by checking `if message.author_id == user.id`.
+            for user in users:
+                messages = await self.get_messages(user.id)  # pep8 so i did this to be sure?
+                user.messages = messages
+
+        if get_reps:
+            # This is just as bad as the above ^
+            # Both of these need to be improved.
+            for user in users:
+                reps = await self.get_reps(user.id)
+                user.reps = reps
+
+        return users
 
     async def get_messages(self, author_id: int) -> List[Message]:
         query = """SELECT * FROM messages WHERE author_id = $1"""
         records = await self.fetch(query, author_id)
         return [Message(bot=self.bot, **record) for record in records]
+
+    async def get_reps(self, id: int, key: str = 'user_id '):
+        if key not in ('author_id', 'user_id'):
+            raise RuntimeWarning('get_reps `key` can only be `author_id` or `user_id`')
+        query = """SELECT * FROM reps WHERE {} = $1"""
+        records = await self.fetch(query, id)
+        return [Rep(bot=self.bot, **record) for record in records]
