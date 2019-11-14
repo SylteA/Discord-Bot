@@ -46,9 +46,10 @@ class Tim(commands.AutoShardedBot):
         if message.author.bot or not message.guild:
             return
 
-        await Message.on_message(bot=self, message=message)
-
-        await self.process_commands(message)
+        try:
+            await self.process_commands(message)
+        finally:
+            await Message.on_message(bot=self, message=message)
 
     async def process_commands(self, message):
         if message.author.bot:
