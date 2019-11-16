@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from json import dumps
 
 
 class Rep(object):
@@ -9,7 +10,7 @@ class Rep(object):
         self.user_id = user_id  # The user that recieved +1 rep.
         self.author_id = author_id  # The user that gave +1 rep.
         self.repped_at = repped_at
-        self.extra_info = extra_info
+        self.extra_info = dumps(extra_info)
 
     async def post(self, assure_24h: bool = True):
         """We shouldn't have to check for duplicate reps either. ->
@@ -29,13 +30,15 @@ class Rep(object):
                        ORDER BY repped_at ASC 
                        LIMIT 1"""
 
-            record = await self.bot.db.fetchrow(query, self.author_id)
-            rep = Rep(bot=self.bot, **record)
-            if (rep.repped_at + timedelta(days=1)) > datetime.utcnow():
-                return rep.repped_at
+            record = await self.bot.db.fetch(query, self.author_id)
+            if len(record) == 1:
+                rep = Rep(bot=self.bot, **record[0])
+                if (rep.repped_at + timedelta(days=1)) > datetime.utcnow():
+                    return rep.repped_at
 
         query = """INSERT INTO reps ( rep_id, user_id, author_id, repped_at, extra_info )
                    VALUES (  $1, $2, $3, $4, $5 )
                    ON CONFLICT DO NOTHING"""
-        await self.bot.db.execyte(query, self.rep_id, self.user_id, self.author_id, self.repped_at, self.extra_info)
+        await self.bot.db.execute(query, self.rep_id, self.user_id, self.author_id,
+                                  self.repped_at, f"{self.extra_info}")
         return None

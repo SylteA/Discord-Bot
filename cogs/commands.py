@@ -7,11 +7,8 @@ import typing
 
 from .utils.time import human_timedelta
 
-# TODO: Checks for different commands
-# TODO: Change cog name?
 
-
-class OldCommands(commands.Cog, name='Commands'):
+class Commands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.bot.remove_command('help')
@@ -77,7 +74,7 @@ class OldCommands(commands.Cog, name='Commands'):
         await ctx.send(f'```Online: {members["online"]}\n'
                        f'Idle: {members["idle"]}\n'
                        f'DND: {members["dnd"]}\n'
-                       f'Offline: {members["offline"]}')
+                       f'Offline: {members["offline"]}```')
 
     @commands.command()
     async def member_count(self, ctx):
@@ -110,7 +107,7 @@ class OldCommands(commands.Cog, name='Commands'):
         member = member or ctx.author
         user = await self.bot.db.get_user(member.id, get_messages=True)
         await ctx.send(f"Messages: {len(user.messages)}"
-                       f"\nSince: {human_timedelta(user.joined_at, suffix=False, brief=True, accuracy=2)}")
+                       f"\nSince: {human_timedelta(user.joined_at, brief=True, accuracy=2)}")
 
     def user__repr__(self, id: int) -> str:
         user = self.bot.get_user(id)
@@ -129,7 +126,7 @@ class OldCommands(commands.Cog, name='Commands'):
             users_.append((self.user__repr__(user.id), len(user.messages)))
 
         users_.sort(key=lambda x: x[1], reverse=True)
-        users_ = users_[:10]
+        users_ = users_[:5]
 
         frame = pandas.DataFrame(users_, columns=["user", "messages"])
         frame.sort_values(by=['messages'], ascending=False)
@@ -138,14 +135,16 @@ class OldCommands(commands.Cog, name='Commands'):
 
     @commands.command(name='reps', aliases=['my_reps'])
     async def reps_(self, ctx, member: typing.Optional[commands.MemberConverter]):
-        user = await self.bot.db.get_user(get_reps=True)
+        member = member or ctx.author
+        user = await self.bot.db.get_user(member.id, get_reps=True)
 
         reps = len(user.reps)
         ret = f'{member.display_name} has received `{reps}` reps'
         if reps > 0:
-            ret += f'\nLast rep: {human_timedelta(max(user.reps, key=lambda r: r.repped_at))}'
+            last_rep = max(user.reps, key=lambda r: r.repped_at)
+            ret += f'\nLast rep: {human_timedelta(last_rep.repped_at)}'
 
-        await ctx.send(f'{member.display_name} has received {len(user.reps)}')
+        await ctx.send(ret)
 
     @commands.command()
     async def rep_scoreboard(self, ctx):
@@ -156,10 +155,10 @@ class OldCommands(commands.Cog, name='Commands'):
             users_.append((self.user__repr__(user.id), len(user.reps)))
 
         users_.sort(key=lambda x: x[1], reverse=True)
-        users_ = users_[:10]
+        users_ = users_[:5]
 
         frame = pandas.DataFrame(users_, columns=["user", "reps"])
-        frame.sort_values(by=['messages'], ascending=False)
+        frame.sort_values(by=['reps'], ascending=False)
 
         await ctx.send(f'```{frame.head().to_string(index=False)}```')
 
@@ -199,4 +198,4 @@ class OldCommands(commands.Cog, name='Commands'):
 
 
 def setup(bot):
-    bot.add_cog(OldCommands(bot))
+    bot.add_cog(Commands(bot))

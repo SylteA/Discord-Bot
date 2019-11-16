@@ -42,20 +42,17 @@ class DataBase(object):
                 return await con.execute(query, *args, timeout=self.timeout)
 
     async def get_user(self, user_id: int, get_messages: bool = False, get_reps: bool = False):
-        """Not excepting errors here as it would only be good for raising a different error.
-        When using this you want to try: except TimeoutError.
-        Timeout is set at `self.timeout`"""
+        """Not excepting errors here as it would only be good for raising a different error."""
         query = """SELECT * FROM users WHERE id = $1"""
         record = await self.fetchrow(query, user_id)
         if record is None:
             # Post new user.
-            user = User(bot=self.bot, id=user_id, messages=[])
+            user = User(bot=self.bot, id=user_id, messages=[], reps=[])
             await user.post()
             return user
 
         if get_messages:
             messages = await self.get_messages(user_id)
-            # Temporary solution for getting user messages, still works great though
         else:
             messages = []
 
@@ -68,21 +65,30 @@ class DataBase(object):
 
     async def get_all_users(self, get_messages: bool = False, get_reps: bool = False):
         records = await self.fetch('SELECT * FROM users')
-        users = [User(bot=self.bot, **record) for record in records]
+        users = [User(bot=self.bot, messages=[], reps=[], **record) for record in records]
+
+        # As i write this, with about 1300 messages in the database i can tell that this will be very slow once we let
+        # this run for a few days, (currently takes about 2 sec to complete)
+        # If you know a more efficient way, please tell.
+
         if get_messages:
-            # Not a very efficient way to get messages for ALL users.
-            # TODO: Fetch all messages at once and add them to the correct user
-            # Do this by checking `if message.author_id == user.id`.
-            for user in users:
-                messages = await self.get_messages(user.id)  # pep8 so i did this to be sure?
-                user.messages = messages
+            records = await self.fetch('SELECT * FROM messages ORDER BY author_id ASC')
+            messages = [Message(bot=self.bot, **record) for record in records]
 
         if get_reps:
-            # This is just as bad as the above ^
-            # Both of these need to be improved.
-            for user in users:
-                reps = await self.get_reps(user.id)
-                user.reps = reps
+            records = await self.fetch("SELECT * FROM reps ORDER BY user_id ASC")
+            reps = [Rep(bot=self.bot, **record) for record in records]
+
+        for user in users:
+            if get_messages:
+                for message in messages:
+                    if user.id == message.author_id:
+                        user.messages.append(message)
+
+            if get_reps:
+                for rep in reps:
+                    if user.id == rep.user_id:
+                        user.reps.append(rep)
 
         return users
 
@@ -91,9 +97,9 @@ class DataBase(object):
         records = await self.fetch(query, author_id)
         return [Message(bot=self.bot, **record) for record in records]
 
-    async def get_reps(self, id: int, key: str = 'user_id '):
+    async def get_reps(self, id: int, key: str = 'user_id'):
         if key not in ('author_id', 'user_id'):
             raise RuntimeWarning('get_reps `key` can only be `author_id` or `user_id`')
-        query = """SELECT * FROM reps WHERE {} = $1"""
+        query = """SELECT * FROM reps WHERE {} = $1""".format(key)
         records = await self.fetch(query, id)
         return [Rep(bot=self.bot, **record) for record in records]

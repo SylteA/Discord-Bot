@@ -47,6 +47,7 @@ class Message(object):
 
     @classmethod
     async def on_message(cls, bot, message: Discord_Message) -> None:
+        await bot.db.get_user(message.author.id)  # Assure that everyone gets a user row
         self = cls(bot=bot, content=message.content, created_at=message.created_at,
                    message_id=message.id, guild_id=message.guild.id,
                    channel_id=message.channel.id, author_id=message.author.id)
