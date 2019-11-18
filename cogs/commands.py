@@ -1,11 +1,12 @@
 from discord.ext import commands
 import discord
 
-from datetime import datetime
+from datetime import datetime, timedelta
 import pandas
 import typing
 
 from .utils.time import human_timedelta
+from .utils.checks import is_mod
 
 
 class Commands(commands.Cog):
@@ -15,7 +16,7 @@ class Commands(commands.Cog):
 
     @commands.command()
     async def post_question(self, ctx):
-        if self.bot.is_mod(ctx.author):
+        if is_mod(ctx):
             await ctx.message.delete()
             await ctx.send("```Please post your question, rather than asking for help. "
                            "It's much easier and less time consuming.```")
@@ -170,12 +171,14 @@ class Commands(commands.Cog):
         user = await self.bot.db.get_user(member.id)
 
         result = await user.add_rep(message_id=ctx.message.id, author_id=ctx.author.id,
-                                    extra_info={"channel_id": ctx.channel.id})
+                                    repped_at=ctx.message.created_at, extra_info={"channel_id": ctx.channel.id})
 
         if result is not None:
-            return await ctx.send(f'You can rep that user again in {human_timedelta(result)}')
+            delta = timedelta(days=1, hours=0, minutes=0, seconds=0, milliseconds=0, microseconds=0)
+            return await ctx.send(f'{ctx.author.mention} You can rep **{member.display_name}** '
+                                  f'again in {human_timedelta(result + delta, suffix=False, accuracy=2)}')
         else:
-            await ctx.send(f"**{member.display_name}** has received a rep!")
+            await ctx.send(f"{ctx.author.mention} has repped **{member.display_name}**!")
 
     @commands.command(name='help')  # TODO: This needs updating.
     async def help_(self, ctx):
@@ -195,6 +198,12 @@ class Commands(commands.Cog):
         embed.add_field(name="tim.git", value="Links to GIT download page")
         embed.add_field(name="tim.insta/tim.yt/tim.twitter", value="Links to Tim's Social Medias")
         await ctx.send(embed=embed)
+
+    @commands.command()
+    async def test(self, ctx):
+        users = await self.bot.db.get_all_users(get_messages=True)
+        await ctx.send(str(len(users)))
+        await ctx.send(str(sum(len(user.messages) for user in users)))
 
 
 def setup(bot):

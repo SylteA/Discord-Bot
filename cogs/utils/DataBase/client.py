@@ -1,13 +1,13 @@
-# TODO: Update the commands that use `self.bot.db`
-
-
 from typing import List
+from json import loads
 import asyncpg
 import asyncio
 
 from .rep import Rep
 from .user import User
+from .poll import Poll
 from .message import Message
+from .gconfig import FilterConfig
 
 
 class DataBase(object):
@@ -103,3 +103,19 @@ class DataBase(object):
         query = """SELECT * FROM reps WHERE {} = $1""".format(key)
         records = await self.fetch(query, id)
         return [Rep(bot=self.bot, **record) for record in records]
+
+    async def get_config(self, guild_id: int):
+        query = """SELECT * FROM gconfigs WHERE guild_id = $1"""
+        record = await self.bot.db.fetchrow(query, guild_id)
+        if record is not None:
+            return FilterConfig(bot=self.bot, **record)
+        config = FilterConfig(bot=self.bot, guild_id=guild_id, blacklist_urls=[], whitelist_channels=[])
+        return await config.post()
+
+    async def get_current_poll(self, guild_id: int):
+        query = """SELECT * FROM polls WHERE guild_id = $1 ORDER BY created_at ASC LIMIT 1"""
+        record = await self.bot.db.fetchrow(query, guild_id)
+        if record is None:
+            return None
+        record = dict(record)
+        return Poll(bot=self.bot, options=loads(record.pop('options')), replies=loads(record.pop('replies')), **record)
