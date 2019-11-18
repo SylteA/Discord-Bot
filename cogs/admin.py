@@ -3,6 +3,8 @@ import discord
 
 import asyncio
 
+from .utils.checks import is_admin
+
 
 class Administration(commands.Cog):
     """Only work in a guild"""
@@ -14,7 +16,7 @@ class Administration(commands.Cog):
         if not ctx.guild:
             return False
 
-        return self.bot.is_admin(ctx.author)
+        return is_admin(ctx.author)
 
     async def cleanup(self, ctx, msg):
         await asyncio.sleep(self.delete_after)
