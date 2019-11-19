@@ -1,5 +1,4 @@
-discord.py
-motor
+git+https://github.com/Rapptz/discord.py@master#egg=discord.py
 pandas
-pymongo
 python-dateutil
+asyncpg

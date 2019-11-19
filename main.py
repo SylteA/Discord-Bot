@@ -1,49 +1,64 @@
 #!/usr/bin/env python3
-
+from discord.ext.commands.errors import *
 from discord.ext import commands
 import discord
 
 import datetime
-import pathlib
 import asyncio
 import json
 
 from cogs.utils.time import human_timedelta
-from cogs.utils.database import DataBase
+from cogs.utils.DataBase import DataBase, Message, User
+
+initial_cogs = [
+    'cogs.admin',
+    'cogs.commands',
+    'cogs.filtering',
+    'cogs.polls',
+]
 
 
 with open('tokens.json') as json_file:
     data = json.load(json_file)
 TOKEN = data["token"]
+POSTGRES = data["postgres"]
 
 
 class Tim(commands.AutoShardedBot):
     def __init__(self, **kwargs):
-        super().__init__(command_prefix='tim.', case_insensitive=True, **kwargs)
+        super().__init__(command_prefix='t.', case_insensitive=True, **kwargs)
         self.start_time = datetime.datetime.utcnow()
-        self.db = DataBase()
+        self.clean_text = commands.clean_content(escape_markdown=True, fix_channel_mentions=True)
 
     """  Events   """
+
+    async def on_connect(self):
+        """Connect DB before bot is ready to assure that no calls are made before its ready"""
+        self.db = await DataBase.create_pool(bot=self, uri=POSTGRES, loop=self.loop)
 
     async def on_ready(self):
         print(f'Successfully logged in as {self.user}\nSharded to {len(self.guilds)} guilds')
         self.guild = self.get_guild(501090983539245061)
         self.welcomes = self.guild.get_channel(511344843247845377)
         await self.change_presence(activity=discord.Game(name='use the prefix "tim"'))
-        await self.load_extensions()
+
+        for ext in initial_cogs:
+            self.load_extension(ext)
+        print(f'Loaded all extensions after {human_timedelta(self.start_time, brief=True, suffix=False)}')
 
     async def on_member_join(self, member):
+        await self.wait_until_ready()
         if member.guild.id == 501090983539245061:
             await self.welcomes.send(f"Welcome to the Tech With Tim Community {member.mention}!\n"
                                      f"Members += 1\nCurrent # of members: {self.guild.member_count}")
 
     async def on_message(self, message):
-        print(f"{message.channel}: {message.author}: {message.author.name}: {message.content}")
-        if message.author.bot or not message.guild:
+        await self.wait_until_ready()
+        if message.author.bot:
             return
-
-        self.db.update_server_stats()
-        self.db.update_messages(message.author)
+        print(f"{message.channel}: {message.author}: {message.clean_content}")
+        if not message.guild:
+            return
         await self.process_commands(message)
 
     async def process_commands(self, message):
@@ -53,29 +68,56 @@ class Tim(commands.AutoShardedBot):
         ctx = await self.get_context(message=message)
 
         if ctx.command is None:
-            return
+            return await Message.on_message(bot=self, message=message)
 
         if ctx.command.name in ('help', 'scoreboard', 'rep_scoreboard', 'reps', 'member_count', 'top_user', 'users',
                                 'server_messages', 'messages'):
             if ctx.channel.id not in (511344208955703306, 536199577284509696):
                 return await message.channel.send("**Please use #bot-commands channel**")
 
-        await self.invoke(ctx)
+        try:
+            await self.invoke(ctx)
+        finally:
+            await User.on_command(bot=self, user=message.author)
+
+    async def on_command_error(self, ctx, exception):
+        await self.wait_until_ready()
+
+        error = getattr(exception, 'original', exception)
+
+        if hasattr(ctx.command, 'on_error'):
+            return
+
+        if isinstance(error, (BadUnionArgument, CommandOnCooldown, PrivateMessageOnly,
+                              NoPrivateMessage, MissingRequiredArgument)):
+            return await ctx.send(str(error))
+
+        elif isinstance(error, BotMissingPermissions):
+            return await ctx.send('I am missing these permissions to do this command:'
+                                  f'\n{self.lts(error.missing_perms)}')
+
+        elif isinstance(error, MissingPermissions):
+            return await ctx.send('You are missing these permissions to do this command:'
+                                  f'\n{self.lts(error.missing_perms)}')
+
+        elif isinstance(error, (BotMissingAnyRole, BotMissingRole)):
+            return await ctx.send(f'I am missing these roles to do this command:'
+                                  f'\n{self.lts(error.missing_roles or [error.missing_role])}')
+
+        elif isinstance(error, (MissingRole, MissingAnyRole)):
+            return await ctx.send(f'You are missing these roles to do this command:'
+                                  f'\n{self.lts(error.missing_roles or [error.missing_role])}')
+
+        else:
+            raise error
 
     """   Functions   """
 
     @staticmethod
-    def is_mod(member: discord.Member) -> bool:
-        for role in member.roles:
-            if role.name.lower() in ('helper', 'mod', 'admin', 'tim'):
-                return True
-        return False
-
-    async def load_extensions(self):
-        """Loads all extensions in Path('./cogs')"""
-        for extension in [file.stem for file in pathlib.Path('./cogs').glob('*.py')]:
-            self.load_extension(f'cogs.{extension}')
-        print(f'Loaded all extensions after {human_timedelta(self.start_time, brief=True, suffix=False)}')
+    def lts(list_: list):
+        """List to string.
+           For use in `self.on_command_error`"""
+        return ', '.join([obj.name if isinstance(obj, discord.Role) else str(obj).replace('_', ' ') for obj in list_])
 
     @classmethod
     async def setup(cls, **kwargs):
