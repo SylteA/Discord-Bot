@@ -16,7 +16,7 @@ class Commands(commands.Cog):
 
     @commands.command()
     async def post_question(self, ctx):
-        if is_mod(ctx):
+        if is_mod(ctx.author):
             await ctx.message.delete()
             await ctx.send("```Please post your question, rather than asking for help. "
                            "It's much easier and less time consuming.```")

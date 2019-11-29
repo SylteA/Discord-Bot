@@ -1,6 +1,8 @@
 from discord.ext import commands
 import discord
 
+from .utils.checks import is_mod
+
 from urllib.parse import urlparse
 import asyncio
 import re
@@ -15,7 +17,7 @@ class Filtering(commands.Cog):
         if not ctx.guild:
             return False
 
-        return self.bot.is_mod(ctx)
+        return is_mod(ctx.author)
 
     async def assure_config(self, guild_id: int):
         if str(guild_id) not in self.configs:
