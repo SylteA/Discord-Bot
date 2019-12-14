@@ -1,4 +1,5 @@
 from discord import Member
+from discord.ext.commands import check
 
 
 def is_admin(member: Member):
@@ -13,3 +14,9 @@ def is_mod(member: Member):
         if role.id in (511332506780434438, 541272748161499147):
             return True
     return is_admin(member)
+
+
+def in_twt():
+    def predicate(ctx):
+        return ctx.guild.id == 501090983539245061
+    return check(predicate)

@@ -2,3 +2,4 @@ discord.py
 pandas
 python-dateutil
 asyncpg
+jishaku
