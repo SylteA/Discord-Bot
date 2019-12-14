@@ -3,30 +3,33 @@ from discord.ext.commands.errors import *
 from discord.ext import commands
 import discord
 
+from aiohttp import ClientSession
 import datetime
 import asyncio
-import json
 
+from cogs.utils.context import SyltesContext
 from cogs.utils.time import human_timedelta
 from cogs.utils.DataBase import DataBase, Message, User
+
+from config import TOKEN, POSTGRES
 
 initial_cogs = [
     'cogs.admin',
     'cogs.commands',
     'cogs.filtering',
     'cogs.polls',
+    'cogs.youtube',
+    'cogs.debugging',
+    'cogs._help'
 ]
 
-
-with open('tokens.json') as json_file:
-    data = json.load(json_file)
-TOKEN = data["token"]
-POSTGRES = data["postgres"]
+print('Connecting...')
 
 
 class Tim(commands.AutoShardedBot):
     def __init__(self, **kwargs):
-        super().__init__(command_prefix='t.', case_insensitive=True, **kwargs)
+        super().__init__(command_prefix=kwargs.pop('command_prefix', ('t.', 'tim.')), case_insensitive=True, **kwargs)
+        self.session = ClientSession(loop=self.loop)
         self.start_time = datetime.datetime.utcnow()
         self.clean_text = commands.clean_content(escape_markdown=True, fix_channel_mentions=True)
 
@@ -88,6 +91,9 @@ class Tim(commands.AutoShardedBot):
         if hasattr(ctx.command, 'on_error'):
             return
 
+        elif isinstance(error, CheckFailure):
+            return
+
         if isinstance(error, (BadUnionArgument, CommandOnCooldown, PrivateMessageOnly,
                               NoPrivateMessage, MissingRequiredArgument)):
             return await ctx.send(str(error))
@@ -112,6 +118,10 @@ class Tim(commands.AutoShardedBot):
             raise error
 
     """   Functions   """
+
+    async def get_context(self, message, *, cls=SyltesContext):
+        """Implementation of custom context"""
+        return await super().get_context(message=message, cls=cls or SyltesContext)
 
     @staticmethod
     def lts(list_: list):

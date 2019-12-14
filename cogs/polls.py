@@ -48,10 +48,10 @@ class SyltesPolls(commands.Cog, name="Polls"):
                     self.listeners[str(payload.guild_id)] = await poll.listen()
                     await poll.handle_payload(payload)
 
-    @commands.group()
+    @commands.group(hidden=True)  # TODO: Fix // find out why this malfunctioned
     async def poll(self, ctx):
         if ctx.invoked_subcommand is None:
-            return
+            return await ctx.send_help(self.bot.get_command('poll new'))
 
     @staticmethod
     async def cleanup(messages: list):
