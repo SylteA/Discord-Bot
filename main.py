@@ -14,13 +14,14 @@ from cogs.utils.DataBase import DataBase, Message, User
 from config import TOKEN, POSTGRES
 
 initial_cogs = [
-    'cogs.admin',
     'cogs.commands',
     'cogs.filtering',
     'cogs.polls',
     'cogs.youtube',
     'cogs.debugging',
-    'cogs._help'
+    'cogs._help',
+    'cogs.tags',
+    'cogs.challenges'
 ]
 
 print('Connecting...')

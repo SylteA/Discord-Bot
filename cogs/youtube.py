@@ -60,7 +60,7 @@ class YouTube(commands.Cog):
                 if videos != last_videos:
                     print('Getting last video')
                     response = await self.bot.session.get(f'https://www.googleapis.com/youtube/v3/playlistItems'
-                                                          f'?part=snippet'
+                                                          f'?part=snippet,statistics'
                                                           f'&maxResults=1'
                                                           f'&channelId=UC4JX40jDee_tINbkjycV4Sg'
                                                           f'&playlistId=UU4JX40jDee_tINbkjycV4Sg'
@@ -80,7 +80,7 @@ class YouTube(commands.Cog):
         while not self.bot.is_closed():
             print('Getting last video')
             response = await self.bot.session.get(f'https://www.googleapis.com/youtube/v3/playlistItems'
-                                                  f'?part=snippet'
+                                                  f'?part=snippet,statistics'
                                                   f'&maxResults=1'
                                                   f'&channelId=UC4JX40jDee_tINbkjycV4Sg'
                                                   f'&playlistId=UU4JX40jDee_tINbkjycV4Sg'
