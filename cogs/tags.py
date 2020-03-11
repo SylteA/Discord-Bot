@@ -3,7 +3,7 @@ import discord
 
 
 from .utils.DataBase.tag import Tag
-from .utils.checks import is_mod_check
+from .utils.checks import is_mod_check, is_admin
 
 
 def setup(bot):
@@ -14,8 +14,14 @@ class TagCommands(commands.Cog, name="Tags"):
     def __init__(self, bot):
         self.bot = bot
 
+    def cog_check(self, ctx):
+        if ctx.guild is None:
+            return False
+        return True
+
     @commands.group(invoke_without_command=True)
     async def tag(self, ctx, *, name: str):
+        """Main tag group."""
         name = name.lower()
         tag = await self.bot.db.get_tag(guild_id=ctx.guild.id, name=name)
 
@@ -28,6 +34,7 @@ class TagCommands(commands.Cog, name="Tags"):
 
     @tag.command()
     async def info(self, ctx, *, name: str):
+        """Get information regarding the specified tag."""
         name = name.lower()
         tag = await self.bot.db.get_tag(guild_id=ctx.guild.id, name=name)
 
@@ -43,6 +50,7 @@ class TagCommands(commands.Cog, name="Tags"):
     @tag.command()
     @is_mod_check()
     async def create(self, ctx, name: str, *, text: str):
+        """Create a new tag."""
         text = await commands.clean_content().convert(ctx=ctx, argument=text)
         name = name.lower()
 
@@ -57,7 +65,19 @@ class TagCommands(commands.Cog, name="Tags"):
 
     @tag.command()
     @is_mod_check()
+    async def list(self, ctx):
+        """List your existing tags."""
+        query = """SELECT name FROM tags WHERE guild_id = $1 AND creator_id = $2"""
+        records = await self.bot.db.fetch(query, ctx.guild.id, ctx.author.id)
+        if not len(records) >= 1:
+            return await ctx.send('You don\'t have any tags?')
+        tags = [record["name"] for record in records]
+        await ctx.send('{}'.format('\n'.join(tags)))
+
+    @tag.command()
+    @is_mod_check()
     async def edit(self, ctx, name: str, *, text: str):
+        """Edit a tag"""
         text = await commands.clean_content().convert(ctx=ctx, argument=text)
         name = name.lower()
 
@@ -71,12 +91,17 @@ class TagCommands(commands.Cog, name="Tags"):
     @tag.command()
     @is_mod_check()
     async def delete(self, ctx, *, name: str):
+        """Delete a tag."""
         name = name.lower()
 
         tag = await self.bot.db.get_tag(guild_id=ctx.guild.id, name=name)
 
         if tag is None:
             return await ctx.send('Could not find a tag with that name.')
+
+        if tag.creator_id != ctx.author.id:
+            if not is_admin(ctx.author):
+                return await ctx.send(f'You don\'t have permission to do that.')
 
         await tag.delete()
         await ctx.send('You have successfully deleted your tag.')
