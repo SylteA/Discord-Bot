@@ -1,0 +1,33 @@
+from datetime import datetime
+
+class Tag:
+    def __init__(self, bot, guild_id: int, creator_id: int, text: str, name: str, created_at: datetime=datetime.utcnow()):
+        self.bot = bot
+        self.guild_id = guild_id
+        self.creator_id = creator_id
+        self.text = text
+        self.name = lower(name)
+        self.created_at = created_at
+
+    async def post(self):
+        query = """INSERT INTO tags ( guild_id, creator_id, text, name, created_at )
+                   VALUES ( $1, $2, $3, $4, $5 )"""
+        await self.bot.db.execute(query, self.guild_id, self.creator_id, self.text, self.name, self.created_at)
+
+    async def update(self, text):
+        self.text = text
+        query = """UPDATE tags SET text = $2 WHERE guild_id = $1, name = $3"""
+        await self.bot.db.execute(query, self.guild_id, self.text, self.name)
+
+    async def delete(self):
+        query = """DELETE FROM tags WHERE guild_id = $1, name = $2"""
+        await self.bot.db.execute(query, self.guild_id, self.name)
+
+    @classmethod
+    async def find(cls, guild_id, name, bot):
+        query = """SELECT guild_id = $1, name = $2 FROM tags ORDER BY name FETCH FIRST ROW ONLY"""
+        try:
+            row = await bot.db.execute(query, guild_id, lower(name))
+        except:
+            return None
+        self = cls(bot, row.get("guild_id"), row.get("creator_id"), row.get("text"), row.get("name"), row.get("created_at"))
