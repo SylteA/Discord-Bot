@@ -15,6 +15,10 @@ def is_mod(member: Member):
             return True
     return is_admin(member)
 
+def is_mod_check():
+    def predicate(ctx):
+        return is_mod(ctx.author)
+    return check(predicate)
 
 def in_twt():
     def predicate(ctx):
