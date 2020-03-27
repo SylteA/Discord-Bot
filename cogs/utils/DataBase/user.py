@@ -9,7 +9,8 @@ from .rep import Rep
 
 class User(object):
     def __init__(self, bot, id: int, *, messages: List[Message], reps: List[Rep],
-                 commands_used: int = 0, joined_at: datetime = datetime.utcnow()):
+                 commands_used: int = 0, joined_at: datetime = datetime.utcnow(),
+                 messages_sent: int = 0):
         self.bot = bot
         self.id = id
         self.messages = messages
