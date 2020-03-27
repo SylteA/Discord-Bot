@@ -96,7 +96,7 @@ class Tim(commands.AutoShardedBot):
             return
 
         if isinstance(error, (BadUnionArgument, CommandOnCooldown, PrivateMessageOnly,
-                              NoPrivateMessage, MissingRequiredArgument)):
+                              NoPrivateMessage, MissingRequiredArgument, ConversionError)):
             return await ctx.send(str(error))
 
         elif isinstance(error, BotMissingPermissions):
