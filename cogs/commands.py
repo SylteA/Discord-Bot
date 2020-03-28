@@ -265,7 +265,7 @@ class Commands(commands.Cog):
         # TODO: Improve the fetch.
         # Refer to to-do sentence in `.utils.DataBase.client`
         records = await self.bot.db.fetch('SELECT * FROM users ORDER BY messages_sent LIMIT 10')
-        users = [User(bot=self.bot, **record) for record in records]
+        users = [User(bot=self.bot, messages=[], reps=[], **record) for record in records]
 
         users_ = []
         for user in users:
