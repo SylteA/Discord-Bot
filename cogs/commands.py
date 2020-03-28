@@ -227,7 +227,7 @@ class Commands(commands.Cog):
     @commands.command()
     async def top_user(self, ctx):
         """Find out who is the top user in our server!"""
-        query = """SELECT * FROM users ORDER BY messages_sent LIMIT 1"""
+        query = """SELECT * FROM users ORDER BY messages_sent DESC LIMIT 1"""
         top_user = await self.bot.db.fetchrow(query)
 
         user = self.bot.get_user(top_user['id'])
@@ -257,14 +257,14 @@ class Commands(commands.Cog):
         user = self.bot.get_user(id)
         if isinstance(user, discord.User):
             return str(user)
-        return f'(ID: `{id}`)'
+        return f'(ID: {id})'
 
     @commands.command()
     async def scoreboard(self, ctx):
         """Scoreboard over users message count"""
         # TODO: Improve the fetch.
         # Refer to to-do sentence in `.utils.DataBase.client`
-        records = await self.bot.db.fetch('SELECT * FROM users ORDER BY messages_sent LIMIT 10')
+        records = await self.bot.db.fetch('SELECT * FROM users ORDER BY messages_sent DESC LIMIT 5')
         users = [User(bot=self.bot, messages=[], reps=[], **record) for record in records]
 
         users_ = []
