@@ -15,6 +15,7 @@ class User(object):
         self.id = id
         self.messages = messages
         self.commands_used = commands_used
+        self.messages_sent = messages_sent
         self.reps = reps
         self.joined_at = joined_at
         # Joined at wont actually be when they joined.
