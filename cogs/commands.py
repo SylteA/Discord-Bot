@@ -10,6 +10,8 @@ import re
 import os
 import io
 
+from .utils.DataBase import User
+
 from .youtube import to_pages_by_lines
 from .utils.time import human_timedelta
 from .utils.checks import is_mod
@@ -225,17 +227,14 @@ class Commands(commands.Cog):
     @commands.command()
     async def top_user(self, ctx):
         """Find out who is the top user in our server!"""
-        users = await self.bot.db.get_all_users(get_messages=True)
-        users = sorted(users, key=lambda m: len(m.messages), reverse=True)
-        # we need a way better way to resolve this.
-        # Either we store a message_count per user already,
-        # Or someone might know a faster query to fetch users + messages
+        query = """SELECT * FROM users ORDER BY messages_sent LIMIT 1"""
+        top_user = await self.bot.db.fetchrow(query)
 
-        user = self.bot.get_user(users[0].id)
+        user = self.bot.get_user(top_user['id'])
         if not isinstance(user, discord.User):
-            return await ctx.send(f'Couldn\'t find the top user, but his ID is {user.id}'
-                                  f'\n And he has `{len(users[0].messages)}`` messages')
-        await ctx.send(f'Top User: {user} \nMessages: `{len(users[0].messages)}`')
+            return await ctx.send(f'Could not find the top user, but his ID is {user.id}'
+                                  f'\n And he has `{top_user["messages_sent"]}`` messages')
+        await ctx.send(f'Top User: {user} \nMessages: `{top_user["messages_sent"]}`')
 
     @commands.command()
     async def server_messages(self, ctx):
@@ -250,22 +249,23 @@ class Commands(commands.Cog):
     async def messages_(self, ctx, member: typing.Optional[commands.MemberConverter]):
         """How many messages have you sent?"""
         member = member or ctx.author
-        user = await self.bot.db.get_user(member.id, get_messages=True)
-        await ctx.send(f"Messages: {len(user.messages)}"
+        user = await self.bot.db.get_user(member.id)
+        await ctx.send(f"Messages: {user.messages_sent}"
                        f"\nSince: {human_timedelta(user.joined_at, brief=True, accuracy=2)}")
 
     def user__repr__(self, id: int) -> str:
         user = self.bot.get_user(id)
         if isinstance(user, discord.User):
-            return f'{user.name}#{user.discriminator}'
-        return f'(ID: {id})'
+            return str(user)
+        return f'(ID: `{id}`)'
 
     @commands.command()
     async def scoreboard(self, ctx):
         """Scoreboard over users message count"""
         # TODO: Improve the fetch.
         # Refer to to-do sentence in `.utils.DataBase.client`
-        users = await self.bot.db.get_all_users(get_messages=True, get_reps=False)
+        records = await self.bot.db.fetch('SELECT * FROM users ORDER BY messages_sent LIMIT 10')
+        users = [User(bot=self.bot, **record) for record in records]
 
         users_ = []
         for user in users:
