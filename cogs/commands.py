@@ -269,7 +269,7 @@ class Commands(commands.Cog):
 
         users_ = []
         for user in users:
-            users_.append((self.user__repr__(user.id), len(user.messages)))
+            users_.append((self.user__repr__(user.id), user.messages_sent))
 
         users_.sort(key=lambda x: x[1], reverse=True)
         users_ = users_[:5]
@@ -315,6 +315,9 @@ class Commands(commands.Cog):
         """Rep someone! 24hr cooldown."""
         if member.id == ctx.author.id:
             return await ctx.send('You cannot rep yourself.')
+
+        if member.bot:
+            return await ctx.send('You cannot rep bots.')
 
         user = await self.bot.db.get_user(member.id)
 

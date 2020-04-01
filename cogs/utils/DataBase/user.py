@@ -28,10 +28,10 @@ class User(object):
         query = """SELECT * FROM users WHERE id = $1"""
         assure_exclusive = await self.bot.db.fetch(query, self.id)
         if len(assure_exclusive) == 0:
-            query = """INSERT INTO users ( id, commands_used, joined_at )
-                    VALUES ( $1, $2, $3 )
+            query = """INSERT INTO users ( id, commands_used, joined_at, messages_sent )
+                    VALUES ( $1, $2, $3, $4 )
                     ON CONFLICT DO NOTHING"""
-            await self.bot.db.execute(query, self.id, self.commands_used, self.joined_at)
+            await self.bot.db.execute(query, self.id, self.commands_used, self.joined_at, self.messages_sent)
 
     @classmethod
     async def on_command(cls, bot, user: Union[Member, Discord_User]):
