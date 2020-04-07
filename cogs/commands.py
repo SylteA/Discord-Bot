@@ -135,7 +135,6 @@ class Commands(commands.Cog):
 
         source = obj.callback.__code__
         module = obj.callback.__module__
-        filename = obj.co_filename
 
         lines, firstlineno = inspect.getsourcelines(source)
         location = module.replace('.', '/')
