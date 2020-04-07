@@ -162,13 +162,16 @@ class Commands(commands.Cog):
         pages = to_pages_by_lines(source, max_size=1900)
 
         if not len(pages) > 1:
+            page = pages[0].replace("`", "`\u200b")
             await ctx.send(f'Command {cmd.qualified_name}: {url}'
-                           f'\n```py\n{pages[0]}```')
+                           f'\n```py\n{page}```')
         else:
+            page = pages[0].replace("`", "`\u200b")
             await ctx.send(f'Command {cmd.qualified_name}: {url}'
-                           f'\n```py\n{pages[0]}```')
+                           f'\n```py\n{page}```')
             del pages[0]
             for page in pages:
+                page = page.replace("`", "`\u200b")
                 await ctx.send(f'```py\n{page}```')
 
     @commands.command(name='website', aliases=['web'])
