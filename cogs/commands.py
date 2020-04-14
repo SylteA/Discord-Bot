@@ -348,8 +348,7 @@ class Commands(commands.Cog):
     async def get_docs(self, ctx, key, obj):
         page_types = {
             'latest': 'https://discordpy.readthedocs.io/en/latest',
-            'python': 'https://docs.python.org/3',
-            'aiohttp': 'https://aiohttp.readthedocs.io/en/stable/'
+            'python': 'https://docs.python.org/3'
         }
 
         if obj is None:
@@ -378,14 +377,12 @@ class Commands(commands.Cog):
             return await ctx.send('Could not find anything. Sorry.')
 
         e = discord.Embed(colour=discord.Colour.blue())
-        if key == 'latest':
-            author = 'discord.py'
-        elif key == 'python':
-            author = 'python'
-        elif key == 'aiohttp':
-            author = 'aiohttp'
-        else:
-            author = '**unknown?**'
+
+        author = {
+            "latest": "discord.py",
+            "python": "python"
+        }.get(key)
+
         e.set_author(name=f"{author} docs result", url=page_types.get(key, 'unknown'))
         e.description = '\n'.join(f'[`{key}`]({url})' for key, url in matches)
         await ctx.send(embed=e)
@@ -407,11 +404,6 @@ class Commands(commands.Cog):
 
         Props to github.com/Rapptz"""
         await self.get_docs(ctx, 'python', obj)
-
-    @docs.command(name='aiohttp', aliases=['aio'])
-    async def aiohttp_docs(self, ctx, *, obj: str = None):
-        """Gives you a documentation link for a aiohttp entity."""
-        await self.get_docs(ctx, 'aiohttp', obj)
 
 
 def setup(bot):
