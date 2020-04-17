@@ -138,7 +138,7 @@ class Commands(commands.Cog):
 
         lines, firstlineno = inspect.getsourcelines(source)
         location = module.replace('.', '/')
-        url = f'{base_url}/blob/{branch}/{location}#L{firstlineno}-L{firstlineno + len(lines) - 1}'
+        url = f'{base_url}/blob/{branch}/{location}.py#L{firstlineno}-L{firstlineno + len(lines) - 1}'
         return url
 
     @commands.command()
@@ -264,8 +264,6 @@ class Commands(commands.Cog):
     @commands.command()
     async def scoreboard(self, ctx):
         """Scoreboard over users message count"""
-        # TODO: Improve the fetch.
-        # Refer to to-do sentence in `.utils.DataBase.client`
         records = await self.bot.db.fetch('SELECT * FROM users ORDER BY messages_sent DESC LIMIT 5')
         users = [User(bot=self.bot, messages=[], reps=[], **record) for record in records]
 
