@@ -3,6 +3,7 @@ from json import loads
 import asyncpg
 import asyncio
 
+from .tag import Tag
 from .rep import Rep
 from .user import User
 from .poll import Poll
@@ -106,7 +107,7 @@ class DataBase(object):
 
     async def get_config(self, guild_id: int):
         query = """SELECT * FROM gconfigs WHERE guild_id = $1"""
-        record = await self.bot.db.fetchrow(query, guild_id)
+        record = await self.fetchrow(query, guild_id)
         if record is not None:
             return FilterConfig(bot=self.bot, **record)
         config = FilterConfig(bot=self.bot, guild_id=guild_id, blacklist_urls=[], whitelist_channels=[])
@@ -114,8 +115,15 @@ class DataBase(object):
 
     async def get_current_poll(self, guild_id: int):
         query = """SELECT * FROM polls WHERE guild_id = $1 ORDER BY created_at ASC LIMIT 1"""
-        record = await self.bot.db.fetchrow(query, guild_id)
+        record = await self.fetchrow(query, guild_id)
         if record is None:
             return None
         record = dict(record)
         return Poll(bot=self.bot, options=loads(record.pop('options')), replies=loads(record.pop('replies')), **record)
+
+    async def get_tag(self, guild_id: int, name: str):
+        query = """SELECT * FROM tags WHERE guild_id = $1 AND name = $2"""
+        record = await self.fetchrow(query, guild_id, name)
+        if record is not None:
+            return Tag(bot=self.bot, **record)
+        return record
