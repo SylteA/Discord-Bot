@@ -346,7 +346,8 @@ class Commands(commands.Cog):
     async def get_docs(self, ctx, key, obj):
         page_types = {
             'latest': 'https://discordpy.readthedocs.io/en/latest',
-            'python': 'https://docs.python.org/3'
+            'python': 'https://docs.python.org/3',
+            'pygame': 'https://www.pygame.org/docs'
         }
 
         if obj is None:
@@ -378,7 +379,8 @@ class Commands(commands.Cog):
 
         author = {
             "latest": "discord.py",
-            "python": "python"
+            "python": "python",
+            "pygame": "pygame"
         }.get(key)
 
         e.set_author(name=f"{author} docs result", url=page_types.get(key, 'unknown'))
@@ -403,6 +405,12 @@ class Commands(commands.Cog):
         Props to github.com/Rapptz"""
         await self.get_docs(ctx, 'python', obj)
 
+    @docs.command(name='pygame', aliases=['pg'])
+    async def pygame_docs(self, ctx, *, obj: str = None):
+        """Gives you a documentation link for a PyGame entity.
+
+        Props to github.com/Rapptz"""
+        await self.get_docs(ctx, 'pygame', obj)
 
 def setup(bot):
     bot.add_cog(Commands(bot))
