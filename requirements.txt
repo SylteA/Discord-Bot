@@ -1,6 +1,7 @@
 python-dateutil
-discord.py
+discord
 asyncpg
 jishaku
 pandas
 psutil
+jsonpickle
