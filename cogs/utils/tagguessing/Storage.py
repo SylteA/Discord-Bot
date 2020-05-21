@@ -56,5 +56,6 @@ class Storage:
             print('id not found')
 
     def load_tags(self):
+        # This needs to be updated to grab from database
         return {"hello": 'Hello! How are you', "bye": 'Have a good night!'}
 
