@@ -1,5 +1,5 @@
 python-dateutil
-discord
+discord.py
 asyncpg
 jishaku
 pandas
