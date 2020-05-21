@@ -14,8 +14,7 @@ def main(tags):
         dumpIntents[k] = jsonpickle.encode(v)
     with open(r'cogs\tagguessing\DMintents.json', 'w') as file:
         json.dump(dumpIntents, file)
-    # print('loading default intents')
-    #
+
     # myIntents = {'patterns':
     #                  {'Hello! How are you': {'sentences': {'hi how are you', 'how are you', 'how are you doing',
     #                                                        'greetings', 'ello', 'hello', 'hi'},
@@ -33,11 +32,6 @@ def main(tags):
     #
     #              'times_called': 0
     #              }
-    # dumpIntents = dict()
-    # for k, v in myIntents.items():
-    #     dumpIntents[k] = jsonpickle.encode(v)
-    # with open(r'cogs\tagguessing\DMintents.json', 'w') as file:
-    #     json.dump(dumpIntents, file)
 
 
 
