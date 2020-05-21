@@ -144,11 +144,6 @@ class mainHandler():
         guess = interpreter.getSentenceType(text)
         if guess == False:
             guess = 'Could not determine from given text'
-        # if len(guess) > 85:
-        #     for itr1 in range(0, len(guess), 85):
-        #         if itr1 != 0:
-        #             pivot = guess[:itr1].rindex(' ')
-        #             guess = guess[:pivot] + '\n' + guess[pivot + 1:]
         return guess
 
     def correct_guess(self, guess, sentence):
@@ -165,16 +160,3 @@ class mainHandler():
             self.intents['patterns'][guess]['times_called'] += 1
             self.update_intents()
 
-
-
-
-
-
-
-def main():
-    myHandler = mainHandler()
-    result = myHandler.interpret('How are you?')
-    print(result)
-
-if __name__ == '__main__':
-    main()
