@@ -1,4 +1,4 @@
 __pycache__
 .idea
 tokens.json
-config.py
+config.example.py
