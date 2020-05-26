@@ -25,7 +25,9 @@ class ChallengeHandler(commands.Cog):
         if message.channel.id != 680851820587122700:
             return
 
-        role = self.bot.guild.get_role(687417501931536478)
+        submitted = self.bot.guild.get_role(687417501931536478)
+        participant = self.bot.guild.get_role(687417513918857232)
 
-        if role not in message.author.roles:
-            await message.author.add_roles(role)
+        if submitted not in message.author.roles:
+            await message.author.add_roles(submitted)
+            await message.author.remove_roles(participant)
