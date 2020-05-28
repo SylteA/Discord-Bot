@@ -11,11 +11,12 @@ class ChallengeHandler(commands.Cog):
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):  # Participant role.
-        submitted = self.bot.guild.get_role(687417501931536478)
-        if submitted in payload.member.roles:
-            return
 
         if payload.channel_id != 680851798340272141:
+            return
+
+        submitted = self.bot.guild.get_role(687417501931536478)
+        if submitted in payload.member.roles:
             return
 
         if str(payload.emoji) != "<:tick:582492227410984961>":
