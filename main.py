@@ -114,7 +114,16 @@ class Tim(commands.AutoShardedBot):
         elif isinstance(error, (MissingRole, MissingAnyRole)):
             return await ctx.send(f'You are missing these roles to do this command:'
                                   f'\n{self.lts(error.missing_roles or [error.missing_role])}')
-
+        
+        elif isinstance(error, commands.CommandOnCooldown):
+			if error.cooldown.rate == 1 and error.cooldown.per == 86400 and error.cooldown.type == commands.BucketType.user:
+				command = 'rep'
+			after = error.retry_after
+			sec = divmod(after, 60)[1]
+			min_ = divmod(divmod(after, 60)[0], 60)[1]
+			hours = divmod(divmod(after, 60)[0], 60)[0]
+			return await ctx.send(f'Please wait another `{hours}` hours and `{min_}` minutes and `{sec}` seconds to use `{command}` again.')
+        
         else:
             raise error
 
