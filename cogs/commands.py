@@ -310,6 +310,7 @@ class Commands(commands.Cog):
 
         await ctx.send(f'```{frame.head().to_string(index=False)}```')
 
+	@commands.cooldown(1, 86400, commands.BucketType.user)
     @commands.command(name='rep')
     async def rep(self, ctx, member: commands.MemberConverter):
         """Rep someone! 24hr cooldown."""
@@ -324,12 +325,7 @@ class Commands(commands.Cog):
         result = await user.add_rep(message_id=ctx.message.id, author_id=ctx.author.id,
                                     repped_at=ctx.message.created_at, extra_info={"channel_id": ctx.channel.id})
 
-        if result is not None:
-            delta = timedelta(days=1, hours=0, minutes=0, seconds=0, milliseconds=0, microseconds=0)
-            return await ctx.send(f'{ctx.author.mention} You can rep **{member.display_name}** '
-                                  f'again in {human_timedelta(result + delta, suffix=False, accuracy=2)}')
-        else:
-            await ctx.send(f"{ctx.author.mention} has repped **{member.display_name}**!")
+		await ctx.send(f"{ctx.author.mention} has repped **{member.display_name}**!")
 
     async def build_docs_lookup_table(self, page_types):
         cache = {}
