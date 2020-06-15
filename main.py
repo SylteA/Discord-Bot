@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+
+"""
+This is a modification made by Frank (aka Pi)
+"""
+
 from discord.ext.commands.errors import *
 from discord.ext import commands
 import discord
