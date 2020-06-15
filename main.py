@@ -63,6 +63,8 @@ class Tim(commands.AutoShardedBot):
         print(f"{message.channel}: {message.author}: {message.clean_content}")
         if not message.guild:
             return
+        if message.content.find(`<@!501089409379205161>`) != -1:
+            message.channel.send("Please donot ping tim")
         await self.process_commands(message)
 
     async def process_commands(self, message):
