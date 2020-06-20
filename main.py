@@ -17,7 +17,7 @@ initial_cogs = [
     'cogs.commands',
     'cogs.filtering',
     'cogs.polls',
-    'cogs.youtube',
+    # 'cogs.youtube',
     'cogs.debugging',
     'cogs._help',
     'cogs.tags',
