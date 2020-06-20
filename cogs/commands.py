@@ -66,6 +66,7 @@ class SphinxObjectFileReader:
                 buf = buf[pos + 1:]
                 pos = buf.find(b'\n')
 
+
 def parse_object_inv(stream, url):
     result = {}
     inv_version = stream.readline().rstrip()  # version info
@@ -144,7 +145,7 @@ class Commands(commands.Cog):
     @commands.command()
     async def source(self, ctx, *, command: str = None):
         """Get source code for the bot or any command."""
-        base_url = "https://github.com/techwithtim/Discord-Bot"
+        base_url = "https://github.com/SylteA/Discord-Bot"
 
         if command is None:
             return await ctx.send(base_url)
