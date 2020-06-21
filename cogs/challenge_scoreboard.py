@@ -6,11 +6,11 @@ Have another cog call it?"""
 # All of this new source code written by Pi
 async def adder(bot):
     winner_role = bot.guild.get_role(692022273934360586)
+    current_winners = []
     while bot.running:
         await asyncio.sleep(1800)
-        old_states = current_states if len(current_states) != 0 else []
-        current_winners = await bot.db.get_all_users(get_challenges=True, get_messages=False, get_reps=False)
-        current_states = [(winner_role in winner.roles) for winner in current_winners]
-        for state, user, old_state in zip(current_states, current_winners, old_states):
-            if not old_state and state:
-                user.add_cwin()
+        old_winners = current_winners
+        current_winners = winner_role.members()
+        for winner in current_winners:
+            if winner not in old_winners:
+                winner.add_cwin()
