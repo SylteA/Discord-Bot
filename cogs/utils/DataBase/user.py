@@ -9,9 +9,9 @@ from .cwin import CWins
 
 
 class User(object):
-    def __init__(self, bot, id: int, *, messages: List[Message], reps: List[Rep], challenges: int = 0,
+    def __init__(self, bot, id: int, *, messages: List[Message], reps: List[Rep],
                  commands_used: int = 0, joined_at: datetime = datetime.utcnow(),
-                 messages_sent: int = 0):
+                 messages_sent: int = 0, challenges: int = 0):
         self.bot = bot
         self.id = id
         self.messages = messages
@@ -30,10 +30,10 @@ class User(object):
         query = """SELECT * FROM users WHERE id = $1"""
         assure_exclusive = await self.bot.db.fetch(query, self.id)
         if len(assure_exclusive) == 0:
-            query = """INSERT INTO users ( id, commands_used, joined_at, messages_sent )
-                    VALUES ( $1, $2, $3, $4 )
+            query = """INSERT INTO users ( id, commands_used, joined_at, messages_sent, wins )
+                    VALUES ( $1, $2, $3, $4, $5 )
                     ON CONFLICT DO NOTHING"""
-            await self.bot.db.execute(query, self.id, self.commands_used, self.joined_at, self.messages_sent)
+            await self.bot.db.execute(query, self.id, self.commands_used, self.joined_at, self.messages_sent, self.challenges)
 
     @classmethod
     async def on_command(cls, bot, user: Union[Member, Discord_User]):

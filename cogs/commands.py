@@ -121,6 +121,7 @@ class Commands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self._docs_cache = None
+        self.winner_role = self.bot.guild.get_role(692022273934360586)
 
     @commands.command(hidden=True)
     @commands.check(predicate)
@@ -331,10 +332,11 @@ class Commands(commands.Cog):
         else:
             await ctx.send(f"{ctx.author.mention} has repped **{member.display_name}**!")
 
-    @commands.command(name='challenge_scoreboard')
+    @commands.command(name='challenge_scoreboard', aliases=['challenge_winners'])
     async def challenge_scoreboard(self, ctx):
-        """Same as the rep scoreboard!"""
-        users = await self.bot.db.get_all_users(get_reps=False, get_messages=False, get_challenges=True)
+        """Same as the normal scoreboard!"""
+        records = await self.bot.db.fetch('SELECT * FROM users ORDER BY wins DESC LIMIT 5')
+        users = [User(bot=self.bot, messages=[], reps=[], **record) for record in records]
 
         users_ = []
         for user in users:
@@ -347,6 +349,19 @@ class Commands(commands.Cog):
         frame.sort_values(by=['wins'], ascending=False)
 
         await ctx.send(f'```{frame.head().to_string(index=False)}```')
+
+    @commands.command(name='addwins', aliases=['update_wins'])
+    @commands.has_any_role(511334601977888798, # Tim
+                            580911082290282506, # Admins
+                            511332506780434438, # Mods
+                            541272748161499147) # Helpers
+    async def addwins(self, ctx):
+        """Will add the wins to the leaderboard
+        Please only use this after updating ALL of the winner roles."""
+        for winner in self.winner_role.members():
+            winner.add_cwin()
+
+        await ctx.send('Challenge Scoreboard updated successfully')
 
 
     async def build_docs_lookup_table(self, page_types):

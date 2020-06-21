@@ -5,17 +5,11 @@ class CWins(object):
         self.wins = wins
 
     async def add_win(self):
-        """Adds +1 to the win count for the user in the challenge leaderboard
-        and creates them an entry if they don't have one"""
-        query = """SELECT * FROM challenges WHERE id = $1"""
-        assure = await self.bot.db.fetch(query, self.id)
-        if len(assure) == 0:
-            query = """INSERT INTO challenges ( id, wins )
-                            VALUES ( $1, $2 )
-                            ON CONFLICT DO NOTHING"""
-            await self.bot.db.execute(query, self.id, self.wins)
+        """Adds +1 to the win count for the user in the challenge leaderboard.
+        No need to check if they already have an entry because they are supposed
+        to already have an entry in the user db."""
 
-        query = """UPDATE challenges SET wins = wins + 1 WHERE id = $1"""
+        query = """UPDATE users SET wins = wins + 1 WHERE id = $1"""
         self.bot.db.execute(query, self.id)
         self.wins += 1
         # Idk how to actually get info out of the db so I suppose as long as

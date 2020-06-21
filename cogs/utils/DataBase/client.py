@@ -82,7 +82,7 @@ class DataBase(object):
             reps = [Rep(bot=self.bot, **record) for record in records]
 
         if get_challenges:
-            records = await self.fetch("SELECT * FROM challenges ORDER BY id ASC")
+            records = await self.fetch("SELECT * FROM users ORDER BY wins ASC")
             challenge_wins = [CWins(bot=self.bot, **record) for record in records]
 
         for user in users:
