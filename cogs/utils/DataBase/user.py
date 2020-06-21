@@ -5,10 +5,11 @@ from typing import List, Union
 
 from .message import Message
 from .rep import Rep
+from .cwin import CWins
 
 
 class User(object):
-    def __init__(self, bot, id: int, *, messages: List[Message], reps: List[Rep],
+    def __init__(self, bot, id: int, *, messages: List[Message], reps: List[Rep], challenges: int = 0,
                  commands_used: int = 0, joined_at: datetime = datetime.utcnow(),
                  messages_sent: int = 0):
         self.bot = bot
@@ -17,6 +18,7 @@ class User(object):
         self.commands_used = commands_used
         self.messages_sent = messages_sent
         self.reps = reps
+        self.challenges = challenges
         self.joined_at = joined_at
         # Joined at wont actually be when they joined.
         # It will be when they "joined" the database
@@ -63,3 +65,8 @@ class User(object):
         rep = Rep(bot=self.bot, rep_id=message_id, user_id=self.id, author_id=author_id,
                   repped_at=repped_at, extra_info=extra_info)
         return await rep.post(assure_24h=assure_24h)
+
+    def add_cwin(self):
+        """Adds +1 to their entry in the challenge leaderboard"""
+        win = CWins(self.bot, self.id)
+        self.challenges = win.add_win()

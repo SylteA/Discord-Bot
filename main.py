@@ -34,6 +34,7 @@ class Tim(commands.AutoShardedBot):
         self.session = ClientSession(loop=self.loop)
         self.start_time = datetime.datetime.utcnow()
         self.clean_text = commands.clean_content(escape_markdown=True, fix_channel_mentions=True)
+        self.running = True
 
     """  Events   """
 
@@ -118,6 +119,9 @@ class Tim(commands.AutoShardedBot):
 
         else:
             raise error
+
+    async def on_disconnect(self):
+        self.running = False
 
     """   Functions   """
 

@@ -331,6 +331,24 @@ class Commands(commands.Cog):
         else:
             await ctx.send(f"{ctx.author.mention} has repped **{member.display_name}**!")
 
+    @commands.command(name='challenge_scoreboard')
+    async def challenge_scoreboard(self, ctx):
+        """Same as the rep scoreboard!"""
+        users = await self.bot.db.get_all_users(get_reps=False, get_messages=False, get_challenges=True)
+
+        users_ = []
+        for user in users:
+            users_.append((self.user__repr__(user.id), user.challenges))
+
+        users_.sort(key=lambda x: x[1], reverse=True)
+        users_ = users_[:5]
+
+        frame = pandas.DataFrame(users_, columns=["user", "wins"])
+        frame.sort_values(by=['wins'], ascending=False)
+
+        await ctx.send(f'```{frame.head().to_string(index=False)}```')
+
+
     async def build_docs_lookup_table(self, page_types):
         cache = {}
         for key, page in page_types.items():
