@@ -121,7 +121,6 @@ class Commands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self._docs_cache = None
-        self.winner_role = self.bot.guild.get_role(692022273934360586)
 
     @commands.command(hidden=True)
     @commands.check(predicate)
@@ -355,14 +354,21 @@ class Commands(commands.Cog):
                             580911082290282506, # Admins
                             511332506780434438, # Mods
                             541272748161499147) # Helpers
-    async def addwins(self, ctx):
+    async def addwins(self, ctx, *, role: str = None):
         """Will add the wins to the leaderboard
         Please only use this after updating ALL of the winner roles."""
-        for winner in self.winner_role.members():
+        self.role = await commands.RoleConverter().convert(ctx, role)
+        # This little check might break something, erase it if you want
+        if self.role.name() != 'Challenge Winner' or 'Monthly Winner':
+            await ctx.send('Please specify the role correctly.\n'
+                           'It should be `Challenge Winner` or `Monthly Winner`.\n'
+                           'Or any other form of mentioning them')
+            return
+
+        for winner in self.role.members():
             winner.add_cwin()
 
         await ctx.send('Challenge Scoreboard updated successfully')
-
 
     async def build_docs_lookup_table(self, page_types):
         cache = {}
