@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 from discord.ext.commands.errors import *
 from discord.ext import commands
 import discord
@@ -29,7 +30,7 @@ print('Connecting...')
 
 class Tim(commands.AutoShardedBot):
     def __init__(self, **kwargs):
-        super().__init__(command_prefix=kwargs.pop('command_prefix', ('t.', 'tim.')), case_insensitive=True, **kwargs)
+        super().__init__(command_prefix=kwargs.pop('command_prefix', ('t.', 'T.', 'tim.')), case_insensitive=True, **kwargs)
         self.session = ClientSession(loop=self.loop)
         self.start_time = datetime.datetime.utcnow()
         self.clean_text = commands.clean_content(escape_markdown=True, fix_channel_mentions=True)

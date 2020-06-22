@@ -5,18 +5,20 @@ from typing import List, Union
 
 from .message import Message
 from .rep import Rep
+from .cwin import CWins
 
 
 class User(object):
     def __init__(self, bot, id: int, *, messages: List[Message], reps: List[Rep],
                  commands_used: int = 0, joined_at: datetime = datetime.utcnow(),
-                 messages_sent: int = 0):
+                 messages_sent: int = 0, challenges: int = 0):
         self.bot = bot
         self.id = id
         self.messages = messages
         self.commands_used = commands_used
         self.messages_sent = messages_sent
         self.reps = reps
+        self.challenges = challenges
         self.joined_at = joined_at
         # Joined at wont actually be when they joined.
         # It will be when they "joined" the database
@@ -28,10 +30,10 @@ class User(object):
         query = """SELECT * FROM users WHERE id = $1"""
         assure_exclusive = await self.bot.db.fetch(query, self.id)
         if len(assure_exclusive) == 0:
-            query = """INSERT INTO users ( id, commands_used, joined_at, messages_sent )
-                    VALUES ( $1, $2, $3, $4 )
+            query = """INSERT INTO users ( id, commands_used, joined_at, messages_sent, wins )
+                    VALUES ( $1, $2, $3, $4, $5 )
                     ON CONFLICT DO NOTHING"""
-            await self.bot.db.execute(query, self.id, self.commands_used, self.joined_at, self.messages_sent)
+            await self.bot.db.execute(query, self.id, self.commands_used, self.joined_at, self.messages_sent, self.challenges)
 
     @classmethod
     async def on_command(cls, bot, user: Union[Member, Discord_User]):
@@ -63,3 +65,8 @@ class User(object):
         rep = Rep(bot=self.bot, rep_id=message_id, user_id=self.id, author_id=author_id,
                   repped_at=repped_at, extra_info=extra_info)
         return await rep.post(assure_24h=assure_24h)
+
+    def add_cwin(self):
+        """Adds +1 to their entry in the challenge leaderboard"""
+        win = CWins(self.bot, self.id)
+        self.challenges = win.add_win()

@@ -331,6 +331,43 @@ class Commands(commands.Cog):
         else:
             await ctx.send(f"{ctx.author.mention} has repped **{member.display_name}**!")
 
+    @commands.command(name='challenge_scoreboard', aliases=['challenge_winners'])
+    async def challenge_scoreboard(self, ctx):
+        """Same as the normal scoreboard!"""
+        records = await self.bot.db.fetch('SELECT * FROM users ORDER BY wins DESC LIMIT 5')
+        users = [User(bot=self.bot, messages=[], reps=[], **record) for record in records]
+
+        users_ = []
+        for user in users:
+            users_.append((self.user__repr__(user.id), user.challenges))
+
+        users_.sort(key=lambda x: x[1], reverse=True)
+        users_ = users_[:5]
+
+        frame = pandas.DataFrame(users_, columns=["user", "wins"])
+        frame.sort_values(by=['wins'], ascending=False)
+
+        await ctx.send(f'```{frame.head().to_string(index=False)}```')
+
+    @commands.command(name='addwins', aliases=['update_wins'])
+    @commands.has_any_role(511334601977888798, # Tim
+                           580911082290282506, # Admins
+                           511332506780434438, # Mods
+                           713170076148433017) # Challenge hosts
+    async def addwins(self, ctx, *, role: commands.RoleConverter):
+        """Will add the wins to the leaderboard
+        Only use this after updating ALL of the winner roles."""
+        # This little check might break something, erase it if you want
+        if role.id not in (692022273934360586, ):
+            return await ctx.send('Please specify the role correctly.\n'
+                                 'It should be `Challenge Winner` or `Monthly Winner`.\n'
+                                 'Or any other form of mentioning them')
+
+        for member in role.members.copy():
+            await winner.add_cwin()
+
+        await ctx.send('Challenge Scoreboard updated successfully')
+
     async def build_docs_lookup_table(self, page_types):
         cache = {}
         for key, page in page_types.items():
