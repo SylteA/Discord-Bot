@@ -351,22 +351,20 @@ class Commands(commands.Cog):
 
     @commands.command(name='addwins', aliases=['update_wins'])
     @commands.has_any_role(511334601977888798, # Tim
-                            580911082290282506, # Admins
-                            511332506780434438, # Mods
-                            541272748161499147) # Helpers
-    async def addwins(self, ctx, *, role: str = None):
+                           580911082290282506, # Admins
+                           511332506780434438, # Mods
+                           713170076148433017) # Challenge hosts
+    async def addwins(self, ctx, *, role: commands.RoleConverter):
         """Will add the wins to the leaderboard
-        Please only use this after updating ALL of the winner roles."""
-        self.role = await commands.RoleConverter().convert(ctx, role)
+        Only use this after updating ALL of the winner roles."""
         # This little check might break something, erase it if you want
-        if self.role.name() != 'Challenge Winner' or 'Monthly Winner':
-            await ctx.send('Please specify the role correctly.\n'
-                           'It should be `Challenge Winner` or `Monthly Winner`.\n'
-                           'Or any other form of mentioning them')
-            return
+        if role.id not in (692022273934360586, ):
+            return await ctx.send('Please specify the role correctly.\n'
+                                 'It should be `Challenge Winner` or `Monthly Winner`.\n'
+                                 'Or any other form of mentioning them')
 
-        for winner in self.role.members():
-            winner.add_cwin()
+        for member in role.members.copy():
+            await winner.add_cwin()
 
         await ctx.send('Challenge Scoreboard updated successfully')
 
