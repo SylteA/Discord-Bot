@@ -42,7 +42,10 @@ class ChallengeHandler(commands.Cog):
                 await message.author.add_roles(submitted)
                 await message.author.remove_roles(participant)
                 await message.delete()
-                await submission_channel.send(f'‍\n__Solution by__ : {message.author.mention}\n{message.content}\n‍')
+                embed = discord.Embed(description=message.content)
+                embed.set_author(name=message.author,icon_url=message.author.avatar_url)
+                embed.set_footer(text=f'#ID: {message.author.id}')
+                await submission_channel.send(embed=embed)
 
         elif message.channel.id == 713841306253656064:  # monthly 
 
@@ -54,4 +57,7 @@ class ChallengeHandler(commands.Cog):
                 await message.author.add_roles(submitted)
                 await message.author.remove_roles(participant)
                 await message.delete()
-                await submission_channel.send(f'‍\n__Solution by__ : {message.author.mention}\n{message.content}\n‍')
+                embed = discord.Embed(description=message.content)
+                embed.set_author(name=message.author,icon_url=message.author.avatar_url)
+                embed.set_footer(text=f'#ID: {message.author.id}')
+                await submission_channel.send(embed=embed)
