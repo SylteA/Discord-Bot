@@ -32,20 +32,26 @@ class ChallengeHandler(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):  # Submitted role.
-        if message.channel.id == 680851820587122700:
+        if message.channel.id == 680851820587122700:  # weekly
 
             submitted = self.bot.guild.get_role(687417501931536478)
             participant = self.bot.guild.get_role(687417513918857232)
-
-            if submitted not in message.author.roles:
+            submission_channel = self.bot.guild.get_channel(#channel id here)
+            
+            if submitted not in message.author.roles:  
                 await message.author.add_roles(submitted)
                 await message.author.remove_roles(participant)
+                await message.delete()
+                await submission_channel.send(f'‍\n__Solution by__ : {message.author.mention}\n{message.content}\n‍')
 
-        elif message.channel.id == 713841306253656064:
+        elif message.channel.id == 713841306253656064:  # monthly 
 
             submitted = self.bot.guild.get_role(715676464573317220)
             participant = self.bot.guild.get_role(715676023387062363)
-
+            submission_channel = self.bot.guild.get_channel(#channel id here)
+                
             if submitted not in message.author.roles:
                 await message.author.add_roles(submitted)
                 await message.author.remove_roles(participant)
+                await message.delete()
+                await submission_channel.send(f'‍\n__Solution by__ : {message.author.mention}\n{message.content}\n‍')
