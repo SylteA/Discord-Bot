@@ -6,6 +6,7 @@ import discord
 from aiohttp import ClientSession
 import datetime
 import asyncio
+import os
 
 from cogs.utils.context import SyltesContext
 from cogs.utils.time import human_timedelta
@@ -13,12 +14,16 @@ from cogs.utils.DataBase import DataBase, Message, User
 
 from config import TOKEN, POSTGRES
 
+
+os.environ["JISHAKU_NO_UNDERSCORE"] = "True"
+os.environ["JISHAKU_NO_DM_TRACEBACK"] = "True"
+os.environ["JISHAKU_HIDE"] = "True"
+
 initial_cogs = [
+    'jishaku',
     'cogs.commands',
     'cogs.filtering',
     'cogs.polls',
-    # 'cogs.youtube',
-    'cogs.debugging',
     'cogs._help',
     'cogs.tags',
     'cogs.challenges'
@@ -29,7 +34,9 @@ print('Connecting...')
 
 class Tim(commands.AutoShardedBot):
     def __init__(self, **kwargs):
-        super().__init__(command_prefix=kwargs.pop('command_prefix', ('t.', 'T.', 'tim.')), case_insensitive=True, **kwargs)
+        super().__init__(command_prefix=kwargs.pop('command_prefix', ('t.', 'T.', 'tim.')),
+                         case_insensitive=True,
+                         **kwargs)
         self.session = ClientSession(loop=self.loop)
         self.start_time = datetime.datetime.utcnow()
         self.clean_text = commands.clean_content(escape_markdown=True, fix_channel_mentions=True)
