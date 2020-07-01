@@ -3,7 +3,7 @@ import discord
 
 
 from .utils.DataBase.tag import Tag
-from .utils.checks import is_mod_check, is_admin
+from .utils.checks import is_engineer_check, is_admin
 
 
 def setup(bot):
@@ -48,7 +48,7 @@ class TagCommands(commands.Cog, name="Tags"):
         await ctx.send(text)
 
     @tag.command()
-    @is_mod_check()
+    @is_engineer_check()
     async def create(self, ctx, name: str, *, text: str):
         """Create a new tag."""
         text = await commands.clean_content().convert(ctx=ctx, argument=text)
@@ -64,7 +64,7 @@ class TagCommands(commands.Cog, name="Tags"):
         await ctx.send('You have successfully created your tag.')
 
     @tag.command()
-    @is_mod_check()
+    @is_engineer_check()
     async def list(self, ctx):
         """List your existing tags."""
         query = """SELECT name FROM tags WHERE guild_id = $1 AND creator_id = $2"""
@@ -75,7 +75,7 @@ class TagCommands(commands.Cog, name="Tags"):
         await ctx.send('{}'.format('\n'.join(tags)))
 
     @tag.command()
-    @is_mod_check()
+    @is_engineer_check()
     async def edit(self, ctx, name: str, *, text: str):
         """Edit a tag"""
         text = await commands.clean_content().convert(ctx=ctx, argument=text)
@@ -89,7 +89,7 @@ class TagCommands(commands.Cog, name="Tags"):
         await ctx.send('You have successfully edited your tag.')
 
     @tag.command()
-    @is_mod_check()
+    @is_engineer_check()
     async def delete(self, ctx, *, name: str):
         """Delete a tag."""
         name = name.lower()
