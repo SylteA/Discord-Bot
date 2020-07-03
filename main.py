@@ -22,7 +22,8 @@ initial_cogs = [
     'cogs.debugging',
     'cogs._help',
     'cogs.tags',
-    'cogs.challenges'
+    'cogs.challenges',
+    'cogs.coc_notifier
 ]
 
 print('Connecting...')
