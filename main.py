@@ -23,7 +23,7 @@ initial_cogs = [
     'cogs._help',
     'cogs.tags',
     'cogs.challenges',
-    'cogs.coc_notifier
+    'cogs.coc_notifier'
 ]
 
 print('Connecting...')
