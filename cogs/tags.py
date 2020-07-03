@@ -69,10 +69,28 @@ class TagCommands(commands.Cog, name="Tags"):
         """List your existing tags."""
         query = """SELECT name FROM tags WHERE guild_id = $1 AND creator_id = $2"""
         records = await self.bot.db.fetch(query, ctx.guild.id, ctx.author.id)
-        if not len(records) >= 1:
+        if not records:
             return await ctx.send('You don\'t have any tags?')
         tags = [record["name"] for record in records]
         await ctx.send('{}'.format('\n'.join(tags)))
+
+    @tag.command()
+    async def all(self, ctx: commands.Context):
+        """List all existing tags alphabetically ordered."""
+        records = await self.bot.db.fetch(
+            """SELECT * FROM tags WHERE guild_id = $1 ORDER BY name""",
+            ctx.guild.id
+        )
+        
+        if not records:
+            return await ctx.send("This server doesn't have any tags.")
+
+        pager = commands.Paginator()
+        for record in records:
+            pager.add_line(line=record["name"])
+        
+        for page in pager.pages:
+            await ctx.send(page)
 
     @tag.command()
     @is_engineer_check()
