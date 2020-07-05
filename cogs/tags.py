@@ -103,6 +103,10 @@ class TagCommands(commands.Cog, name="Tags"):
         if tag is None:
             return await ctx.send('Could not find a tag with that name.')
 
+        if tag.creator_id != ctx.author.id:
+            if not is_admin(ctx.author):
+                return await ctx.send(f'You don\'t have permission to do that.')
+
         await tag.update(text=text)
         await ctx.send('You have successfully edited your tag.')
 
@@ -110,9 +114,7 @@ class TagCommands(commands.Cog, name="Tags"):
     @is_engineer_check()
     async def delete(self, ctx, *, name: str):
         """Delete a tag."""
-        name = name.lower()
-
-        tag = await self.bot.db.get_tag(guild_id=ctx.guild.id, name=name)
+        tag = await self.bot.db.get_tag(guild_id=ctx.guild.id, name=name.lower())
 
         if tag is None:
             return await ctx.send('Could not find a tag with that name.')
