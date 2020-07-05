@@ -23,7 +23,6 @@ initial_cogs = [
     'jishaku',
     'cogs.commands',
     'cogs.filtering',
-    'cogs.polls',
     'cogs._help',
     'cogs.tags',
     'cogs.challenges',
