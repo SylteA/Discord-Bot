@@ -9,7 +9,6 @@ from .user import User
 from .poll import Poll
 from .message import Message
 from .gconfig import FilterConfig
-from .cwin import CWins
 
 
 class DataBase(object):
@@ -65,7 +64,7 @@ class DataBase(object):
 
         return User(bot=self.bot, messages=messages, reps=reps, **record)
 
-    async def get_all_users(self, get_messages: bool = False, get_reps: bool = False, get_challenges: bool = False):
+    async def get_all_users(self, get_messages: bool = False, get_reps: bool = False):
         records = await self.fetch('SELECT * FROM users')
         users = [User(bot=self.bot, messages=[], reps=[], **record) for record in records]
 
@@ -81,10 +80,6 @@ class DataBase(object):
             records = await self.fetch("SELECT * FROM reps ORDER BY user_id ASC")
             reps = [Rep(bot=self.bot, **record) for record in records]
 
-        if get_challenges:
-            records = await self.fetch("SELECT * FROM users ORDER BY wins ASC")
-            challenge_wins = [CWins(bot=self.bot, **record) for record in records]
-
         for user in users:
             if get_messages:
                 for message in messages:
@@ -95,11 +90,6 @@ class DataBase(object):
                 for rep in reps:
                     if user.id == rep.user_id:
                         user.reps.append(rep)
-
-            if get_challenges:
-                for win in challenge_wins:
-                    if user.id == win.id:
-                        user.challenges.append(win)
 
         return users
 
