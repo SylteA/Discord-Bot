@@ -32,12 +32,32 @@ class ChallengeHandler(commands.Cog):
 
     @commands.Cog.listener() # Resolved conflict by taking the verion already in the testing branch
     async def on_message(self, message):  # Submitted role.
-        if message.channel.id != 680851820587122700:
-            return
+        if message.channel.id == 680851820587122700:  # weekly
 
-        submitted = self.bot.guild.get_role(687417501931536478)
-        participant = self.bot.guild.get_role(687417513918857232)
+            submitted = self.bot.guild.get_role(687417501931536478)
+            participant = self.bot.guild.get_role(687417513918857232)
+            submission_channel = self.bot.guild.get_channel(#channel id here)
+            
+            if submitted not in message.author.roles:  
+                await message.author.add_roles(submitted)
+                await message.author.remove_roles(participant)
+                await message.delete()
+                embed = discord.Embed(description=message.content)
+                embed.set_author(name=message.author,icon_url=message.author.avatar_url)
+                embed.set_footer(text=f'#ID: {message.author.id}')
+                await submission_channel.send(embed=embed)
 
-        if submitted not in message.author.roles:
-            await message.author.add_roles(submitted)
-            await message.author.remove_roles(participant)
+        elif message.channel.id == 713841306253656064:  # monthly 
+
+            submitted = self.bot.guild.get_role(715676464573317220)
+            participant = self.bot.guild.get_role(715676023387062363)
+            submission_channel = self.bot.guild.get_channel(#channel id here)
+                
+            if submitted not in message.author.roles:
+                await message.author.add_roles(submitted)
+                await message.author.remove_roles(participant)
+                await message.delete()
+                embed = discord.Embed(description=message.content)
+                embed.set_author(name=message.author,icon_url=message.author.avatar_url)
+                embed.set_footer(text=f'#ID: {message.author.id}')
+                await submission_channel.send(embed=embed)
