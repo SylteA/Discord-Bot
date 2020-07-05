@@ -4,6 +4,6 @@
 
 
 ## Contributing
-* Fork our repository to your own profile that you can edit, commit and push to.
-* When you are done with a feature open a pull request to the testing branch.
-* Any questions contact us in our discord server.
+* Fork the repository to your own profile, edit the code there.
+* When you are done with a feature open a pull request.
+* If you have any questions contact us in our discord server.
