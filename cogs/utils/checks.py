@@ -16,9 +16,22 @@ def is_mod(member: Member):
     return is_admin(member)
 
 
+def is_engineer(member: Member):
+    for role in member.roles:
+        if role.id == 611734695587086370:
+            return True
+    return is_mod(member)
+
+
 def is_mod_check():
     def predicate(ctx):
         return is_mod(ctx.author)
+    return check(predicate)
+
+
+def is_engineer_check():
+    def predicate(ctx):
+        return is_engineer(ctx.author)
     return check(predicate)
 
 
