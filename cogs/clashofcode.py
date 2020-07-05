@@ -9,6 +9,10 @@ coc_message = 729355074085584918
 REGEX = re.compile(r"(www.codinggame.com/clashofcode/clash/[^\s])")
 
 
+def setup(bot: commands.Bot):
+    bot.add_cog(ClashOfCode(bot=bot))
+
+
 class ClashOfCode(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
