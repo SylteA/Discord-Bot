@@ -44,7 +44,7 @@ class ClashOfCode(commands.Cog):
 
         await member.remove_roles(self.role)
         try:
-            await payload.member.send(f"Removed your **{self.role.name}** role!")
+            await member.send(f"Removed your **{self.role.name}** role!")
         except discord.HTTPException:
             pass
 
