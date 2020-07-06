@@ -6,7 +6,7 @@ import re
 coc_role = 729342805855567934
 coc_channel = 729352136588263456
 coc_message = 729355074085584918
-REGEX = re.compile(r"(www.codinggame.com/clashofcode/clash/[^\s])")
+REGEX = re.compile(r"(https://www.codingame.com/clashofcode/clash/[^\s]+)")
 
 
 def setup(bot: commands.Bot):
