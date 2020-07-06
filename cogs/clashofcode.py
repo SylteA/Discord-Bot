@@ -72,7 +72,7 @@ class ClashOfCode(commands.Cog):
             return await ctx.send(f'Please only provide one "clashofcode" url.')
 
         pager = commands.Paginator(prefix=f'Hey, {ctx.author.mention} is hosting a "clashofcode" game!'
-                                          f'\nJoin here: {links[0]}',
+                                          f'\nJoin (or coward) here: {links[0]}',
                                    suffix="")
         for member in self.role.members:
             if member.status != discord.Status.offline:
