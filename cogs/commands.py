@@ -358,14 +358,13 @@ class Commands(commands.Cog):
     async def addwins(self, ctx, *, role: commands.RoleConverter):
         """Will add the wins to the leaderboard
         Only use this after updating ALL of the winner roles."""
-        # This little check might break something, erase it if you want
-        if role.id not in (692022273934360586, ):
+        if role.id not in (692022273934360586, 724596365963034706): # Weekly and monthly challenge winners
             return await ctx.send('Please specify the role correctly.\n'
                                  'It should be `Challenge Winner` or `Monthly Winner`.\n'
                                  'Or any other form of mentioning them')
 
         for member in role.members.copy():
-            await winner.add_cwin()
+            await member.add_cwin()
 
         await ctx.send('Challenge Scoreboard updated successfully')
 

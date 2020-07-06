@@ -30,7 +30,7 @@ class ChallengeHandler(commands.Cog):
             participant = self.bot.guild.get_role(715676023387062363)
             await self.bot.guild.get_member(payload.user_id).add_roles(participant)
 
-    @commands.Cog.listener() # Resolved conflict by taking the verion already in the testing branch
+    @commands.Cog.listener()
     async def on_message(self, message):  # Submitted role.
         if message.channel.id == 680851820587122700:  # weekly
 
