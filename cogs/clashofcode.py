@@ -2,6 +2,7 @@ from discord.ext import commands
 import discord
 
 import re
+from typing import Optional
 
 coc_role = 729342805855567934
 coc_channel = 729352136588263456
@@ -58,8 +59,10 @@ class ClashOfCode(commands.Cog):
         )
     @commands.check(lambda ctx: ctx.channel.id == 729352136588263456)
     @commands.cooldown(1, 60, commands.BucketType.channel)
-    async def coc_invite(self, ctx: commands.Context, *, url: str):
+    async def coc_invite(self, ctx: commands.Context, *, url: str, game_type: Optional[str]):
         """Mentions all the users with the `Clash Of Code` role that are currently online."""
+        
+        game_type = game_type or "not specified"
         await ctx.message.delete()
 
         links = REGEX.findall(url)
@@ -71,7 +74,7 @@ class ClashOfCode(commands.Cog):
             ctx.command.reset_cooldown(ctx)
             return await ctx.send(f'Please only provide one "clashofcode" url.')
 
-        pager = commands.Paginator(prefix=f'Hey, {ctx.author.mention} is hosting a "clashofcode" game!'
+        pager = commands.Paginator(prefix=f'Hey, {ctx.author.mention} is hosting a "clashofcode" game of type "{game_type}"!'
                                           f'\nJoin here: {links[0]}',
                                    suffix="")
         for member in self.role.members:
