@@ -2,8 +2,8 @@ from discord.ext import commands
 import discord
 
 from datetime import datetime, timedelta
+from tabulate import tabulate
 import inspect
-import pandas
 import typing
 import zlib
 import re
@@ -256,29 +256,17 @@ class Commands(commands.Cog):
         await ctx.send(f"Messages: {user.messages_sent}"
                        f"\nSince: {human_timedelta(user.joined_at, brief=True, accuracy=2)}")
 
-    def user__repr__(self, id: int) -> str:
-        user = self.bot.get_user(id)
-        if isinstance(user, discord.User):
-            return str(user)
-        return f'(ID: {id})'
-
     @commands.command()
     async def scoreboard(self, ctx):
         """Scoreboard over users message count"""
-        records = await self.bot.db.fetch('SELECT * FROM users ORDER BY messages_sent DESC LIMIT 5')
+        records = await self.bot.db.fetch('SELECT * FROM users ORDER BY messages_sent DESC LIMIT 10')
         users = [User(bot=self.bot, messages=[], reps=[], **record) for record in records]
 
-        users_ = []
+        table = []
         for user in users:
-            users_.append((self.user__repr__(user.id), user.messages_sent))
+            table.append((str(user), user.messages_sent))
 
-        users_.sort(key=lambda x: x[1], reverse=True)
-        users_ = users_[:5]
-
-        frame = pandas.DataFrame(users_, columns=["user", "messages"])
-        frame.sort_values(by=['messages'], ascending=False)
-
-        await ctx.send(f'```{frame.head().to_string(index=False)}```')
+        await ctx.send(f'```prolog\n{tabulate(table, headers=("User", "Messages", ), tablefmt="fancy_grid")}')
 
     @commands.command(name='reps', aliases=['my_reps'])
     async def reps_(self, ctx, member: typing.Optional[commands.MemberConverter]):
@@ -299,17 +287,11 @@ class Commands(commands.Cog):
         """Rep scoreboard!"""
         users = await self.bot.db.get_all_users(get_reps=True, get_messages=False)
 
-        users_ = []
-        for user in users:
-            users_.append((self.user__repr__(user.id), len(user.reps)))
+        table = []
+        for user in users[:10]:
+            table.append((str(user), len(user.reps)))
 
-        users_.sort(key=lambda x: x[1], reverse=True)
-        users_ = users_[:5]
-
-        frame = pandas.DataFrame(users_, columns=["user", "reps"])
-        frame.sort_values(by=['reps'], ascending=False)
-
-        await ctx.send(f'```{frame.head().to_string(index=False)}```')
+        await ctx.send(f'```prolog\n{tabulate(table, headers=("User", "Messages", ), tablefmt="fancy_grid")}')
 
     @commands.command(name='rep')
     async def rep(self, ctx, member: commands.MemberConverter):
@@ -412,6 +394,7 @@ class Commands(commands.Cog):
 
         Props to github.com/Rapptz"""
         await self.get_docs(ctx, 'pygame', obj)
+
 
 def setup(bot):
     bot.add_cog(Commands(bot))

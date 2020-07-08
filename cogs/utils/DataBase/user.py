@@ -21,6 +21,9 @@ class User(object):
         # Joined at wont actually be when they joined.
         # It will be when they "joined" the database
 
+    def __repr__(self):
+        return str(self.bot.get_user(self.id)) or str(self.id)
+
     async def post(self) -> None:
         """We shouldn't have to check for duplicate messages here ->
         Unless someone mis-uses this.
