@@ -266,7 +266,7 @@ class Commands(commands.Cog):
         for user in users:
             table.append((str(user), user.messages_sent))
 
-        await ctx.send(f'```prolog\n{tabulate(table, headers=("User", "Messages", ), tablefmt="fancy_grid")}')
+        await ctx.send(f'```prolog\n{tabulate(table, headers=("User", "Messages", ), tablefmt="fancy_grid")}\n```')
 
     @commands.command(name='reps', aliases=['my_reps'])
     async def reps_(self, ctx, member: typing.Optional[commands.MemberConverter]):
@@ -291,7 +291,7 @@ class Commands(commands.Cog):
         for user in sorted(users, key=lambda u: len(u.reps))[:10]:
             table.append((str(user), len(user.reps)))
 
-        await ctx.send(f'```prolog\n{tabulate(table, headers=("User", "Messages", ), tablefmt="fancy_grid")}')
+        await ctx.send(f'```prolog\n{tabulate(table, headers=("User", "Messages", ), tablefmt="fancy_grid")}\n`` ')
 
     @commands.command(name='rep')
     async def rep(self, ctx, member: commands.MemberConverter):
