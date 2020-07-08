@@ -288,7 +288,7 @@ class Commands(commands.Cog):
         users = await self.bot.db.get_all_users(get_reps=True, get_messages=False)
 
         table = []
-        for user in users[:10]:
+        for user in sorted(users, key=lambda u: len(u.reps))[:10]:
             table.append((str(user), len(user.reps)))
 
         await ctx.send(f'```prolog\n{tabulate(table, headers=("User", "Messages", ), tablefmt="fancy_grid")}')
