@@ -4,3 +4,6 @@ asyncpg
 jishaku
 pandas
 psutil
+aiohttp
+beautifulsoup4
+html5lib
