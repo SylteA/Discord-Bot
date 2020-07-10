@@ -317,37 +317,38 @@ class Commands(commands.Cog):
         else:
             await ctx.send(f"{ctx.author.mention} has repped **{member.display_name}**!")
                        
-    @commands.command('pipsearch', aliases=['pip','pypi']
+    @commands.command('pipsearch', aliases=['pip', 'pypi'])
     async def pipsearch(self, ctx, term, order='relevance'):
-        if not order.lower() in ('relevance', 'trending', 'updated'):
-            return await ctx.send(f"{order} is not a valid order type.")
-        order_url = {'relevance': '', 'trending': '-zscore', 'updated': '-created'}
-        PYPI_SEARCH = "https://pypi.org/search?q="+term+"&o="+order_url[order]
-        
-        async with aiohttp.ClientSession() as session:
-            async with session.get(PYPI_SEARCH.replace(":search:", term).replace(":order:", order_url[order])) as resp:
-                text = await resp.read()
-        
-        table = []
-                      
-        bs = BeautifulSoup(text.decode('utf-8'), 'html5lib')
-        packages = bs.find_all("a", class_="package-snippet")
-        results = bs.find("div", class_="split-layout split-layout--table split-layout--wrap-on-tablet").find("div").find("p").find("strong").text
-        em = discord.Embed(title=f"Searched '[{name} - {version}]{href}'", description=f"Found {results} results."
-        if results >= 1:
-            i = True
-            em.colour = discord.Colour.green()
-            for package in packages:
-                href = "https://pypi.org" + package.get("href")
-                title = package.find("h3")
-                name = title.find("span", class_="package-snippet__name").text
-                version = title.find("span", class_="package-snippet__version").text
-                desc = package.find("p").text
-                em.add_field(name=f"{name} - {version}", value=desc, inline=i)
-                i = False if i else True
-        else:
-            em.colour = discord.Colour.red()
-        await ctx.send(embed=em)
+        async with ctx.typing():
+            if not order.lower() in ('relevance', 'trending', 'updated'):
+                return await ctx.send(f"{order} is not a valid order type.")
+            order_url = {'relevance': '', 'trending': '-zscore', 'updated': '-created'}
+            PYPI_SEARCH = "https://pypi.org/search?q=" + term.replace(" ", "+") + "&o=" + order_url[order]
+
+            async with aiohttp.ClientSession() as session:
+                async with session.get(PYPI_SEARCH.replace(":search:", term).replace(":order:", order_url[order])) as resp:
+                    text = await resp.read()
+
+            bs = BeautifulSoup(text.decode('utf-8'), 'html5lib')
+            packages = bs.find_all("a", class_="package-snippet")
+            results = int(bs.find("div", class_="split-layout split-layout--table split-layout--wrap-on-tablet").find("div").find("p").find("strong").text)
+            if results > 0:
+                em = discord.Embed(title=f"Searched {term}", description=f"[Showing 10/{results} results.]({PYPI_SEARCH})" if results > 20 else f"Showing {results} results.")
+                i = False
+                em.colour = discord.Colour.green()
+                for package in packages[:10]:
+                    href = "https://pypi.org" + package.get("href")
+                    title = package.find("h3")
+                    name = title.find("span", class_="package-snippet__name").text
+                    version = title.find("span", class_="package-snippet__version").text
+                    desc = package.find("p").text
+                    desc = 'Unkown Description'if desc==''else desc
+                    em.add_field(name=f"{name} - {version}", value=f"[`{desc}`]({href})", inline=i)
+                    i = False if i else True
+            else:
+                em = discord.Embed(title=f"Searched for [{term}]({PYPI_SEARCH})", description="No results found.")
+                em.colour = discord.Colour.red()
+            await ctx.send(embed=em)
 
     async def build_docs_lookup_table(self, page_types):
         cache = {}
