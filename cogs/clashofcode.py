@@ -59,7 +59,7 @@ class ClashOfCode(commands.Cog):
         )
     @commands.check(lambda ctx: ctx.channel.id == 729352136588263456)
     @commands.cooldown(1, 60, commands.BucketType.channel)
-    async def coc_invite(self, ctx: commands.Context, *, url: str, game_type: Optional[str]):
+    async def coc_invite(self, ctx: commands.Context, url: str, *, game_type: Optional[str]):
         """Mentions all the users with the `Clash Of Code` role that are currently online."""
         
         game_type = game_type or "not specified"
