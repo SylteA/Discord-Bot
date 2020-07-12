@@ -288,10 +288,10 @@ class Commands(commands.Cog):
         users = await self.bot.db.get_all_users(get_reps=True, get_messages=False)
 
         table = []
-        for user in sorted(users, key=lambda u: len(u.reps))[:10]:
+        for user in sorted(users, key=lambda u: len(u.reps), reverse=True)[:10]:
             table.append((str(user), len(user.reps)))
 
-        await ctx.send(f'>>> ```prolog\n{tabulate(table, headers=("User", "Messages", ), tablefmt="fancy_grid")}\n`` ')
+        await ctx.send(f'>>> ```prolog\n{tabulate(table, headers=("User", "Reps", ), tablefmt="fancy_grid")}\n```')
 
     @commands.command(name='rep')
     async def rep(self, ctx, member: commands.MemberConverter):
