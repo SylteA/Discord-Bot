@@ -318,7 +318,9 @@ class Commands(commands.Cog):
             await ctx.send(f"{ctx.author.mention} has repped **{member.display_name}**!")
                        
     @commands.command('pipsearch', aliases=['pip', 'pypi'])
-    async def pipsearch(self, ctx, term, order='relevance'):
+    async def pipsearch(self, ctx, term, order:str='relevance', amount:int=10):
+        """Search pypi.org for packages. 
+        Specify term, order (relevance, trending, updated) and amount (10 is default) you want to show."""
         async with ctx.typing():
             if not order.lower() in ('relevance', 'trending', 'updated'):
                 return await ctx.send(f"{order} is not a valid order type.")
@@ -336,7 +338,7 @@ class Commands(commands.Cog):
                 em = discord.Embed(title=f"Searched {term}", description=f"[Showing 10/{results} results.]({PYPI_SEARCH})" if results > 20 else f"Showing {results} results.")
                 i = False
                 em.colour = discord.Colour.green()
-                for package in packages[:10]:
+                for package in packages[:amount]:
                     href = "https://pypi.org" + package.get("href")
                     title = package.find("h3")
                     name = title.find("span", class_="package-snippet__name").text
