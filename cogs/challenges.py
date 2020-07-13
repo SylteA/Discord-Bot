@@ -12,7 +12,7 @@ class ChallengeHandler(commands.Cog):
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):  # Participant role.
-        if str(payload.emoji) != "🖐️":
+        if payload.emoji != discord.PartialEmoji(name="🖐️"):
             return
 
         if payload.channel_id == 680851798340272141:
