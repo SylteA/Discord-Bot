@@ -12,7 +12,7 @@ class ChallengeHandler(commands.Cog):
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):  # Participant role.
-        if str(payload.emoji) != "<:tick:582492227410984961>":
+        if str(payload.emoji) != "<:tickk:582492589152927782>":
             return
 
         if payload.channel_id == 680851798340272141:
