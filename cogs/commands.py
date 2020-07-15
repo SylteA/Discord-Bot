@@ -317,18 +317,19 @@ class Commands(commands.Cog):
             await ctx.send(f"{ctx.author.mention} has repped **{member.display_name}**!")
 
     @commands.command('pipsearch', aliases=['pip', 'pypi'])
+    @commands.cooldown(2, 5, commands.BucketType.user)
     async def pipsearch(self, ctx, term, order: lambda string: string.lower() = 'relevance', amount: int = 10):
         """Search pypi.org for packages.
         Specify term, order (relevance, trending, updated) and amount (10 is default) you want to show."""
-        if not order in ('relevance', 'trending', 'updated'):
+        if order not in ('relevance', 'trending', 'updated'):
             return await ctx.send(f"{order} is not a valid order type.")
 
         async with ctx.typing():
             order_url = {'relevance': '', 'trending': '-zscore', 'updated': '-created'}
-            PYPI_SEARCH = "https://pypi.org/search?q=" + term.replace(" ", "+") + "&o=" + order_url[order]
+            search = "https://pypi.org/search?q=" + term.replace(" ", "+") + "&o=" + order_url[order]
 
             async with self.bot.session.get(
-                    PYPI_SEARCH.replace(":search:", term).replace(":order:", order_url[order])) as resp:
+                    search.replace(":search:", term).replace(":order:", order_url[order])) as resp:
                 text = await resp.read()
 
             bs = BeautifulSoup(text.decode('utf-8'), 'html5lib')
@@ -351,7 +352,7 @@ class Commands(commands.Cog):
                     em.add_field(name=f"{name} - {version}", value=f"[`{desc}`]({href})", inline=i)
                     i = not i
             else:
-                em = discord.Embed(title=f"Searched for [{term}]({PYPI_SEARCH})", description="No results found.")
+                em = discord.Embed(title=f"Searched for [{term}]({search})", description="No results found.")
                 em.colour = discord.Colour.red()
             await ctx.send(embed=em)
 

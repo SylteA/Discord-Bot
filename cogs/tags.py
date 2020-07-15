@@ -3,7 +3,7 @@ import discord
 
 
 from .utils.DataBase.tag import Tag
-from .utils.checks import is_engineer_check, is_admin
+from .utils.checks import is_engineer_check, is_admin, is_mod_check
 
 
 def setup(bot):
@@ -82,26 +82,6 @@ class TagCommands(commands.Cog, name="Tags"):
             await ctx.send(page)
 
     @tag.command()
-    async def all(self, ctx: commands.Context):
-        """List all existing tags alphabetically ordered."""
-        records = await self.bot.db.fetch(
-            """SELECT name FROM tags WHERE guild_id = $1 ORDER BY name""",
-            ctx.guild.id
-        )
-        
-        if not records:
-            return await ctx.send("This server doesn't have any tags.")
-
-        pager = commands.Paginator()
-        pager.add_line(f"**{len(records)} tags found on this server.**")
-
-        for record in records:
-            pager.add_line(line=record["name"])
-
-        for page in pager.pages:
-            await ctx.send(page)
-
-    @tag.command()
     @is_engineer_check()
     async def edit(self, ctx, name: str, *, text: str):
         """Edit a tag"""
@@ -136,19 +116,15 @@ class TagCommands(commands.Cog, name="Tags"):
         await ctx.send('You have successfully deleted your tag.')
     
     @tag.command()
+    @commands.cooldown(1, 1, commands.BucketType.user)
     async def search(self, ctx, *, term: str):
         """Search for a tag given a search term. PostgreSQL syntax must be used for the search."""
-        query = """SELECT name FROM tags WHERE guild_id = $1 AND name LIKE $2"""
+        query = """SELECT name FROM tags WHERE guild_id = $1 AND name LIKE $2 LIMIT 10"""
         records = await self.bot.db.fetch(query, ctx.guild.id, term)
 
         if not records:
             return await ctx.send("No tags found that has the term in it's name")
-        
-        pager = commands.Paginator()
-        pager.add_line(f"**{len(records)} tags found with search term on this server.**")
 
-        for record in records:
-            pager.add_line(line=record["name"])
+        records = "\n".join([record["name"] for record in records])
 
-        for page in pager.pages:
-            await ctx.send(page)
+        await ctx.send(f"**{len(records)} tags found with search term on this server.**```\n{records}\n```")
