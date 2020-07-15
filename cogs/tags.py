@@ -124,7 +124,7 @@ class TagCommands(commands.Cog, name="Tags"):
 
         if not records:
             return await ctx.send("No tags found that has the term in it's name")
-        count = len(records)
+        count = "Maximum of 10" if len(records) == 10 else len(records)
         records = "\n".join([record["name"] for record in records])
 
         await ctx.send(f"**{count} tags found with search term on this server.**```\n{records}\n```")
