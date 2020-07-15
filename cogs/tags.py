@@ -71,9 +71,9 @@ class TagCommands(commands.Cog, name="Tags"):
         records = await self.bot.db.fetch(query, ctx.guild.id, ctx.author.id)
         if not records:
             return await ctx.send('You don\'t have any tags?')
+        await ctx.send(f"**{len(records)} tags by you found on this server.**")
 
         pager = commands.Paginator()
-        pager.add_line(f"**{len(records)} tags by you found on this server.**")
 
         for record in records:
             pager.add_line(line=record["name"])
