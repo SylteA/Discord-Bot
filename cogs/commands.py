@@ -2,21 +2,20 @@ from discord.ext import commands
 import discord
 
 from datetime import datetime, timedelta
+from bs4 import BeautifulSoup
 from tabulate import tabulate
 import inspect
+import aiohttp
 import typing
 import zlib
 import re
 import os
 import io
-import aiohttp
-from bs4 import BeautifulSoup
-import html5lib
 
 from .utils.DataBase import User
 
-from .youtube import to_pages_by_lines
 from .utils.time import human_timedelta
+from .youtube import to_pages_by_lines
 from .utils.checks import is_mod
 
 
@@ -269,7 +268,7 @@ class Commands(commands.Cog):
         for user in users:
             table.append((str(user), user.messages_sent))
 
-        await ctx.send(f'>>> ```prolog\n{tabulate(table, headers=("User", "Messages", ), tablefmt="fancy_grid")}\n```')
+        await ctx.send(f'>>> ```prolog\n{tabulate(table, headers=("User", "Messages",), tablefmt="fancy_grid")}\n```')
 
     @commands.command(name='reps', aliases=['my_reps'])
     async def reps_(self, ctx, member: typing.Optional[commands.MemberConverter]):
@@ -294,7 +293,7 @@ class Commands(commands.Cog):
         for user in sorted(users, key=lambda u: len(u.reps))[:10]:
             table.append((str(user), len(user.reps)))
 
-        await ctx.send(f'>>> ```prolog\n{tabulate(table, headers=("User", "Messages", ), tablefmt="fancy_grid")}\n`` ')
+        await ctx.send(f'>>> ```prolog\n{tabulate(table, headers=("User", "Messages",), tablefmt="fancy_grid")}\n`` ')
 
     @commands.command(name='rep')
     async def rep(self, ctx, member: commands.MemberConverter):
@@ -316,27 +315,31 @@ class Commands(commands.Cog):
                                   f'again in {human_timedelta(result + delta, suffix=False, accuracy=2)}')
         else:
             await ctx.send(f"{ctx.author.mention} has repped **{member.display_name}**!")
-                       
+
     @commands.command('pipsearch', aliases=['pip', 'pypi'])
-    async def pipsearch(self, ctx, term, order:str='relevance', amount:int=10):
-        """Search pypi.org for packages. 
+    async def pipsearch(self, ctx, term, order: lambda string: string.lower() = 'relevance', amount: int = 10):
+        """Search pypi.org for packages.
         Specify term, order (relevance, trending, updated) and amount (10 is default) you want to show."""
+        if not order.lower() in ('relevance', 'trending', 'updated'):
+            return await ctx.send(f"{order} is not a valid order type.")
+
         async with ctx.typing():
-            if not order.lower() in ('relevance', 'trending', 'updated'):
-                return await ctx.send(f"{order} is not a valid order type.")
             order_url = {'relevance': '', 'trending': '-zscore', 'updated': '-created'}
             PYPI_SEARCH = "https://pypi.org/search?q=" + term.replace(" ", "+") + "&o=" + order_url[order]
 
-            async with aiohttp.ClientSession() as session:
-                async with session.get(PYPI_SEARCH.replace(":search:", term).replace(":order:", order_url[order])) as resp:
-                    text = await resp.read()
+            async with self.bot.session.get(
+                    PYPI_SEARCH.replace(":search:", term).replace(":order:", order_url[order])) as resp:
+                text = await resp.read()
 
             bs = BeautifulSoup(text.decode('utf-8'), 'html5lib')
             packages = bs.find_all("a", class_="package-snippet")
-            results = int(bs.find("div", class_="split-layout split-layout--table split-layout--wrap-on-tablet").find("div").find("p").find("strong").text)
+            results = int(
+                bs.find("div", class_="split-layout split-layout--table split-layout--wrap-on-tablet").find("div").find(
+                    "p").find("strong").text)
             if results > 0:
-                em = discord.Embed(title=f"Searched {term}", description=f"[Showing 10/{results} results.]({PYPI_SEARCH})" if results > 20 else f"Showing {results} results.")
-                i = False
+                em = discord.Embed(title=f"Searched {term}",
+                                   description=f"[Showing 10/{results} results.]({PYPI_SEARCH})" if results > 20 else f"Showing {results} results.")
+                i = 0
                 em.colour = discord.Colour.green()
                 for package in packages[:amount]:
                     href = "https://pypi.org" + package.get("href")
@@ -344,9 +347,9 @@ class Commands(commands.Cog):
                     name = title.find("span", class_="package-snippet__name").text
                     version = title.find("span", class_="package-snippet__version").text
                     desc = package.find("p").text
-                    desc = 'Unkown Description'if desc==''else desc
+                    desc = 'Unkown Description' if desc == '' else desc
                     em.add_field(name=f"{name} - {version}", value=f"[`{desc}`]({href})", inline=i)
-                    i = False if i else True
+                    i = not i
             else:
                 em = discord.Embed(title=f"Searched for [{term}]({PYPI_SEARCH})", description="No results found.")
                 em.colour = discord.Colour.red()
