@@ -134,3 +134,21 @@ class TagCommands(commands.Cog, name="Tags"):
 
         await tag.delete()
         await ctx.send('You have successfully deleted your tag.')
+    
+    @tag.command()
+    async def search(self, ctx, *, term: str):
+        """Search for a tag given a search term"""
+        query = """SELECT name FROM tags WHERE guild_id = $1 LIKE '%"""+term+"""%'"""
+        records = await self.bot.db.fetch(query, ctx.guild.id)
+
+        if not records:
+            return await ctx.send("No tags found that has the term in it's name")
+        
+        pager = commands.Paginator()
+        pager.add_line(f"**{len(records)} tags found with search term on this server.**")
+
+        for record in records:
+            pager.add_line(line=record["name"])
+
+        for page in pager.pages:
+            await ctx.send(page)
