@@ -31,7 +31,7 @@ class Rep(object):
                        LIMIT 1"""
 
             record = await self.bot.db.fetch(query, self.author_id)
-            if len(record) == 1:
+            if record:
                 rep = Rep(bot=self.bot, **record[0])
                 if (rep.repped_at + timedelta(days=1)) > datetime.utcnow():
                     return rep.repped_at
