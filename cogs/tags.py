@@ -137,9 +137,9 @@ class TagCommands(commands.Cog, name="Tags"):
     
     @tag.command()
     async def search(self, ctx, *, term: str):
-        """Search for a tag given a search term"""
-        query = """SELECT name FROM tags WHERE guild_id = $1 LIKE '%"""+term+"""%'"""
-        records = await self.bot.db.fetch(query, ctx.guild.id)
+        """Search for a tag given a search term. PostgreSQL syntax must be used for the search."""
+        query = """SELECT name FROM tags WHERE guild_id = $1 AND name LIKE $2"""
+        records = await self.bot.db.fetch(query, ctx.guild.id, term)
 
         if not records:
             return await ctx.send("No tags found that has the term in it's name")
