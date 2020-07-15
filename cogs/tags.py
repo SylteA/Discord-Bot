@@ -71,15 +71,21 @@ class TagCommands(commands.Cog, name="Tags"):
         records = await self.bot.db.fetch(query, ctx.guild.id, ctx.author.id)
         if not records:
             return await ctx.send('You don\'t have any tags?')
-        tags = [record["name"] for record in records]
-        
-        await ctx.send('**{0} tags found made by you in this server.**\n{1}'.format(len(tags), '\n'.join(tags)))
+
+        pager = commands.Paginator()
+        pager.add_line(f"**{len(records)} tags by you found on this server.**")
+
+        for record in records:
+            pager.add_line(line=record["name"])
+
+        for page in pager.pages:
+            await ctx.send(page)
 
     @tag.command()
     async def all(self, ctx: commands.Context):
         """List all existing tags alphabetically ordered."""
         records = await self.bot.db.fetch(
-            """SELECT * FROM tags WHERE guild_id = $1 ORDER BY name""",
+            """SELECT name FROM tags WHERE guild_id = $1 ORDER BY name""",
             ctx.guild.id
         )
         
@@ -87,10 +93,11 @@ class TagCommands(commands.Cog, name="Tags"):
             return await ctx.send("This server doesn't have any tags.")
 
         pager = commands.Paginator()
+        pager.add_line(f"**{len(records)} tags found on this server.**")
+
         for record in records:
             pager.add_line(line=record["name"])
-        
-        await ctx.send(f"**{len(records)} tags found on this server.**")
+
         for page in pager.pages:
             await ctx.send(page)
 
