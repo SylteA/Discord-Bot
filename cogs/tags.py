@@ -71,14 +71,21 @@ class TagCommands(commands.Cog, name="Tags"):
         records = await self.bot.db.fetch(query, ctx.guild.id, ctx.author.id)
         if not records:
             return await ctx.send('You don\'t have any tags?')
-        tags = [record["name"] for record in records]
-        await ctx.send('{}'.format('\n'.join(tags)))
+
+        pager = commands.Paginator()
+        pager.add_line(f"**{len(records)} tags by you found on this server.**")
+
+        for record in records:
+            pager.add_line(line=record["name"])
+
+        for page in pager.pages:
+            await ctx.send(page)
 
     @tag.command()
     async def all(self, ctx: commands.Context):
         """List all existing tags alphabetically ordered."""
         records = await self.bot.db.fetch(
-            """SELECT * FROM tags WHERE guild_id = $1 ORDER BY name""",
+            """SELECT name FROM tags WHERE guild_id = $1 ORDER BY name""",
             ctx.guild.id
         )
         
@@ -86,9 +93,11 @@ class TagCommands(commands.Cog, name="Tags"):
             return await ctx.send("This server doesn't have any tags.")
 
         pager = commands.Paginator()
+        pager.add_line(f"**{len(records)} tags found on this server.**")
+
         for record in records:
             pager.add_line(line=record["name"])
-        
+
         for page in pager.pages:
             await ctx.send(page)
 
@@ -125,3 +134,21 @@ class TagCommands(commands.Cog, name="Tags"):
 
         await tag.delete()
         await ctx.send('You have successfully deleted your tag.')
+    
+    @tag.command()
+    async def search(self, ctx, *, term: str):
+        """Search for a tag given a search term. PostgreSQL syntax must be used for the search."""
+        query = """SELECT name FROM tags WHERE guild_id = $1 AND name LIKE $2"""
+        records = await self.bot.db.fetch(query, ctx.guild.id, term)
+
+        if not records:
+            return await ctx.send("No tags found that has the term in it's name")
+        
+        pager = commands.Paginator()
+        pager.add_line(f"**{len(records)} tags found with search term on this server.**")
+
+        for record in records:
+            pager.add_line(line=record["name"])
+
+        for page in pager.pages:
+            await ctx.send(page)
