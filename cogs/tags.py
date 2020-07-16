@@ -82,6 +82,26 @@ class TagCommands(commands.Cog, name="Tags"):
             await ctx.send(page)
 
     @tag.command()
+    async def all(self, ctx: commands.Context):
+        """List all existing tags alphabetically ordered and sends them in DMs."""
+        records = await self.bot.db.fetch(
+            """SELECT name FROM tags WHERE guild_id = $1 ORDER BY name""",
+            ctx.guild.id
+        )
+        
+        if not records:
+            return await ctx.send("This server doesn't have any tags.")
+
+        pager = commands.Paginator()
+        pager.add_line(f"**{len(records)} tags found on this server.**")
+
+        for record in records:
+            pager.add_line(line=record["name"])
+
+        for page in pager.pages:
+            await ctx.author.send(page)
+
+    @tag.command()
     @is_engineer_check()
     async def edit(self, ctx, name: str, *, text: str):
         """Edit a tag"""
