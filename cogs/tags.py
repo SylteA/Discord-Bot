@@ -101,6 +101,8 @@ class TagCommands(commands.Cog, name="Tags"):
         for page in pager.pages:
             await ctx.author.send(page)
 
+        await ctx.send("Tags sent in DMs.")
+
     @tag.command()
     @is_engineer_check()
     async def edit(self, ctx, name: str, *, text: str):
