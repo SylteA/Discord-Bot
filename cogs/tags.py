@@ -26,7 +26,23 @@ class TagCommands(commands.Cog, name="Tags"):
         tag = await self.bot.db.get_tag(guild_id=ctx.guild.id, name=name)
 
         if tag is None:
-            return await ctx.send('Could not find a tag with that name.')
+            await ctx.message.delete(delay=3.0)
+            return await ctx.send('Could not find a tag with that name.', delete_after=3.0)
+
+        await ctx.send("{}".format(tag.text))
+        await self.bot.db.execute("UPDATE tags SET uses = uses + 1 WHERE guild_id = $1 AND name = $2",
+                                  ctx.guild.id, name)
+        
+    @tag.command(name='silent', aliases=['hide'])
+    async def silent(self, ctx, *, name:str):
+        """Get a tag and delete message."""
+        await ctx.message.delete()
+        name = name.lower()
+        tag = await self.bot.db.get_tag(guild_id=ctx.guild.id, name=name)
+
+        if tag is None:
+            await ctx.message.delete(delay=3.0)
+            return await ctx.send('Could not find a tag with that name.', delete_after=3.0)
 
         await ctx.send("{}".format(tag.text))
         await self.bot.db.execute("UPDATE tags SET uses = uses + 1 WHERE guild_id = $1 AND name = $2",
