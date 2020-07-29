@@ -3,7 +3,7 @@ import discord
 
 
 from .utils.DataBase.tag import Tag
-from .utils.checks import is_engineer_check, is_admin, is_mod_check
+from .utils.checks import is_engineer_check, is_admin
 
 
 def setup(bot):
