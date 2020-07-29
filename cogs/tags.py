@@ -20,24 +20,8 @@ class TagCommands(commands.Cog, name="Tags"):
         return True
 
     @commands.group(invoke_without_command=True)
-    async def tag(self, ctx, *, name: str):
+    async def tag(self, ctx, *, name: lambda inp: inp.lower()):
         """Main tag group."""
-        name = name.lower()
-        tag = await self.bot.db.get_tag(guild_id=ctx.guild.id, name=name)
-
-        if tag is None:
-            await ctx.message.delete(delay=3.0)
-            return await ctx.send('Could not find a tag with that name.', delete_after=3.0)
-
-        await ctx.send("{}".format(tag.text))
-        await self.bot.db.execute("UPDATE tags SET uses = uses + 1 WHERE guild_id = $1 AND name = $2",
-                                  ctx.guild.id, name)
-        
-    @tag.command(name='silent', aliases=['hide'])
-    async def silent(self, ctx, *, name:str):
-        """Get a tag and delete message."""
-        await ctx.message.delete()
-        name = name.lower()
         tag = await self.bot.db.get_tag(guild_id=ctx.guild.id, name=name)
 
         if tag is None:
@@ -49,13 +33,13 @@ class TagCommands(commands.Cog, name="Tags"):
                                   ctx.guild.id, name)
 
     @tag.command()
-    async def info(self, ctx, *, name: str):
+    async def info(self, ctx, *, name: lambda inp: inp.lower()):
         """Get information regarding the specified tag."""
-        name = name.lower()
         tag = await self.bot.db.get_tag(guild_id=ctx.guild.id, name=name)
 
         if tag is None:
-            return await ctx.send('Could not find a tag with that name.')
+            await ctx.message.delete(delay=3.0)
+            return await ctx.send('Could not find a tag with that name.', delete_after=3.0)
 
         author = self.bot.get_user(tag.creator_id)
         author = str(author) if isinstance(author, discord.User) else "(ID: {})".format(tag.creator_id)
@@ -65,10 +49,9 @@ class TagCommands(commands.Cog, name="Tags"):
 
     @tag.command()
     @is_engineer_check()
-    async def create(self, ctx, name: str, *, text: str):
+    async def create(self, ctx, name: lambda inp: inp.lower(), *, text: str):
         """Create a new tag."""
         text = await commands.clean_content().convert(ctx=ctx, argument=text)
-        name = name.lower()
 
         tag = await self.bot.db.get_tag(guild_id=ctx.guild.id, name=text)
         if tag is not None:
@@ -99,14 +82,15 @@ class TagCommands(commands.Cog, name="Tags"):
 
     @tag.command()
     @is_engineer_check()
-    async def edit(self, ctx, name: str, *, text: str):
+    async def edit(self, ctx, name: lambda inp: inp.lower(), *, text: str):
         """Edit a tag"""
         text = await commands.clean_content().convert(ctx=ctx, argument=text)
-        name = name.lower()
 
         tag = await self.bot.db.get_tag(guild_id=ctx.guild.id, name=name)
+
         if tag is None:
-            return await ctx.send('Could not find a tag with that name.')
+            await ctx.message.delete(delay=3.0)
+            return await ctx.send('Could not find a tag with that name.', delete_after=3.0)
 
         if tag.creator_id != ctx.author.id:
             if not is_admin(ctx.author):
@@ -117,12 +101,13 @@ class TagCommands(commands.Cog, name="Tags"):
 
     @tag.command()
     @is_engineer_check()
-    async def delete(self, ctx, *, name: str):
+    async def delete(self, ctx, *, name: lambda inp: inp.lower()):
         """Delete a tag."""
-        tag = await self.bot.db.get_tag(guild_id=ctx.guild.id, name=name.lower())
+        tag = await self.bot.db.get_tag(guild_id=ctx.guild.id, name=name)
 
         if tag is None:
-            return await ctx.send('Could not find a tag with that name.')
+            await ctx.message.delete(delay=3.0)
+            return await ctx.send('Could not find a tag with that name.', delete_after=3.0)
 
         if tag.creator_id != ctx.author.id:
             if not is_admin(ctx.author):
