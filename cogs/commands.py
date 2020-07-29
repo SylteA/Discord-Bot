@@ -372,7 +372,8 @@ class Commands(commands.Cog):
         page_types = {
             'latest': 'https://discordpy.readthedocs.io/en/latest',
             'python': 'https://docs.python.org/3',
-            'pygame': 'https://www.pygame.org/docs'
+            'pygame': 'https://www.pygame.org/docs',
+            'aiohttp': 'https://docs.aiohttp.org/en/stable'
         }
 
         if obj is None:
@@ -406,7 +407,7 @@ class Commands(commands.Cog):
             "latest": "discord.py",
             "python": "python",
             "pygame": "pygame"
-        }.get(key)
+        }.get(key, key)
 
         e.set_author(name=f"{author} docs result", url=page_types.get(key, 'unknown'))
         e.description = '\n'.join(f'[`{key}`]({url})' for key, url in matches)
@@ -436,6 +437,13 @@ class Commands(commands.Cog):
 
         Props to github.com/Rapptz"""
         await self.get_docs(ctx, 'pygame', obj)
+
+    @docs.command(name='aiohttp', aliases=["aio"])
+    async def aiohttp_docs(self, ctx, *, obj: str = None):
+        """Gives you a documentation link for a aiohttp entity.
+
+        Props to github.com/Rapptz"""
+        await self.get_docs(ctx, 'aiohttp', obj)
 
 
 def setup(bot):
