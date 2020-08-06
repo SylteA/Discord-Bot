@@ -33,6 +33,7 @@ class ChallengeHandler(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):  # Submitted role.
+        if message.author.bot:return
         if message.channel.id == 680851820587122700:  # weekly
 
             submitted = self.bot.guild.get_role(687417501931536478)
