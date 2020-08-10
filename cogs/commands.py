@@ -13,7 +13,7 @@ import os
 import io
 
 from .utils.DataBase import User
-
+from .utils.DataBase.rep import Rep
 from .utils.time import human_timedelta
 from .youtube import to_pages_by_lines
 from .utils.checks import is_mod
@@ -305,16 +305,27 @@ class Commands(commands.Cog):
             return await ctx.send('You cannot rep bots.')
 
         user = await self.bot.db.get_user(member.id)
+        if True:
+            query = """SELECT * FROM reps 
+                              WHERE author_id = $1 
+                              ORDER BY repped_at ASC 
+                              LIMIT 1"""
 
-        result = await user.add_rep(message_id=ctx.message.id, author_id=ctx.author.id,
-                                    repped_at=ctx.message.created_at, extra_info={"channel_id": ctx.channel.id})
+            record = await self.bot.db.fetch(query, self.author_id)
+            if record:
+                rep = Rep(bot=self.bot, **record[0])
+                if (rep.repped_at + timedelta(days=1)) > datetime.utcnow():
+                    return rep.repped_at
+            else:
+                result = await user.add_rep(message_id=ctx.message.id, author_id=ctx.author.id,
+                                            repped_at=ctx.message.created_at, extra_info={"channel_id": ctx.channel.id})
 
-        if result is not None:
-            delta = timedelta(days=1, hours=0, minutes=0, seconds=0, milliseconds=0, microseconds=0)
-            return await ctx.send(f'{ctx.author.mention} You can rep **{member.display_name}** '
-                                  f'again in {human_timedelta(result + delta, suffix=False, accuracy=2)}')
-        else:
-            await ctx.send(f"{ctx.author.mention} has repped **{member.display_name}**!")
+                if result is not None:
+                    delta = timedelta(days=1, hours=0, minutes=0, seconds=0, milliseconds=0, microseconds=0)
+                    return await ctx.send(f'{ctx.author.mention} You can rep **{member.display_name}** '
+                                          f'again in {human_timedelta(result + delta, suffix=False, accuracy=2)}')
+                else:
+                    await ctx.send(f"{ctx.author.mention} has repped **{member.display_name}**!")
 
     @commands.command('pipsearch', aliases=['pip', 'pypi'])
     @commands.cooldown(2, 5, commands.BucketType.user)
