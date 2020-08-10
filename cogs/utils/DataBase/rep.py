@@ -3,10 +3,10 @@ from json import dumps
 
 
 class Rep(object):
-    def __init__(self, bot, rep_id: int, user_id: int, author_id: int,
+    def __init__(self, bot, user_id: int, author_id: int,
                  repped_at: datetime = datetime.utcnow(), extra_info: dict = None):
         self.bot = bot
-        self.rep_id = rep_id  # In most cases this is the id of the message that posted this.
+
         self.user_id = user_id  # The user that recieved +1 rep.
         self.author_id = author_id  # The user that gave +1 rep.
         self.repped_at = repped_at
@@ -36,9 +36,5 @@ class Rep(object):
                 if (rep.repped_at + timedelta(days=1)) > datetime.utcnow():
                     return rep.repped_at
 
-        query = """INSERT INTO reps ( rep_id, user_id, author_id, repped_at, extra_info )
-                   VALUES (  $1, $2, $3, $4, $5 )
-                   ON CONFLICT DO NOTHING"""
-        await self.bot.db.execute(query, self.rep_id, self.user_id, self.author_id,
-                                  self.repped_at, f"{self.extra_info}")
+
         return None
