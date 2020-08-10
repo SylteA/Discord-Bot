@@ -25,8 +25,9 @@ class TagCommands(commands.Cog, name="Tags"):
         tag = await self.bot.db.get_tag(guild_id=ctx.guild.id, name=name)
 
         if tag is None:
-            await ctx.message.delete(delay=3.0)
-            return await ctx.send('Could not find a tag with that name.', delete_after=3.0)
+            await ctx.message.delete()
+            await ctx.send('Could not find a tag with that name.\nAttempting to search **' + name + '**')
+            return self.search(ctx, '%'+name+'%')
 
         await ctx.send("{}".format(tag.text))
         await self.bot.db.execute("UPDATE tags SET uses = uses + 1 WHERE guild_id = $1 AND name = $2",
@@ -125,6 +126,8 @@ class TagCommands(commands.Cog, name="Tags"):
 
         if not records:
             return await ctx.send("No tags found that has the term in it's name")
+        elif len(records) == 1:
+            return await self.tag(ctx, name=term) # Hopefully this works. The dpy server said it does so....
         count = "Maximum of 10" if len(records) == 10 else len(records)
         records = "\n".join([record["name"] for record in records])
 
