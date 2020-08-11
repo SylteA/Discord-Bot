@@ -355,6 +355,17 @@ class Commands(commands.Cog):
                 em = discord.Embed(title=f"Searched for {term}", description=f"No [results]({search}) found.")
                 em.colour = discord.Colour.red()
             await ctx.send(embed=em)
+    @commands.command(name="meme")
+    async def get_meme(self, ctx):
+        async with aiohttp.ClientSession() as session:
+            res = await session.get("https://meme-api.herokuapp.com/gimme")
+            data = await res.json()
+            embed = discord.Embed(colour=0xcc1b1b,title="Meme")
+            embed.add_field(name="Title",value=data.title,inline=False)
+            embed.set_image(url=data.url)
+            await ctx.send(embed=embed)
+
+
 
     async def build_docs_lookup_table(self, page_types):
         cache = {}
