@@ -1,6 +1,7 @@
 from discord.ext import commands
 import discord
 
+import asyncio
 
 from .utils.DataBase.tag import Tag
 from .utils.checks import is_engineer_check, is_admin
@@ -81,6 +82,30 @@ class TagCommands(commands.Cog, name="Tags"):
             await ctx.send(page)
 
     @tag.command()
+    @commands.cooldown(1, 3600*24, commands.BucketType.user)
+    async def all(self, ctx: commands.Context):
+        """List all existing tags alphabetically ordered and sends them in DMs."""
+        records = await self.bot.db.fetch(
+            """SELECT name FROM tags WHERE guild_id = $1 ORDER BY name""",
+            ctx.guild.id
+        )
+
+        if not records:
+            return await ctx.send("This server doesn't have any tags.")
+
+        pager = commands.Paginator()
+        pager.add_line(f"**{len(records)} tags found on this server.**")
+
+        for record in records:
+            pager.add_line(line=record["name"])
+
+        for page in pager.pages:
+            await asyncio.sleep(1)
+            await ctx.author.send(page)
+            
+        await ctx.send("Tags sent in DMs.")
+
+    @tag.command()
     @is_engineer_check()
     async def edit(self, ctx, name: lambda inp: inp.lower(), *, text: str):
         """Edit a tag"""
@@ -129,3 +154,21 @@ class TagCommands(commands.Cog, name="Tags"):
         records = "\n".join([record["name"] for record in records])
 
         await ctx.send(f"**{count} tags found with search term on this server.**```\n{records}\n```")
+
+    @tag.command()
+    @is_engineer_check()
+    async def rename(self, ctx, name: lambda inp: inp.lower(), *, new_name: lambda inp: inp.lower()):
+        """Rename a tag."""
+
+        tag = await self.bot.db.get_tag(guild_id=ctx.guild.id, name=name)
+
+        if tag is None:
+            await ctx.message.delete(delay=3.0)
+            return await ctx.send('Could not find a tag with that name.', delete_after=3.0)
+
+        if tag.creator_id != ctx.author.id:
+            if not is_admin(ctx.author):
+                return await ctx.send(f'You don\'t have permission to do that.')
+
+        await tag.rename(new_name=new_name)
+        await ctx.send('You have successfully renamed your tag.')
