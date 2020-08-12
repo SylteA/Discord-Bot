@@ -17,7 +17,9 @@ class ClashOfCode(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-        self.role = self.bot.guild.get_role(coc_role)
+    @property
+    def role(self):
+        return self.bot.guild.get_role(coc_role)
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
