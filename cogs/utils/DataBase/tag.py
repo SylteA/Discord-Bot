@@ -26,3 +26,7 @@ class Tag:
     async def delete(self):
         query = """DELETE FROM tags WHERE guild_id = $1 AND name = $2"""
         await self.bot.db.execute(query, self.guild_id, self.name)
+
+    async def rename(self, new_name):
+        query = """UPDATE tags SET name = $3 WHERE guild_id = $1 AND name = $2"""
+        await self.bot.db.execute(query, self.guild_id, self.name, new_name)
