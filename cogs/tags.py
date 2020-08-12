@@ -25,7 +25,6 @@ class TagCommands(commands.Cog, name="Tags"):
         tag = await self.bot.db.get_tag(guild_id=ctx.guild.id, name=name)
 
         if tag is None:
-            await ctx.message.delete()
             await ctx.send('Could not find a tag with that name.\nAttempting to search **' + name + '**')
             return self.search(ctx, '%'+name+'%')
 
@@ -128,7 +127,7 @@ class TagCommands(commands.Cog, name="Tags"):
             return await ctx.send("No tags found that has the term in it's name")
         elif len(records) == 1:
             await ctx.send(f"Found one tag: **{records[0]['name']}**.")
-            return await self.tag(ctx, name=term) # Hopefully this works. The dpy server said it does so....
+            return await self.tag(ctx, name=term)
         count = "Maximum of 10" if len(records) == 10 else len(records)
         records = "\n".join([record["name"] for record in records])
 
