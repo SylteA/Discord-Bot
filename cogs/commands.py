@@ -336,7 +336,7 @@ class Commands(commands.Cog):
             packages = bs.find_all("a", class_="package-snippet")
             results = int(
                 (bs.find("div", class_="split-layout split-layout--table split-layout--wrap-on-tablet").find("div").find(
-                    "p").find("strong").text).replace(',',''))
+                    "p").find("strong").text).replace(',','').replace('+',''))
             if results > 0:
                 em = discord.Embed(title=f"Searched {term}",
                                    description=f"[Showing 10/{results} results.]({search})" if results > 20 else f"Showing {results} results.")
