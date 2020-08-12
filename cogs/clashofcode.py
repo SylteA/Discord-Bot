@@ -74,7 +74,7 @@ class ClashOfCode(commands.Cog):
         pager = commands.Paginator(prefix=f'Hey, {ctx.author.mention} is hosting a "clashofcode" game!'
                                           f'\nJoin here: {links[0]}',
                                    suffix="")
-        for member in self.role.members:
+        for member in ctx.guild.get_role(coc_role).members:
             if member.status != discord.Status.offline:
                 pager.add_line(member.mention + ", ")
 
