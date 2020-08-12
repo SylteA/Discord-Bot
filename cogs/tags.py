@@ -1,6 +1,7 @@
 from discord.ext import commands
 import discord
 
+import asyncio
 
 from .utils.DataBase.tag import Tag
 from .utils.checks import is_engineer_check, is_admin
@@ -99,6 +100,7 @@ class TagCommands(commands.Cog, name="Tags"):
             pager.add_line(line=record["name"])
 
         for page in pager.pages:
+            await asyncio.sleep(1)
             await ctx.author.send(page)
             
         await ctx.send("Tags sent in DMs.")
