@@ -154,3 +154,21 @@ class TagCommands(commands.Cog, name="Tags"):
         records = "\n".join([record["name"] for record in records])
 
         await ctx.send(f"**{count} tags found with search term on this server.**```\n{records}\n```")
+
+    @tag.command()
+    @is_engineer_check()
+    async def rename(self, ctx, name: lambda inp: inp.lower(), *, new_name: lambda inp: inp.lower()):
+        """Rename a tag."""
+
+        tag = await self.bot.db.get_tag(guild_id=ctx.guild.id, name=name)
+
+        if tag is None:
+            await ctx.message.delete(delay=3.0)
+            return await ctx.send('Could not find a tag with that name.', delete_after=3.0)
+
+        if tag.creator_id != ctx.author.id:
+            if not is_admin(ctx.author):
+                return await ctx.send(f'You don\'t have permission to do that.')
+
+        await tag.rename(new_name=new_name)
+        await ctx.send('You have successfully renamed your tag.')
