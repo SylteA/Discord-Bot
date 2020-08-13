@@ -82,7 +82,7 @@ class TagCommands(commands.Cog, name="Tags"):
             await ctx.send(page)
 
     @tag.command()
-    @commands.cooldown(1, 3600*24, commands.BucketType.user)
+    @commands.cooldown(1, 60*60*12, commands.BucketType.user)
     async def all(self, ctx: commands.Context):
         """List all existing tags alphabetically ordered and sends them in DMs."""
         records = await self.bot.db.fetch(
