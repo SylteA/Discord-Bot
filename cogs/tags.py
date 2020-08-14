@@ -6,6 +6,8 @@ import asyncio
 from .utils.DataBase.tag import Tag
 from .utils.checks import is_engineer_check, is_admin
 
+import typing
+
 
 def setup(bot):
     bot.add_cog(TagCommands(bot=bot))
@@ -65,10 +67,11 @@ class TagCommands(commands.Cog, name="Tags"):
 
     @tag.command()
     @is_engineer_check()
-    async def list(self, ctx):
+    async def list(self, ctx, member: typing.Optional[commands.MemberConverter]):
         """List your existing tags."""
-        query = """SELECT name FROM tags WHERE guild_id = $1 AND creator_id = $2"""
-        records = await self.bot.db.fetch(query, ctx.guild.id, ctx.author.id)
+        member = member or ctx.author
+        query = """SELECT name FROM tags WHERE guild_id = $1 AND creator_id = $2 ORDER BY name"""
+        records = await self.bot.db.fetch(query, ctx.guild.id, member.id)
         if not records:
             return await ctx.send('You don\'t have any tags?')
         await ctx.send(f"**{len(records)} tags by you found on this server.**")
