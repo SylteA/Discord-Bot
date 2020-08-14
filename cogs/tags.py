@@ -73,8 +73,8 @@ class TagCommands(commands.Cog, name="Tags"):
         query = """SELECT name FROM tags WHERE guild_id = $1 AND creator_id = $2 ORDER BY name"""
         records = await self.bot.db.fetch(query, ctx.guild.id, member.id)
         if not records:
-            return await ctx.send('You don\'t have any tags?')
-        await ctx.send(f"**{len(records)} tags by you found on this server.**")
+            return await ctx.send(f'No tags found ?')
+        await ctx.send(f"**{len(records)} tags by {member.name} found on this server.**")
 
         pager = commands.Paginator()
 
