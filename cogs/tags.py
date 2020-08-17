@@ -93,8 +93,9 @@ class TagCommands(commands.Cog, name="Tags"):
         if not records:
             return await ctx.send("This server doesn't have any tags.")
 
+        await ctx.author.send(f"***{len(records)} tags found on this server.***")
+
         pager = commands.Paginator()
-        pager.add_line(f"**{len(records)} tags found on this server.**")
 
         for record in records:
             pager.add_line(line=record["name"])
