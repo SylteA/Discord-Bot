@@ -6,8 +6,6 @@ import asyncio
 from .utils.DataBase.tag import Tag
 from .utils.checks import is_engineer_check, is_admin
 
-import typing
-
 
 def setup(bot):
     bot.add_cog(TagCommands(bot=bot))
@@ -67,14 +65,15 @@ class TagCommands(commands.Cog, name="Tags"):
 
     @tag.command()
     @is_engineer_check()
-    async def list(self, ctx, member: typing.Optional[commands.MemberConverter]):
+    async def list(self, ctx, member: commands.MemberConverter = None):
         """List your existing tags."""
         member = member or ctx.author
         query = """SELECT name FROM tags WHERE guild_id = $1 AND creator_id = $2 ORDER BY name"""
         records = await self.bot.db.fetch(query, ctx.guild.id, member.id)
         if not records:
-            return await ctx.send(f'No tags found ?')
-        await ctx.send(f"**{len(records)} tags by {member.name} found on this server.**")
+            return await ctx.send(f'No tags found.')
+        
+        await ctx.send(f"**{len(records)} tags by {'you' if member == ctx.author else str(member)} found on this server.**")
 
         pager = commands.Paginator()
 
