@@ -51,7 +51,7 @@ class Tim(commands.AutoShardedBot):
         print(f'Successfully logged in as {self.user}\nSharded to {len(self.guilds)} guilds')
         self.guild = self.get_guild(501090983539245061)
         self.welcomes = self.guild.get_channel(511344843247845377)
-        await self.change_presence(activity=discord.Game(name='use the prefix "tim"'))
+        await self.change_presence(activity=discord.Game(name='use the prefix "tim."'))
 
         for ext in initial_cogs:
             self.load_extension(ext)
