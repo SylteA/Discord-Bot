@@ -118,8 +118,9 @@ class TagCommands(commands.Cog, name="Tags"):
         tag = await self.bot.db.get_tag(guild_id=ctx.guild.id, name=name)
 
         if tag is None:
-            await ctx.message.delete(delay=3.0)
-            return await ctx.send('Could not find a tag with that name.', delete_after=3.0)
+            await ctx.message.delete(delay=10.0)
+            message = await ctx.send('Could not find a tag with that name.')
+            return await message.delete(delay=10.0)
 
         if tag.creator_id != ctx.author.id:
             if not is_admin(ctx.author):
@@ -135,8 +136,9 @@ class TagCommands(commands.Cog, name="Tags"):
         tag = await self.bot.db.get_tag(guild_id=ctx.guild.id, name=name)
 
         if tag is None:
-            await ctx.message.delete(delay=3.0)
-            return await ctx.send('Could not find a tag with that name.', delete_after=3.0)
+            await ctx.message.delete(delay=10.0)
+            message = await ctx.send('Could not find a tag with that name.')
+            return await message.delete(delay=10.0)
 
         if tag.creator_id != ctx.author.id:
             if not is_admin(ctx.author):
@@ -167,8 +169,9 @@ class TagCommands(commands.Cog, name="Tags"):
         tag = await self.bot.db.get_tag(guild_id=ctx.guild.id, name=name)
 
         if tag is None:
-            await ctx.message.delete(delay=3.0)
-            return await ctx.send('Could not find a tag with that name.', delete_after=3.0)
+            await ctx.message.delete(delay=10.0)
+            message = await ctx.send('Could not find a tag with that name.')
+            return await message.delete(delay=10.0)
 
         if tag.creator_id != ctx.author.id:
             if not is_admin(ctx.author):
