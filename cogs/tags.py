@@ -26,9 +26,9 @@ class TagCommands(commands.Cog, name="Tags"):
         tag = await self.bot.db.get_tag(guild_id=ctx.guild.id, name=name)
 
         if tag is None:
-            await ctx.message.delete(delay=3.0)
+            await ctx.message.delete(delay=10.0)
             message = await ctx.send('Could not find a tag with that name.')
-            return await message.delete(delay=3.0)
+            return await message.delete(delay=10.0)
 
         await ctx.send("{}".format(tag.text))
         await self.bot.db.execute("UPDATE tags SET uses = uses + 1 WHERE guild_id = $1 AND name = $2",
