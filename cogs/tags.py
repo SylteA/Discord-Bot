@@ -1,6 +1,7 @@
 from discord.ext import commands
 import discord
 
+import asyncio
 
 from .utils.DataBase.tag import Tag
 from .utils.checks import is_engineer_check, is_admin
@@ -64,13 +65,15 @@ class TagCommands(commands.Cog, name="Tags"):
 
     @tag.command()
     @is_engineer_check()
-    async def list(self, ctx):
+    async def list(self, ctx, member: commands.MemberConverter = None):
         """List your existing tags."""
-        query = """SELECT name FROM tags WHERE guild_id = $1 AND creator_id = $2"""
-        records = await self.bot.db.fetch(query, ctx.guild.id, ctx.author.id)
+        member = member or ctx.author
+        query = """SELECT name FROM tags WHERE guild_id = $1 AND creator_id = $2 ORDER BY name"""
+        records = await self.bot.db.fetch(query, ctx.guild.id, member.id)
         if not records:
-            return await ctx.send('You don\'t have any tags?')
-        await ctx.send(f"**{len(records)} tags by you found on this server.**")
+            return await ctx.send(f'No tags found.')
+        
+        await ctx.send(f"**{len(records)} tags by {'you' if member == ctx.author else str(member)} found on this server.**")
 
         pager = commands.Paginator()
 
@@ -79,6 +82,31 @@ class TagCommands(commands.Cog, name="Tags"):
 
         for page in pager.pages:
             await ctx.send(page)
+
+    @tag.command()
+    @commands.cooldown(1, 3600*24, commands.BucketType.user)
+    async def all(self, ctx: commands.Context):
+        """List all existing tags alphabetically ordered and sends them in DMs."""
+        records = await self.bot.db.fetch(
+            """SELECT name FROM tags WHERE guild_id = $1 ORDER BY name""",
+            ctx.guild.id
+        )
+
+        if not records:
+            return await ctx.send("This server doesn't have any tags.")
+
+        await ctx.author.send(f"***{len(records)} tags found on this server.***")
+
+        pager = commands.Paginator()
+
+        for record in records:
+            pager.add_line(line=record["name"])
+
+        for page in pager.pages:
+            await asyncio.sleep(1)
+            await ctx.author.send(page)
+            
+        await ctx.send("Tags sent in DMs.")
 
     @tag.command()
     @is_engineer_check()

@@ -33,13 +33,15 @@ class ChallengeHandler(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):  # Submitted role.
-        if message.author.bot:return
+        if message.author.bot:
+            return
+
         if message.channel.id == 680851820587122700:  # weekly
 
             submitted = self.bot.guild.get_role(687417501931536478)
             participant = self.bot.guild.get_role(687417513918857232)
             submission_channel = self.bot.guild.get_channel(729453161885990924)
-            
+
             if submitted not in message.author.roles:
                 await message.author.add_roles(submitted)
                 await message.author.remove_roles(participant)
@@ -65,3 +67,6 @@ class ChallengeHandler(commands.Cog):
                 embed.set_author(name=str(message.author), icon_url=message.author.avatar_url)
                 embed.set_footer(text=f'#ID: {message.author.id}')
                 await submission_channel.send(embed=embed)
+
+        elif message.channel.id in [680851798340272141, 713841395965624490]:  # Automatic reaction
+            await message.add_reaction("🖐️")
