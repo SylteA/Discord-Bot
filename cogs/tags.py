@@ -156,7 +156,7 @@ class TagCommands(commands.Cog, name="Tags"):
         records = await self.bot.db.fetch(query, ctx.guild.id, term)
 
         if not records:
-            return await ctx.send("No tags found that has the term in it's name")
+            return await ctx.send("No tags found that has the term in it's name", delete_after=10)
         count = "Maximum of 10" if len(records) == 10 else len(records)
         records = "\n".join([record["name"] for record in records])
 
