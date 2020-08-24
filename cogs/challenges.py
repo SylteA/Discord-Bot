@@ -72,5 +72,5 @@ class ChallengeHandler(commands.Cog):
                 embed.set_footer(text=f'#ID: {message.author.id}')
                 await submission_channel.send(embed=embed)
 
-        elif message.cha6nnel.id in [weeklyChallenge, monthlyChallenge]:  # Automatic reaction
+        elif message.channel.id in [weeklyChallenge, monthlyChallenge]:  # Automatic reaction
             await message.add_reaction("🖐️")
