@@ -16,7 +16,7 @@ class FilterConfig(object):
 
     async def post(self):
         query = """INSERT INTO gconfigs ( guild_id, blacklist_urls, whitelist_channels, reasons )
-                   VALUES ( $1, $2, $3 )"""
+                   VALUES ( $1, $2, $3, $4 )"""
         await self.bot.db.execute(query, self.guild_id, self.blacklist_urls,
                                   self.whitelist_channels, dumps(self.reasons))
         return self
