@@ -1,5 +1,6 @@
 from discord.ext import commands
 import discord
+from ..discordIds import *
 
 
 def setup(bot):
@@ -15,20 +16,20 @@ class ChallengeHandler(commands.Cog):
         if payload.emoji != discord.PartialEmoji(name="🖐️"):
             return
 
-        if payload.channel_id == 680851798340272141:
-            submitted = self.bot.guild.get_role(687417501931536478)
+        if payload.channel_id == weeklyChallenge:
+            submitted = self.bot.guild.get_role(weeklySubmittedRole)
             if submitted in payload.member.roles:
                 return
 
-            participant = self.bot.guild.get_role(687417513918857232)
+            participant = self.bot.guild.get_role(weeklyParticipantRole)
             await self.bot.guild.get_member(payload.user_id).add_roles(participant)
 
-        elif payload.channel_id == 713841395965624490:
-            submitted = self.bot.guild.get_role(715676464573317220)
+        elif payload.channel_id == monthlyChallenge:
+            submitted = self.bot.guild.get_role(monthlySubmittedRole)
             if submitted in payload.member.roles:
                 return
 
-            participant = self.bot.guild.get_role(715676023387062363)
+            participant = self.bot.guild.get_role(monthlyParticipantRole)
             await self.bot.guild.get_member(payload.user_id).add_roles(participant)
 
     @commands.Cog.listener()
@@ -36,11 +37,30 @@ class ChallengeHandler(commands.Cog):
         if message.author.bot:
             return
 
-        if message.channel.id == 680851820587122700:  # weekly
+        if message.channel.id == weeklySubmit:  # weekly
 
-            submitted = self.bot.guild.get_role(687417501931536478)
-            participant = self.bot.guild.get_role(687417513918857232)
-            submission_channel = self.bot.guild.get_channel(729453161885990924)
+            submitted = self.bot.guild.get_role(weeklySubmittedRole)
+            participant = self.bot.guild.get_role(weeklyParticipantRole)
+            submission_channel = self.bot.guild.get_channel(weeklyHiddenSolution)
+
+            if submitted not in message.author.roles:
+                await message.delete()
+                if message.content.count("```") != 2:
+                    message.channel.send("Make sure to submit your code in a code block\n```python\nyour code here\n```")
+                    return
+                await message.author.add_roles(submitted)
+                await message.author.remove_roles(participant)
+                embed = discord.Embed(description=message.content,
+                                      color=message.guild.me.top_role.color)
+                embed.set_author(name=str(message.author), icon_url=message.author.avatar_url)
+                embed.set_footer(text=f'#ID: {message.author.id}')
+                await submission_channel.send(embed=embed)
+
+        elif message.channel.id == monthlySubmit:  # monthly 
+
+            submitted = self.bot.guild.get_role(monthlySubmittedRole)
+            participant = self.bot.guild.get_role(monthlyParticipantRole)
+            submission_channel = self.bot.guild.get_channel(monthlyHiddenSolution)
 
             if submitted not in message.author.roles:
                 await message.author.add_roles(submitted)
@@ -52,21 +72,5 @@ class ChallengeHandler(commands.Cog):
                 embed.set_footer(text=f'#ID: {message.author.id}')
                 await submission_channel.send(embed=embed)
 
-        elif message.channel.id == 713841306253656064:  # monthly 
-
-            submitted = self.bot.guild.get_role(715676464573317220)
-            participant = self.bot.guild.get_role(715676023387062363)
-            submission_channel = self.bot.guild.get_channel(729453201081761862)
-
-            if submitted not in message.author.roles:
-                await message.author.add_roles(submitted)
-                await message.author.remove_roles(participant)
-                await message.delete()
-                embed = discord.Embed(description=message.content,
-                                      color=message.guild.me.top_role.color)
-                embed.set_author(name=str(message.author), icon_url=message.author.avatar_url)
-                embed.set_footer(text=f'#ID: {message.author.id}')
-                await submission_channel.send(embed=embed)
-
-        elif message.channel.id in [680851798340272141, 713841395965624490]:  # Automatic reaction
+        elif message.cha6nnel.id in [weeklyChallenge, monthlyChallenge]:  # Automatic reaction
             await message.add_reaction("🖐️")
