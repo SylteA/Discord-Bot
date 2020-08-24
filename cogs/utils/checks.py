@@ -1,24 +1,25 @@
 from discord import Member
 from discord.ext.commands import check
+from ...discordIds import *
 
 
 def is_admin(member: Member):
     for role in member.roles:
-        if role.id in (511334601977888798, 580911082290282506, 537990081156481025):
+        if role.id in (TIM, adminRole, 537990081156481025):
             return True
     return False
 
 
 def is_mod(member: Member):
     for role in member.roles:
-        if role.id in (511332506780434438, 541272748161499147):
+        if role.id in (modRole, helperRole):
             return True
     return is_admin(member)
 
 
 def is_engineer(member: Member):
     for role in member.roles:
-        if role.id == 611734695587086370:
+        if role.id == engineerRole:
             return True
     return is_mod(member)
 

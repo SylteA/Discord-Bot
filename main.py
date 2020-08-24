@@ -13,6 +13,7 @@ from cogs.utils.time import human_timedelta
 from cogs.utils.DataBase import DataBase, Message, User
 
 from config import TOKEN, POSTGRES
+from discordIds import *
 
 
 os.environ["JISHAKU_NO_UNDERSCORE"] = "True"
@@ -49,8 +50,8 @@ class Tim(commands.AutoShardedBot):
 
     async def on_ready(self):
         print(f'Successfully logged in as {self.user}\nSharded to {len(self.guilds)} guilds')
-        self.guild = self.get_guild(501090983539245061)
-        self.welcomes = self.guild.get_channel(511344843247845377)
+        self.guild = self.get_guild(guildID)
+        self.welcomes = self.guild.get_channel(welcomesChannel)
         await self.change_presence(activity=discord.Game(name='use the prefix "tim."'))
 
         for ext in initial_cogs:
@@ -59,7 +60,7 @@ class Tim(commands.AutoShardedBot):
 
     async def on_member_join(self, member):
         await self.wait_until_ready()
-        if member.guild.id == 501090983539245061:
+        if member.guild.id == guildID:
             await self.welcomes.send(f"Welcome to the Tech With Tim Community {member.mention}!\n"
                                      f"Members += 1\nCurrent # of members: {self.guild.member_count}")
 
