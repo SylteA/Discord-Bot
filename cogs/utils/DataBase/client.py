@@ -65,38 +65,32 @@ class DataBase(object):
         return User(bot=self.bot, messages=messages, reps=reps, **record)
 
     async def get_all_users(self, get_messages: bool = False, get_reps: bool = False):
-        records = await self.fetch('SELECT * FROM users')
-        users = [User(bot=self.bot, messages=[], reps=[], **record) for record in records]
-
-        # As i write this, with about 1300 messages in the database i can tell that this will be very slow once we let
-        # this run for a few days, (currently takes about 2 sec to complete)
-        # If you know a more efficient way, please tell.
+        records = await self.fetch('SELECT * FROM users ORDER BY level_xp desc')
+        users = {int(record["id"]): User(bot=self.bot, messages=[], reps=[], **record) for record in records}
 
         if get_messages:
             records = await self.fetch('SELECT * FROM messages ORDER BY author_id ASC')
             messages = [Message(bot=self.bot, **record) for record in records]
+            for message in messages:
+                users[message.author_id].messages.append(message)
 
         if get_reps:
             records = await self.fetch("SELECT * FROM reps ORDER BY user_id ASC")
             reps = [Rep(bot=self.bot, **record) for record in records]
+            for rep in reps:
+                users[rep.user_id].reps.append(rep)
 
-        for user in users:
-            if get_messages:
-                for message in messages:
-                    if user.id == message.author_id:
-                        user.messages.append(message)
-
-            if get_reps:
-                for rep in reps:
-                    if user.id == rep.user_id:
-                        user.reps.append(rep)
-
-        return users
+        return [x for x in list(users.values())]
 
     async def get_messages(self, author_id: int) -> List[Message]:
         query = """SELECT * FROM messages WHERE author_id = $1"""
         records = await self.fetch(query, author_id)
         return [Message(bot=self.bot, **record) for record in records]
+
+    async def get_message(self, message_id: int) -> Message:
+        query = """SELECT * FROM messages WHERE message_id = $1"""
+        record = await self.fetchrow(query, message_id)
+        return Message(bot=self.bot, **record)
 
     async def get_reps(self, id: int, key: str = 'user_id'):
         if key not in ('author_id', 'user_id'):
