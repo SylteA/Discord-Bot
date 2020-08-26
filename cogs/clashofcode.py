@@ -57,7 +57,7 @@ class ClashOfCode(commands.Cog):
         511332506780434438,  # Mod
         541272748161499147,  # Helper
         coc_role
-        )
+    )
     @commands.check(lambda ctx: ctx.channel.id == 729352136588263456)
     @commands.cooldown(1, 60, commands.BucketType.channel)
     async def coc_invite(self, ctx: commands.Context, *, url: str):
@@ -77,8 +77,9 @@ class ClashOfCode(commands.Cog):
                                           f'\nJoin here: {links[0]}',
                                    suffix="")
         for member in self.role.members:
-            if member.status != discord.Status.offline:
-                pager.add_line(member.mention + ", ")
+            if member != ctx.author:
+                if member.status != discord.Status.offline:
+                    pager.add_line(member.mention + ", ")
 
         for page in pager.pages:
             await ctx.send(page)
