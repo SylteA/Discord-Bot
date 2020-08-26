@@ -65,7 +65,7 @@ class DataBase(object):
         return User(bot=self.bot, messages=messages, reps=reps, **record)
 
     async def get_all_users(self, get_messages: bool = False, get_reps: bool = False):
-        records = await self.fetch('SELECT * FROM users ORDER BY level_xp desc')
+        records = await self.fetch('SELECT * FROM users')
         users = {int(record["id"]): User(bot=self.bot, messages=[], reps=[], **record) for record in records}
 
         if get_messages:
