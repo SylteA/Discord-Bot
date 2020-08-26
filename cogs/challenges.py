@@ -43,9 +43,15 @@ class ChallengeHandler(commands.Cog):
             submission_channel = self.bot.guild.get_channel(729453161885990924)
 
             if submitted not in message.author.roles:
+                await message.delete()
+                if message.content.count("```") != 2:
+                    return await message.channel.send(f"{message.author.mention} make sure to still submit in a code "
+                                                      f"block and only include the code required for the "
+                                                      f"challenge!\n\\```py\nyour "
+                                                      "code\n\\```", delete_after=15.0)
+
                 await message.author.add_roles(submitted)
                 await message.author.remove_roles(participant)
-                await message.delete()
                 embed = discord.Embed(description=message.content,
                                       color=message.guild.me.top_role.color)
                 embed.set_author(name=str(message.author), icon_url=message.author.avatar_url)
