@@ -41,14 +41,21 @@ class ChallengeHandler(commands.Cog):
             submitted = self.bot.guild.get_role(687417501931536478)
             participant = self.bot.guild.get_role(687417513918857232)
             submission_channel = self.bot.guild.get_channel(729453161885990924)
+            discussion_channel = self.bot.guild.get_channel(680851838857117770)
 
             if submitted not in message.author.roles:
                 await message.delete()
                 if message.content.count("```") != 2:
-                    return await message.channel.send(f"{message.author.mention} make sure to still submit in a code "
-                                                      f"block and only include the code required for the "
-                                                      f"challenge!\n\\```py\nyour "
-                                                      "code\n\\```", delete_after=15.0)
+                    msg = f"{message.author.mention} make sure to submit in a code " \
+                          f"block and only include the code required for the " \
+                          f"challenge!\n\\```py\nyour " \
+                          "code\n\\```"
+                    try:
+                        await message.author.send(msg)
+                    except:
+                        await discussion_channel.send(msg)
+
+                    return
 
                 await message.author.add_roles(submitted)
                 await message.author.remove_roles(participant)
