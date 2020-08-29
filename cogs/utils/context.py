@@ -24,7 +24,6 @@ def embed_to_string(embed: discord.Embed) -> str:
 
 
 class SyltesContext(commands.Context):
-
     async def send(self, content=None, *, tts=False, embed=None, file=None, files=None, delete_after=None, nonce=None) \
             -> Union[discord.Message, None]:
         """Better handling of missing permissions"""
@@ -54,6 +53,7 @@ class SyltesContext(commands.Context):
     @staticmethod
     async def cleanup(*messages, delay: float = 0.0) -> None:
         """Shortcut for deleting messages, with optional delay param"""
+
         async def do_deletion(msg):
             await asyncio.sleep(delay)
             try:
@@ -66,6 +66,7 @@ class SyltesContext(commands.Context):
 
     async def prompt_reply(self, message: str, *, timeout=60.0, delete_after=True, author_id=None) -> Union[str, None]:
         """Prompt a text reply from `author_id` if no response is found returns a empty string"""
+
         author_id = author_id or self.author.id
         _msg = await super().send(message)
 
@@ -86,3 +87,8 @@ class SyltesContext(commands.Context):
                 return message.content
             else:
                 return None
+
+    async def em(self, delete_after=None, **kwargs):
+        """Shortcut to send embeds with `bot.em`"""
+
+        return await self.send(self.bot.em(**kwargs), delete_after=delete_after)
