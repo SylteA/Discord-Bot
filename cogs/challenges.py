@@ -41,11 +41,18 @@ class ChallengeHandler(commands.Cog):
             submitted = self.bot.guild.get_role(687417501931536478)
             participant = self.bot.guild.get_role(687417513918857232)
             submission_channel = self.bot.guild.get_channel(729453161885990924)
+            discussion_channel = self.bot.guild.get_channel(680851838857117770)
 
             if submitted not in message.author.roles:
+                await message.delete()
+                if message.content.count("```") != 2:
+                    msg = f"{message.author.mention} make sure to submit in a code " \
+                          f"block and only include the code required for the challenge!" \
+                          f"\nUse `tim.tag discord code` for more information!"
+                    return await message.channel.send(msg, delete_after=10.0)
+
                 await message.author.add_roles(submitted)
                 await message.author.remove_roles(participant)
-                await message.delete()
                 embed = discord.Embed(description=message.content,
                                       color=message.guild.me.top_role.color)
                 embed.set_author(name=str(message.author), icon_url=message.author.avatar_url)
