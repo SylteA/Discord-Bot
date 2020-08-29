@@ -47,15 +47,9 @@ class ChallengeHandler(commands.Cog):
                 await message.delete()
                 if message.content.count("```") != 2:
                     msg = f"{message.author.mention} make sure to submit in a code " \
-                          f"block and only include the code required for the " \
-                          f"challenge!\n\\```py\nyour " \
-                          "code\n\\```"
-                    try:
-                        await message.author.send(msg)
-                    except:
-                        await discussion_channel.send(msg)
-
-                    return
+                          f"block and only include the code required for the challenge!" \
+                          f"\nUse `tim.tag discord code` for more information!"
+                    return await message.channel.send(msg, delete_after=10.0)
 
                 await message.author.add_roles(submitted)
                 await message.author.remove_roles(participant)
