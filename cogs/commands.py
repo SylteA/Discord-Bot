@@ -339,7 +339,7 @@ class Commands(commands.Cog):
                     "p").find("strong").text).replace(',','').replace('+',''))
             if results > 0:
                 em = discord.Embed(title=f"Searched {term}",
-                                   description=f"[Showing 10/{results} results.]({search})" if results > 20 else f"Showing {results} results.")
+                                   description=f"[Showing {amount}/{results} results.]({search})" if results > 20 else f"Showing {results} results.")
                 i = 0
                 em.colour = discord.Colour.green()
                 for package in packages[:amount]:
