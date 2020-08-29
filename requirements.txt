@@ -1,8 +1,9 @@
-python-dateutil
+aiohttp
+asyncpg
 beautifulsoup4
 discord.py
 html5lib
-asyncpg
 jishaku
 pandas
 psutil
+python-dateutil
