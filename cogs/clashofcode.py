@@ -6,7 +6,7 @@ import re
 coc_role = 729342805855567934
 coc_channel = 729352136588263456
 coc_message = 729355074085584918
-REGEX = re.compile(r"(https://www.codingame.com/clashofcode/clash/[0-9a-f]{39})")
+REGEX = re.compile(r"https://www.codingame.com/clashofcode/clash/([0-9a-f]{39})")
 
 
 def setup(bot: commands.Bot):
@@ -64,17 +64,13 @@ class ClashOfCode(commands.Cog):
         """Mentions all the users with the `Clash Of Code` role that are currently online."""
         await ctx.message.delete()
 
-        links = REGEX.findall(url)
-        if not links:
+        link = REGEX.fullmatch(url)
+        if not link:
             ctx.command.reset_cooldown(ctx)
             return await ctx.send('Could not find any valid "clashofcode" urls.')
 
-        if len(links) > 1:
-            ctx.command.reset_cooldown(ctx)
-            return await ctx.send('Please only provide one "clashofcode" url.')
-
         pager = commands.Paginator(prefix=f'Hey, {ctx.author.mention} is hosting a "clashofcode" game!'
-                                          f'\nJoin here: {links[0]}',
+                                          f'\nJoin here: {link[0]}',
                                    suffix="")
         for member in self.role.members:
             if member.status != discord.Status.offline:
