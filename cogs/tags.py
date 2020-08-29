@@ -97,7 +97,10 @@ class TagCommands(commands.Cog, name="Tags"):
         if not records:
             return await ctx.send("This server doesn't have any tags.")
 
-        await ctx.author.send(f"***{len(records)} tags found on this server.***")
+        try:
+            await ctx.author.send(f"***{len(records)} tags found on this server.***")
+        except discord.Forbidden:
+            ctx.command.reset_cooldown(ctx)
 
         pager = commands.Paginator()
 
