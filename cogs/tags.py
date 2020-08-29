@@ -101,6 +101,7 @@ class TagCommands(commands.Cog, name="Tags"):
             await ctx.author.send(f"***{len(records)} tags found on this server.***")
         except discord.Forbidden:
             ctx.command.reset_cooldown(ctx)
+            return await ctx.send("Could not dm you...", delete_after=10)
 
         pager = commands.Paginator()
 
