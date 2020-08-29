@@ -101,10 +101,10 @@ class ClashOfCode(commands.Cog):
                 async with session.post(API_URL, json=[ID]) as resp:
                     json = await resp.json()
 
-        await ctx.send(
-            "\n".join(
+        await ctx.em(
+            title="**Clash started**",
+            description="\n".join(
                 [
-                    "**Clash started**",
                     f"Mode: {json['mode']}",
                     f"Players: {', '.join([p['codingamerNickname'] for p in sorted(json['players'], key=lambda p: p['position'])])}"
                 ]
@@ -117,16 +117,14 @@ class ClashOfCode(commands.Cog):
                 async with session.post(API_URL, json=[ID]) as resp:
                     json = await resp.json()
 
-        await ctx.send(
-            "\n".join(
-                [
-                    "**Clash finished**",
-                    "Results:"
-                ] + [
+        await ctx.em(
+            title="**Clash finished**",
+            description="\n".join(
+                ["Results:"] + [
                     # Example "1. Takos (Code length: 123, Score 100%, Time 1:09)"
-                    f"{p['rank']}. {p['codingamerNickname']} (" +
-                    (f"Code length: {p['criterion']}, " if json["mode"] == "SHORTEST" else "") +
-                    f"Score: {p['score']}%, Time: {p['duration'] // 60_000}:{p['duration'] // 1000 % 60:02})"
+                    f"{p['rank']}. {p['codingamerNickname']} ("
+                    + (f"Code length: {p['criterion']}, " if json["mode"] == "SHORTEST" else "")
+                    + f"Score: {p['score']}%, Time: {p['duration'] // 60_000}:{p['duration'] // 1000 % 60:02})"
                     for p in sorted(json["players"], key=lambda p: p["rank"])
                 ]
             )
