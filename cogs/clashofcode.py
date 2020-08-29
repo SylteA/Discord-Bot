@@ -57,7 +57,7 @@ class ClashOfCode(commands.Cog):
         511332506780434438,  # Mod
         541272748161499147,  # Helper
         coc_role
-        )
+    )
     @commands.check(lambda ctx: ctx.channel.id == 729352136588263456)
     @commands.cooldown(1, 60, commands.BucketType.channel)
     async def coc_invite(self, ctx: commands.Context, *, url: str):
@@ -67,11 +67,11 @@ class ClashOfCode(commands.Cog):
         links = REGEX.findall(url)
         if not links:
             ctx.command.reset_cooldown(ctx)
-            return await ctx.send(f'Could not find any valid "clashofcode" urls.')
+            return await ctx.send('Could not find any valid "clashofcode" urls.')
 
         if len(links) > 1:
             ctx.command.reset_cooldown(ctx)
-            return await ctx.send(f'Please only provide one "clashofcode" url.')
+            return await ctx.send('Please only provide one "clashofcode" url.')
 
         pager = commands.Paginator(prefix=f'Hey, {ctx.author.mention} is hosting a "clashofcode" game!'
                                           f'\nJoin here: {links[0]}',
