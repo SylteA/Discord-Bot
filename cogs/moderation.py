@@ -21,4 +21,4 @@ class Moderation(commands.Cog):
         em = discord.Embed(title=f"**Report {user} for:**", description=reason)
         em.set_author(name=ctx.author, icon_url=ctx.author.avatar_url)
         await self.report_channel.send(embed=em)
- 
+
