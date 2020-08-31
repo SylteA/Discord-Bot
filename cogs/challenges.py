@@ -1,5 +1,8 @@
 from discord.ext import commands
 import discord
+import re
+
+GITHUB_REGEX = re.compile(r"(https://github.com/[a-zA-Z0-9]+/[a-zA-Z0-9]+)")
 
 
 def setup(bot):
@@ -66,12 +69,21 @@ class ChallengeHandler(commands.Cog):
             submission_channel = self.bot.guild.get_channel(729453201081761862)
 
             await message.delete()
+
+            links = GITHUB_REGEX.findall(message.content)
+            if not links:
+                return await message.channel.send(f'{message.author.mention} Could not find any valid "Github" url.')
+
+            if len(links) > 1:
+                return await message.channel.send(f'{message.author.mention} Please only provide one "Github" url.')
+
             if len(message.mentions) == 0:
                 return await message.channel.send(f"{message.author.mention}, Please make sure to mention your team ("
                                                   f"yourself included)", delete_after=10.0)
             for member in message.mentions:
                 if participant not in member.roles:
-                    return await message.channel.send(f"{member.mention} didn't participated in the challenge", delete_after=10.0)
+                    return await message.channel.send(f"{member.mention} didn't participated in the challenge",
+                                                      delete_after=10.0)
                 if submitted in member.roles:
                     return await message.channel.send(f"{member.mention} has already submitted", delete_after=10.0)
 
