@@ -65,15 +65,25 @@ class ChallengeHandler(commands.Cog):
             participant = self.bot.guild.get_role(715676023387062363)
             submission_channel = self.bot.guild.get_channel(729453201081761862)
 
-            if submitted not in message.author.roles:
-                await message.author.add_roles(submitted)
-                await message.author.remove_roles(participant)
-                await message.delete()
-                embed = discord.Embed(description=message.content,
-                                      color=message.guild.me.top_role.color)
-                embed.set_author(name=str(message.author), icon_url=message.author.avatar_url)
-                embed.set_footer(text=f'#ID: {message.author.id}')
-                await submission_channel.send(embed=embed)
+            await message.delete()
+            if len(message.mentions) == 0:
+                return await message.channel.send(f"{message.author.mention}, Please make sure to mention your team ("
+                                                  f"yourself included)", delete_after=10.0)
+            for member in message.mentions:
+                if participant not in member.roles:
+                    return await message.channel.send(f"{member.mention} didn't participated in the challenge", delete_after=10.0)
+                if submitted in member.roles:
+                    return await message.channel.send(f"{member.mention} has already submitted", delete_after=10.0)
+
+            for member in message.mentions:
+                await member.add_roles(submitted)
+                await member.remove_roles(participant)
+
+            embed = discord.Embed(description=message.content,
+                                  color=message.guild.me.top_role.color)
+            embed.set_author(name=str(message.author), icon_url=message.author.avatar_url)
+            embed.set_footer(text=f'#ID: {message.author.id}')
+            await submission_channel.send(embed=embed)
 
         elif message.channel.id in [680851798340272141, 713841395965624490]:  # Automatic reaction
             await message.add_reaction("🖐️")
