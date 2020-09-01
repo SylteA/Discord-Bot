@@ -26,7 +26,9 @@ initial_cogs = [
     'cogs._help',
     'cogs.tags',
     'cogs.challenges',
-    'cogs.clashofcode'
+    'cogs.clashofcode',
+    'cogs.moderation',
+    'cogs.roles'
 ]
 
 print('Connecting...')
