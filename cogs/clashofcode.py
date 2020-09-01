@@ -80,12 +80,12 @@ class ClashOfCode(commands.Cog):
                 json = await resp.json()
 
         pager = commands.Paginator(
-            prefix="\n".join[
+            prefix="\n".join([
                 f"**Hey, {ctx.author.mention} is hosting a Clash Of Code game!**"
                 f"Mode{'s' if len(json['modes']) > 1 else ''}: {', '.join(json['modes'])}"
                 f"Programming languages: {', '.join(json['programmingLanguages']) if json['programmingLanguages'] else 'All'}"
                 f"Join here: {link[0]}"
-            ],
+            ]),
             suffix="",
         )
 
