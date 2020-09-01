@@ -318,7 +318,7 @@ class Commands(commands.Cog):
 
     @commands.command('pipsearch', aliases=['pip', 'pypi'])
     @commands.cooldown(2, 5, commands.BucketType.user)
-    async def pipsearch(self, ctx, term, order: lambda string: string.lower() = 'relevance', amount: int = 10):
+    async def pipsearch(self, ctx, term, order: lambda string: string.lower() = 'relevance', amount: lambda x: min(int(x), 10) = 10):
         """Search pypi.org for packages.
         Specify term, order (relevance, trending, updated) and amount (10 is default) you want to show."""
         if order not in ('relevance', 'trending', 'updated'):
@@ -339,7 +339,7 @@ class Commands(commands.Cog):
                     "p").find("strong").text).replace(',','').replace('+',''))
             if results > 0:
                 em = discord.Embed(title=f"Searched {term}",
-                                   description=f"[Showing 10/{results} results.]({search})" if results > 20 else f"Showing {results} results.")
+                                   description=f"[Showing {amount}/{results} results.]({search})" if results > amount else f"[Showing {results} results.]({search})")
                 i = 0
                 em.colour = discord.Colour.green()
                 for package in packages[:amount]:
