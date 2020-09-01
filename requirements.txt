@@ -2,7 +2,8 @@ python-dateutil
 beautifulsoup4
 discord.py
 html5lib
-asyncpg
 jishaku
+aiohttp
+asyncpg
 pandas
 psutil
