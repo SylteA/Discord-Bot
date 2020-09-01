@@ -15,7 +15,7 @@ class Moderation(commands.Cog):
         return self.bot.get_channel(749742688521158656)
 
     @commands.command("report")
-    @commands.dm_only()
+    @commands.guild_only()
     async def report(self, ctx, user: discord.User, *, reason: str):
         """Report a user to staff for a reason."""
         await ctx.em(title=f"**Thank you for reporting {user} for:**", description=reason)
