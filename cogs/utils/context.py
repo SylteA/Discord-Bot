@@ -91,4 +91,4 @@ class SyltesContext(commands.Context):
     async def em(self, delete_after=None, **kwargs):
         """Shortcut to send embeds with `bot.em`"""
 
-        return await self.send(self.bot.em(**kwargs), delete_after=delete_after)
+        return await self.send(embed=self.bot.em(**kwargs), delete_after=delete_after)
