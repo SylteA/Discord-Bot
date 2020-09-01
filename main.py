@@ -136,7 +136,7 @@ class Tim(commands.AutoShardedBot):
         """Implementation of custom context"""
         return await super().get_context(message=message, cls=cls or SyltesContext)
 
-    async def em(self, **kwargs):
+    def em(self, **kwargs):
         return discord.Embed(**kwargs)
 
     @staticmethod
