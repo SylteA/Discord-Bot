@@ -73,10 +73,10 @@ class ClashOfCode(commands.Cog):
             ctx.command.reset_cooldown(ctx)
             return await ctx.send('Could not find any valid "clashofcode" urls.')
 
-        ID = link[1]
+        id = link[1]
 
         async with aiohttp.ClientSession() as session:
-            async with session.post(API_URL, json=[ID]) as resp:
+            async with session.post(API_URL, json=[id]) as resp:
                 json = await resp.json()
 
         pager = commands.Paginator(
@@ -100,16 +100,17 @@ class ClashOfCode(commands.Cog):
         async with aiohttp.ClientSession() as session:
             while not json["started"]:
                 await asyncio.sleep(10)  # wait 10s to avoid flooding the API
-                async with session.post(API_URL, json=[ID]) as resp:
+                async with session.post(API_URL, json=[id]) as resp:
                     json = await resp.json()
 
         players = len(json["players"])
+        players_text = ', '.join([p['codingamerNickname'] for p in sorted(json['players'], key=lambda p: p['position'])])
         start_message = await ctx.em(
             title="**Clash started**",
             description="\n".join(
                 [
                     f"Mode: {json['mode']}",
-                    f"Players: {', '.join([p['codingamerNickname'] for p in sorted(json['players'], key=lambda p: p['position'])])}"
+                    f"Players: {players_text}"
                 ]
             )
         )
@@ -117,17 +118,19 @@ class ClashOfCode(commands.Cog):
         async with aiohttp.ClientSession() as session:
             while not json["finished"]:
                 await asyncio.sleep(10)  # wait 10s to avoid flooding the API
-                async with session.post(API_URL, json=[ID]) as resp:
+                async with session.post(API_URL, json=[id]) as resp:
                     json = await resp.json()
 
                 if len(json["players"]) != players:
+                    players_text = ', '.join([p['codingamerNickname']
+                                              for p in sorted(json['players'], key=lambda p: p['position'])])
                     await start_message.edit(
                         embed=self.bot.em(
                             title="**Clash started**",
                             description="\n".join(
                                 [
                                     f"Mode: {json['mode']}",
-                                    f"Players: {', '.join([p['codingamerNickname'] for p in sorted(json['players'], key=lambda p: p['position'])])}",
+                                    f"Players: {players_text}",
                                 ]
                             ),
                         )
