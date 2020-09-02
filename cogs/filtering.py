@@ -24,6 +24,12 @@ class Filtering(commands.Cog):
             config = await self.bot.db.get_config(guild_id)
             self.configs[str(guild_id)] = config
 
+    @property
+    async def allowed_invites(self):
+        invites = [str(invite) for invite in await self.bot.guild.invites()]
+        invites.append("https://discord.gg/python")  # not the best way for storing allowed invites feel free to change it
+        return invites
+
     @commands.Cog.listener()
     async def on_message(self, message):
         await self.bot.wait_until_ready()
@@ -46,6 +52,15 @@ class Filtering(commands.Cog):
         config = self.configs[str(message.guild.id)]
         if not config.enabled:
             return
+
+        invites = re.findall(r"(https://discord.gg/[a-zA-Z0-9]+)", message.content, flags=re.IGNORECASE)
+        allowed_invites = await self.allowed_invites
+
+        for invite in invites:
+            if invite not in allowed_invites:
+                await message.delete()
+                return await message.channel.send(f"{message.author.mention}, Discord Invite Links are not allowed in "
+                                                  f"this server <:pepehammer:713872109478346793>")
 
         urls = re.findall(r"(https?://[^\s]+)", message.content, flags=re.IGNORECASE)
         for url in urls:
