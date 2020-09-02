@@ -29,8 +29,7 @@ class Moderation(commands.Cog):
         embed.add_field(name="Reported User", value=user.mention)
         embed.add_field(name="Reporter", value=ctx.author.mention)
         embed.add_field(name="Reported On", value=f"{datetime.datetime.now().strftime('%a, %b %d, %Y %I:%M %p')}")
-        embed.add_field(name="Channel", value=ctx.channel.mention)
-        embed.add_field(name="Reason", value=reason)
+        embed.add_field(name="Reason", value=reason, inline=False)
 
         await ctx.send(embed=embed)
         await self.report_channel.send(embed=embed)
