@@ -25,7 +25,7 @@ class Moderation(commands.Cog):
             ctx.command.reset_cooldown(ctx)
             return await ctx.send("You can't warn a bot <:mhm:687726663676592145>")
 
-        embed = discord.Embed(title=f"Report", timestamp=datetime.datetime.now(), inline=False)
+        embed = discord.Embed(title=f"Report", timestamp=datetime.datetime.utcnow(), inline=False)
         embed.add_field(name="Reported User", value=f"{user.mention} ({user.id})", inline=False)
         embed.add_field(name="Reporter", value=f"{ctx.author.mention} ({user.id})", inline=False)
         embed.add_field(name="Reason", value=reason, inline=False)
