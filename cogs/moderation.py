@@ -1,6 +1,8 @@
 import discord
 from discord.ext import commands
 
+import datetime
+
 
 def setup(bot: commands.Bot):
     bot.add_cog(Moderation(bot=bot))
@@ -16,10 +18,17 @@ class Moderation(commands.Cog):
 
     @commands.command("report")
     @commands.guild_only()
-    async def report(self, ctx, user: discord.User, *, reason: str):
+    @commands.cooldown(1, 15, commands.BucketType.channel)
+    async def report(self, ctx, user: discord.Member, *, reason: str):
         """Report a user to staff for a reason."""
-        await ctx.em(title=f"**Thank you for reporting {user} for:**", description=reason)
-        em = discord.Embed(title=f"**Report {user} for:**", description=reason)
-        em.set_author(name=ctx.author, icon_url=ctx.author.avatar_url)
-        await self.report_channel.send(embed=em)
+        if user.bot:
+            ctx.command.reset_cooldown(ctx)
+            return await ctx.send("You can't warn a bot <:mhm:687726663676592145>")
 
+        embed = discord.Embed(title=f"Report", timestamp=datetime.datetime.utcnow(), inline=False)
+        embed.add_field(name="Reported User", value=f"{user.mention} ({user.id})", inline=False)
+        embed.add_field(name="Reporter", value=f"{ctx.author.mention} ({user.id})", inline=False)
+        embed.add_field(name="Reason", value=reason, inline=False)
+
+        await ctx.send(embed=embed)
+        await self.report_channel.send(embed=embed)
