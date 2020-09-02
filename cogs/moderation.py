@@ -27,7 +27,7 @@ class Moderation(commands.Cog):
 
         embed = discord.Embed(title=f"Report", timestamp=datetime.datetime.utcnow(), inline=False)
         embed.add_field(name="Reported User", value=f"{user.mention} ({user.id})", inline=False)
-        embed.add_field(name="Reporter", value=f"{ctx.author.mention} ({user.id})", inline=False)
+        embed.add_field(name="Reporter", value=f"{ctx.author.mention} ({ctx.author.id})", inline=False)
         embed.add_field(name="Reason", value=reason, inline=False)
 
         await ctx.send(embed=embed)
