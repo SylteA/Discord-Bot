@@ -360,8 +360,8 @@ class Commands(commands.Cog):
     async def suggestion(self, ctx, *, suggestion: str):
         """Make a poll/suggestion"""
         await ctx.message.delete()
-        em = discord.Embed(title="Poll", description=suggestion)
-        em.set_author(name=ctx.author.display_name, icon_url=ctx.author.avatar_url)
+        em = discord.Embed(description=suggestion)
+        em.set_author(name=f"Poll by {ctx.author.display_name}", icon_url=ctx.author.avatar_url)
         msg = await ctx.send(embed=em)
         await msg.add_reaction('👍')
         await msg.add_reaction('👎')
