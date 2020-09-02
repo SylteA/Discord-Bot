@@ -135,6 +135,7 @@ class ClashOfCode(commands.Cog):
                             ),
                         )
                     )
+                    players = len(json["players"])
 
         await ctx.em(
             title="**Clash finished**",
