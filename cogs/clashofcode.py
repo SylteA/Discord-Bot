@@ -116,7 +116,11 @@ class ClashOfCode(commands.Cog):
         )
 
         async with aiohttp.ClientSession() as session:
-            while not json["finished"]:
+            while not json["finished"] and all(
+                all(
+                    key in p.keys() for key in ["score", "duration"] + (["criterion"] if json["mode"] == "SHORTEST" else [])
+                ) for p in json["players"]
+            ):
                 await asyncio.sleep(10)  # wait 10s to avoid flooding the API
                 async with session.post(API_URL, json=[id]) as resp:
                     json = await resp.json()
