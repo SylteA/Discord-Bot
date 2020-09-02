@@ -25,6 +25,12 @@ class ClashOfCode(commands.Cog):
     def role(self):
         return self.bot.guild.get_role(coc_role)
 
+    def em(self, mode, players):
+        embed = discord.Embed(title="**Clash started**")
+        embed.add_field(name="Mode", value=mode, inline=False)
+        embed.add_field(name="Players", value=players)
+        return embed
+
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
         if payload.message_id != coc_message:
@@ -94,6 +100,9 @@ class ClashOfCode(commands.Cog):
                 if member.status != discord.Status.offline:
                     pager.add_line(member.mention + ", ")
 
+        if not len(pager.pages):
+            await ctx.send(f"{ctx.author.mention}, Nobody is online to play with <:pepesad:733816214010331197>")
+
         for page in pager.pages:
             await ctx.send(page)
 
@@ -105,15 +114,7 @@ class ClashOfCode(commands.Cog):
 
         players = len(json["players"])
         players_text = ', '.join([p['codingamerNickname'] for p in sorted(json['players'], key=lambda p: p['position'])])
-        start_message = await ctx.em(
-            title="**Clash started**",
-            description="\n".join(
-                [
-                    f"Mode: {json['mode']}",
-                    f"Players: {players_text}"
-                ]
-            )
-        )
+        start_message = await ctx.send(embed=self.em(json['mode'], players_text))
 
         async with aiohttp.ClientSession() as session:
             while not json["finished"]:
@@ -124,17 +125,7 @@ class ClashOfCode(commands.Cog):
                 if len(json["players"]) != players:
                     players_text = ', '.join([p['codingamerNickname']
                                               for p in sorted(json['players'], key=lambda p: p['position'])])
-                    await start_message.edit(
-                        embed=self.bot.em(
-                            title="**Clash started**",
-                            description="\n".join(
-                                [
-                                    f"Mode: {json['mode']}",
-                                    f"Players: {players_text}",
-                                ]
-                            ),
-                        )
-                    )
+                    await start_message.edit(embed=self.em(json['mode'], players_text))
 
         await ctx.em(
             title="**Clash finished**",
