@@ -21,9 +21,10 @@ class Moderation(commands.Cog):
     @commands.cooldown(1, 15, commands.BucketType.channel)
     async def report(self, ctx, member: discord.Member, *, reason: str):
         """Report a user to staff for a reason."""
+        await ctx.message.delete()
         if member.bot:
             ctx.command.reset_cooldown(ctx)
-            return await ctx.send("You can't warn a bot <:mhm:687726663676592145>")
+            return await ctx.send("You can't report a bot <:mhm:687726663676592145>")
 
         embed = discord.Embed(title=f"Report", timestamp=datetime.datetime.utcnow(), inline=False)
         embed.add_field(name="Reported Member", value=f"{member.mention} ({member.id})", inline=False)
