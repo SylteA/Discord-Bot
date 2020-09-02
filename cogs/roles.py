@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 
-role_message = 0  # add id of the role message here
+role_message = 750788253770317865
 
 
 def setup(bot: commands.Bot):
