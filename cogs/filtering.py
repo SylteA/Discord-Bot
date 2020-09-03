@@ -56,11 +56,12 @@ class Filtering(commands.Cog):
         invites = re.findall(r"(https://discord.gg/[a-zA-Z0-9]+)", message.content, flags=re.IGNORECASE)
         allowed_invites = await self.allowed_invites
 
-        for invite in invites:
-            if invite not in allowed_invites:
-                await message.delete()
-                return await message.channel.send(f"{message.author.mention}, Discord Invite Links are not allowed in "
-                                                  f"this server <:pepehammer:713872109478346793>")
+        if not is_mod(message.author):
+            for invite in invites:
+                if invite not in allowed_invites:
+                    await message.delete()
+                    return await message.channel.send(f"{message.author.mention}, Discord Invite Links are not "
+                                                      f"allowed in this server <:pepehammer:713872109478346793>")
 
         urls = re.findall(r"(https?://[^\s]+)", message.content, flags=re.IGNORECASE)
         for url in urls:
