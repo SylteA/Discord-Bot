@@ -162,7 +162,7 @@ class Commands(commands.Cog):
 
         url = self.get_github_link(base_url=base_url, branch='master', command=command)
 
-        pages = to_pages_by_lines(source, max_size=1900)
+        pages = to_pages_by_lines(source, max_size=1800)
 
         if not len(pages) > 1:
             page = pages[0].replace("`", "`\u200b")
