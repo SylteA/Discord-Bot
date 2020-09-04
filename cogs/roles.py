@@ -28,29 +28,31 @@ class Roles(commands.Cog):
         }
 
     @commands.Cog.listener()
-    async def on_reaction_add(self, reaction: discord.Reaction, user: discord.User):
-        if reaction.message.id != role_message:
+    async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
+        if payload.message_id != role_message:
             return
 
-        if any(role in user.roles for role in self.roles.values()) or self.lvl_20_role not in user.roles:
-            return await reaction.remove()
+        if any(role in payload.member.roles for role in self.roles.values()) or self.lvl_20_role not in payload.member.roles:
+            message = await self.bot.get_channel(payload.channel_id).fetch_message(role_message)
+            return await message.remove_reaction(payload.emoji, payload.member)
 
-        await user.add_roles(self.roles[reaction.emoji.id])
+        await payload.member.add_roles(self.roles[payload.emoji.id])
         try:
-            await user.send(f"Gave you the **{self.roles[reaction.emoji.id].name}** role!")
+            await payload.member.send(f"Gave you the **{self.roles[payload.emoji.id].name}** role!")
         except discord.HTTPException:
             pass
 
     @commands.Cog.listener()
-    async def on_reaction_remove(self, reaction: discord.Reaction, user: discord.User):
-        if reaction.message.id != role_message:
+    async def on_raw_reaction_remove(self, payload: discord.RawReactionActionEvent):
+        member = self.bot.guild.get_member(payload.user_id)
+        if payload.message_id != role_message:
             return
 
-        if self.roles[reaction.emoji.id] not in user.roles or self.lvl_20_role not in user.roles:
+        if self.roles[payload.emoji.id] not in member.roles or self.lvl_20_role not in member.roles:
             return
 
-        await user.remove_roles(self.roles[reaction.emoji.id])
+        await member.remove_roles(self.roles[payload.emoji.id])
         try:
-            await user.send(f"Removed your **{self.roles[reaction.emoji.id].name}** role!")
+            await member.send(f"Removed your **{self.roles[payload.emoji.id].name}** role!")
         except discord.HTTPException:
             pass
