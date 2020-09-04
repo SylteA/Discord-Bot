@@ -46,3 +46,4 @@ class Moderation(commands.Cog):
             await ctx.send(embed=thx_embed, delete_after=10)
             
         await self.report_channel.send(embed=embed)
+        
