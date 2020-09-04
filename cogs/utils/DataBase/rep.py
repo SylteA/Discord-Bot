@@ -27,7 +27,7 @@ class Rep(object):
         if assure_24h:
             query = """SELECT * FROM reps 
                        WHERE author_id = $1 
-                       ORDER BY repped_at ASC 
+                       ORDER BY repped_at DESC
                        LIMIT 1"""
 
             record = await self.bot.db.fetch(query, self.author_id)

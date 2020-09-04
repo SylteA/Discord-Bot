@@ -145,7 +145,7 @@ class Filtering(commands.Cog):
         if reason is None:
             return await ctx.send(f'Ok, set no reason')
         else:
-            if reason.lower() is 'no':
+            if reason.lower() == 'no':
                 return await ctx.send(f'Ok, set no reason')
             config.reasons[url] = reason
             await config.update()

@@ -1,5 +1,8 @@
 from discord.ext import commands
 import discord
+import re
+
+GITHUB_REGEX = re.compile(r"(https://github.com/[a-zA-Z0-9]+/[a-zA-Z0-9]+)")
 
 
 def setup(bot):
@@ -41,11 +44,18 @@ class ChallengeHandler(commands.Cog):
             submitted = self.bot.guild.get_role(687417501931536478)
             participant = self.bot.guild.get_role(687417513918857232)
             submission_channel = self.bot.guild.get_channel(729453161885990924)
+            discussion_channel = self.bot.guild.get_channel(680851838857117770)
 
             if submitted not in message.author.roles:
+                await message.delete()
+                if message.content.count("```") != 2:
+                    msg = f"{message.author.mention} make sure to submit in a code " \
+                          f"block and only include the code required for the challenge!" \
+                          f"\nUse `tim.tag discord code` for more information!"
+                    return await message.channel.send(msg, delete_after=10.0)
+
                 await message.author.add_roles(submitted)
                 await message.author.remove_roles(participant)
-                await message.delete()
                 embed = discord.Embed(description=message.content,
                                       color=message.guild.me.top_role.color)
                 embed.set_author(name=str(message.author), icon_url=message.author.avatar_url)
@@ -58,15 +68,34 @@ class ChallengeHandler(commands.Cog):
             participant = self.bot.guild.get_role(715676023387062363)
             submission_channel = self.bot.guild.get_channel(729453201081761862)
 
-            if submitted not in message.author.roles:
-                await message.author.add_roles(submitted)
-                await message.author.remove_roles(participant)
-                await message.delete()
-                embed = discord.Embed(description=message.content,
-                                      color=message.guild.me.top_role.color)
-                embed.set_author(name=str(message.author), icon_url=message.author.avatar_url)
-                embed.set_footer(text=f'#ID: {message.author.id}')
-                await submission_channel.send(embed=embed)
+            await message.delete()
+
+            links = GITHUB_REGEX.findall(message.content)
+            if not links:
+                return await message.author.send(f'{message.author.mention} Could not find any valid "Github" url.')
+
+            if len(links) > 1:
+                return await message.author.send(f'{message.author.mention} Please only provide one "Github" url.')
+
+            if len(message.mentions) == 0:
+                return await message.author.send(f"{message.author.mention}, Please make sure to mention your team ("
+                                                 f"yourself included)")
+
+            for member in message.mentions:
+                if participant not in member.roles:
+                    return await message.author.send(f"{member.mention} didn't participated in the challenge")
+                if submitted in member.roles:
+                    return await message.author.send(f"{member.mention} has already submitted")
+
+            for member in message.mentions:
+                await member.add_roles(submitted)
+                await member.remove_roles(participant)
+
+            embed = discord.Embed(description=message.content,
+                                  color=message.guild.me.top_role.color)
+            embed.set_author(name=str(message.author), icon_url=message.author.avatar_url)
+            embed.set_footer(text=f'#ID: {message.author.id}')
+            await submission_channel.send(embed=embed)
 
         elif message.channel.id in [680851798340272141, 713841395965624490]:  # Automatic reaction
             await message.add_reaction("🖐️")

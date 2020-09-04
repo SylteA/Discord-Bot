@@ -26,7 +26,9 @@ initial_cogs = [
     'cogs._help',
     'cogs.tags',
     'cogs.challenges',
-    'cogs.clashofcode'
+    'cogs.clashofcode',
+    'cogs.moderation',
+    'cogs.roles'
 ]
 
 print('Connecting...')
@@ -122,6 +124,9 @@ class Tim(commands.AutoShardedBot):
             return await ctx.send(f'You are missing these roles to do this command:'
                                   f'\n{self.lts(error.missing_roles or [error.missing_role])}')
 
+        elif isinstance(error, BadArgument) and ctx.command.name in ('rep', 'report'):
+            return await ctx.send(f"Can't find that member. Please try again.")
+
         else:
             raise error
 
@@ -130,6 +135,9 @@ class Tim(commands.AutoShardedBot):
     async def get_context(self, message, *, cls=SyltesContext):
         """Implementation of custom context"""
         return await super().get_context(message=message, cls=cls or SyltesContext)
+
+    def em(self, **kwargs):
+        return discord.Embed(**kwargs)
 
     @staticmethod
     def lts(list_: list):

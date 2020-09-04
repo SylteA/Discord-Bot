@@ -163,19 +163,12 @@ class Commands(commands.Cog):
         url = self.get_github_link(base_url=base_url, branch='master', command=command)
 
         pages = to_pages_by_lines(source, max_size=1900)
-
-        if not len(pages) > 1:
-            page = pages[0].replace("`", "`\u200b")
-            await ctx.send(f'Command {cmd.qualified_name}: {url}'
-                           f'\n```py\n{page}```')
-        else:
-            page = pages[0].replace("`", "`\u200b")
-            await ctx.send(f'Command {cmd.qualified_name}: {url}'
-                           f'\n```py\n{page}```')
-            del pages[0]
-            for page in pages:
-                page = page.replace("`", "`\u200b")
-                await ctx.send(f'```py\n{page}```')
+        
+        await ctx.send(f'Command {cmd.qualified_name}: {url}')
+        
+        for page in pages:
+            page = page.replace("`", "`\u200b")
+            await ctx.send(f'```py\n{page}```')
 
     @commands.command(name='website', aliases=['web'])
     async def web_(self, ctx):
@@ -318,7 +311,7 @@ class Commands(commands.Cog):
 
     @commands.command('pipsearch', aliases=['pip', 'pypi'])
     @commands.cooldown(2, 5, commands.BucketType.user)
-    async def pipsearch(self, ctx, term, order: lambda string: string.lower() = 'relevance', amount: int = 10):
+    async def pipsearch(self, ctx, term, order: lambda string: string.lower() = 'relevance', amount: lambda x: min(int(x), 10) = 10):
         """Search pypi.org for packages.
         Specify term, order (relevance, trending, updated) and amount (10 is default) you want to show."""
         if order not in ('relevance', 'trending', 'updated'):
@@ -339,7 +332,7 @@ class Commands(commands.Cog):
                     "p").find("strong").text).replace(',','').replace('+',''))
             if results > 0:
                 em = discord.Embed(title=f"Searched {term}",
-                                   description=f"[Showing 10/{results} results.]({search})" if results > 20 else f"Showing {results} results.")
+                                   description=f"[Showing {amount}/{results} results.]({search})" if results > amount else f"[Showing {results} results.]({search})")
                 i = 0
                 em.colour = discord.Colour.green()
                 for package in packages[:amount]:
@@ -355,6 +348,16 @@ class Commands(commands.Cog):
                 em = discord.Embed(title=f"Searched for {term}", description=f"No [results]({search}) found.")
                 em.colour = discord.Colour.red()
             await ctx.send(embed=em)
+    
+    @commands.command(name="suggest", aliases=["poll"])
+    async def suggestion(self, ctx, *, suggestion: str):
+        """Make a poll/suggestion"""
+        await ctx.message.delete()
+        em = discord.Embed(description=suggestion)
+        em.set_author(name=f"Poll by {ctx.author.display_name}", icon_url=ctx.author.avatar_url)
+        msg = await ctx.send(embed=em)
+        await msg.add_reaction('👍')
+        await msg.add_reaction('👎')
 
     async def build_docs_lookup_table(self, page_types):
         cache = {}
