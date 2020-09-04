@@ -19,16 +19,31 @@ class Moderation(commands.Cog):
     @commands.command("report")
     @commands.guild_only()
     @commands.cooldown(1, 15, commands.BucketType.channel)
-    async def report(self, ctx, user: discord.Member, *, reason: str):
+    async def report(self, ctx, member: discord.Member, *, reason: str):
         """Report a user to staff for a reason."""
-        if user.bot:
+        await ctx.message.delete()
+        
+        if member.bot:
             ctx.command.reset_cooldown(ctx)
-            return await ctx.send("You can't warn a bot <:mhm:687726663676592145>")
+            return await ctx.send("You can't report a bot <:mhm:687726663676592145>")
+        
+        if member.id == ctx.author.id : 
+            ctx.command.reset_cooldown(ctx)
+            return await ctx.send("You can't report your self <:mhm:687726663676592145>")
 
-        embed = discord.Embed(title=f"Report", timestamp=datetime.datetime.utcnow(), inline=False)
-        embed.add_field(name="Reported User", value=f"{user.mention} ({user.id})", inline=False)
-        embed.add_field(name="Reporter", value=f"{ctx.author.mention} ({user.id})", inline=False)
+        thx_embed = discord.Embed(title="Report", timestamp=datetime.datetime.utcnow())
+        thx_embed.description = f"Thank you for reporting `{str(member)}` for `{reason}`"
+        thx_embed.set_author(name=ctx.guild.name, icon_url=ctx.guild.icon_url)
+        
+        embed = discord.Embed(title=f"Report", timestamp=datetime.datetime.utcnow())
+        embed.add_field(name="Reported Member", value=f"{member.mention} ({member.id})", inline=False)
+        embed.add_field(name="Reporter", value=f"{ctx.author.mention} ({ctx.author.id})", inline=False)
         embed.add_field(name="Reason", value=reason, inline=False)
-
-        await ctx.send(embed=embed)
+        
+        try:
+            await ctx.author.send(embed=thx_embed)
+        except discord.Forbidden:
+            await ctx.send(embed=thx_embed, delete_after=10)
+            
         await self.report_channel.send(embed=embed)
+        
