@@ -163,19 +163,12 @@ class Commands(commands.Cog):
         url = self.get_github_link(base_url=base_url, branch='master', command=command)
 
         pages = to_pages_by_lines(source, max_size=1900)
-
-        if not len(pages) > 1:
-            page = pages[0].replace("`", "`\u200b")
-            await ctx.send(f'Command {cmd.qualified_name}: {url}'
-                           f'\n```py\n{page}```')
-        else:
-            page = pages[0].replace("`", "`\u200b")
-            await ctx.send(f'Command {cmd.qualified_name}: {url}'
-                           f'\n```py\n{page}```')
-            del pages[0]
-            for page in pages:
-                page = page.replace("`", "`\u200b")
-                await ctx.send(f'```py\n{page}```')
+        
+        await ctx.send(f'Command {cmd.qualified_name}: {url}')
+        
+        for page in pages:
+            page = page.replace("`", "`\u200b")
+            await ctx.send(f'```py\n{page}```')
 
     @commands.command(name='website', aliases=['web'])
     async def web_(self, ctx):
