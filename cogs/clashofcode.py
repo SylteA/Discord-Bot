@@ -107,12 +107,7 @@ class ClashOfCode(commands.Cog):
         players_text = ', '.join([p['codingamerNickname'] for p in sorted(json['players'], key=lambda p: p['position'])])
         start_message = await ctx.em(
             title="**Clash started**",
-            description="\n".join(
-                [
-                    f"Mode: {json['mode']}",
-                    f"Players: {players_text}"
-                ]
-            )
+            description=f"Mode: {json['mode']}\nPlayers: {players_text}"
         )
 
         async with aiohttp.ClientSession() as session:
@@ -126,18 +121,11 @@ class ClashOfCode(commands.Cog):
                     json = await resp.json()
 
                 if len(json["players"]) != players:
-                    players_text = ', '.join([p['codingamerNickname']
-                                              for p in sorted(json['players'], key=lambda p: p['position'])])
+                    players_text = ", ".join([p["codingamerNickname"] for p in sorted(json["players"], key=lambda p: p["position"])])
                     await start_message.edit(
-                        embed=self.bot.em(
+                        embed=discord.Embed(
                             title="**Clash started**",
-                            description="\n".join(
-                                [
-                                    f"Mode: {json['mode']}",
-                                    f"Players: {players_text}",
-                                ]
-                            ),
-                        )
+                            description=f"Mode: {json['mode']}\nPlayers: {players_text}")
                     )
                     players = len(json["players"])
 
