@@ -57,4 +57,5 @@ class Moderation(commands.Cog):
             return
 
         message = await self.report_channel.fetch_message(payload.message_id)
-        await message.delete()
+        if [r for r in message.reactions if r.emoji == "👍"][0].count >= 3:
+            await message.delete()
