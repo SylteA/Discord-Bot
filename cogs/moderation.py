@@ -45,4 +45,16 @@ class Moderation(commands.Cog):
         except discord.Forbidden:
             await ctx.send(embed=thx_embed, delete_after=10.0)
 
-        await self.report_channel.send(embed=embed)
+        message = await self.report_channel.send(embed=embed)
+        await message.add_reaction("👍")
+
+    @commands.Cog.listener()
+    async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
+        if payload.channel_id != self.report_channel.id:
+            return
+
+        if payload.member.bot:
+            return
+
+        message = await self.report_channel.fetch_message(payload.message_id)
+        await message.delete()
