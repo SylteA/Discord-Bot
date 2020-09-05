@@ -10,7 +10,7 @@ coc_role = 729342805855567934
 coc_channel = 729352136588263456
 coc_message = 729355074085584918
 REGEX = re.compile(r"https://www.codingame.com/clashofcode/clash/([0-9a-f]{39})")
-API_URL = "https://www.codingame.com/services/ClashOfCode/findClashByHandle"
+COC_URL = "https://www.codingame.com/services/ClashOfCode/findClashByHandle"
 
 
 def setup(bot: commands.Bot):
@@ -76,7 +76,7 @@ class ClashOfCode(commands.Cog):
         id = link[1]
 
         async with aiohttp.ClientSession() as session:
-            async with session.post(API_URL, json=[id]) as resp:
+            async with session.post(COC_URL, json=[id]) as resp:
                 json = await resp.json()
 
         pager = commands.Paginator(
