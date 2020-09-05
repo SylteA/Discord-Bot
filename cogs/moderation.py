@@ -13,7 +13,7 @@ class Moderation(commands.Cog):
         self.bot = bot
 
     @property
-    def report_channel(self):
+    def report_channel(self) -> discord.TextChannel:
         return self.bot.get_channel(749742688521158656)
 
     @commands.command("report")
@@ -35,7 +35,7 @@ class Moderation(commands.Cog):
         thx_embed.description = f"Thank you for reporting `{str(member)}` for `{reason}`"
         thx_embed.set_author(name=ctx.guild.name, icon_url=ctx.guild.icon_url)
 
-        embed = discord.Embed(title=f"Report", timestamp=datetime.datetime.utcnow())
+        embed = discord.Embed(title="Report", timestamp=datetime.datetime.utcnow())
         embed.add_field(name="Reported Member", value=f"{member.mention} ({member.id})", inline=False)
         embed.add_field(name="Reporter", value=f"{ctx.author.mention} ({ctx.author.id})", inline=False)
         embed.add_field(name="Reason", value=reason, inline=False)
