@@ -358,26 +358,22 @@ class Commands(commands.Cog):
         msg = await ctx.send(embed=em)
         await msg.add_reaction('👍')
         await msg.add_reaction('👎')
-    @commands.command(name = "result",aliases = ["show"])
-    async def result(self,ctx,msg_link:str):
+
+    @commands.command(name="result", aliases=["show"])
+    async def result(self, ctx, msg_link: str):
         """Get result of poll"""
-        server_id = int(msg_link.split('/')[-3])
         channel_id = int(msg_link.split('/')[-2])
         msg_id = int(msg_link.split('/')[-1])
-        server = self.bot.get_guild(server_id)
-        channel = server.get_channel(channel_id)
+        channel = ctx.guild.get_channel(channel_id)
         message = await channel.fetch_message(msg_id)
         reaction_upvote = get(message.reactions, emoji='👍')
         reaction_downvote = get(message.reactions, emoji='👎')
         poll_embed = message.embeds[0]
-        embed = discord.Embed(
-            description = f'Suggestion: {poll_embed.description}'
-
-        )
-        embed.set_author(name = poll_embed.author.name , icon_url= poll_embed.author.icon_url)
-        embed.add_field(name = f'👍 : {str(reaction_upvote.count)} Upvote ' , value = '.')
-        embed.add_field(name = f'👎 : {str(reaction_downvote.count)} Downvote ' , value = '.')
-        await ctx.send(embed = embed)
+        embed = discord.Embed(description=f'Suggestion: {poll_embed.description}')
+        embed.set_author(name=poll_embed.author.name , icon_url= poll_embed.author.icon_url)
+        embed.add_field(name=f'👍 : {str(reaction_upvote.count)} Upvote ' , value = '.')
+        embed.add_field(name=f'👎 : {str(reaction_downvote.count)} Downvote ' , value = '.')
+        await ctx.send(embed=embed)
 
     async def build_docs_lookup_table(self, page_types):
         cache = {}
