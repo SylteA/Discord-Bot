@@ -25,6 +25,10 @@ class ClashOfCode(commands.Cog):
     def role(self):
         return self.bot.guild.get_role(coc_role)
 
+    @staticmethod
+    def clean(name: str):
+        return name.replace("_", "\\_").replace("*", "\\*").replace("`", "`\u200b")
+
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
         if payload.message_id != coc_message:
@@ -107,7 +111,7 @@ class ClashOfCode(commands.Cog):
         players_text = ', '.join([p['codingamerNickname'] for p in sorted(json['players'], key=lambda p: p['position'])])
         start_message = await ctx.em(
             title="**Clash started**",
-            description=f"Mode: {json['mode']}\nPlayers: {players_text}"
+            description=f"Mode: {json['mode']}\nPlayers: {self.clean(players_text)}"
         )
 
         async with aiohttp.ClientSession() as session:
@@ -125,7 +129,7 @@ class ClashOfCode(commands.Cog):
                     await start_message.edit(
                         embed=discord.Embed(
                             title="**Clash started**",
-                            description=f"Mode: {json['mode']}\nPlayers: {players_text}")
+                            description=f"Mode: {json['mode']}\nPlayers: {self.clean(players_text)}")
                     )
                     players = len(json["players"])
 
@@ -134,7 +138,7 @@ class ClashOfCode(commands.Cog):
             description="\n".join(
                 ["Results:"] + [
                     # Example "1. Takos (Code length: 123, Score 100%, Time 1:09)"
-                    f"{p['rank']}. {p['codingamerNickname']} ("
+                    f"{p['rank']}. {self.clean(p['codingamerNickname'])} ("
                     + (f"Code length: {p['criterion']}, " if json["mode"] == "SHORTEST" else "")
                     + f"Score: {p['score']}%, Time: {p['duration'] // 60_000}:{p['duration'] // 1000 % 60:02})"
                     for p in sorted(json["players"], key=lambda p: p["rank"])
