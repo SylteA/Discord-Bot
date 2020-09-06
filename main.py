@@ -88,6 +88,10 @@ class Tim(commands.AutoShardedBot):
             if ctx.channel.id not in (511344208955703306, 536199577284509696):
                 return await message.channel.send("**Please use #bot-commands channel**")
 
+        if ctx.command.name in ('tag', 'suggest'):
+            if ctx.channel.id in (713841306253656064, 680851820587122700):
+                return await message.channel.send(f"You can't send those commands in {message.channel.mention} <:pepetoaster:739935438428438609>", delete_after=10.0)
+
         try:
             await self.invoke(ctx)
         finally:
