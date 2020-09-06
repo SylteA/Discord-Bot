@@ -5,3 +5,4 @@ from .poll import Poll
 from .user import User
 from .rep import Rep
 from .tag import Tag
+from .coc_user import CocUser
