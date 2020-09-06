@@ -371,8 +371,8 @@ class Commands(commands.Cog):
         poll_embed = message.embeds[0]
         embed = discord.Embed(description=f'Suggestion: {poll_embed.description}')
         embed.set_author(name=poll_embed.author.name, icon_url= poll_embed.author.icon_url)
-        embed.add_field(name='👍 Upvote', value=f'{str(reaction_upvote.count)}')
-        embed.add_field(name='👎 Downvote', value=f'{str(reaction_downvote.count)}')
+        embed.add_field(name='Upvotes:', value=f'{reaction_upvote.count} 👍')
+        embed.add_field(name='Downvotes:', value=f'{reaction_downvote.count} 👎')
         await ctx.send(embed=embed)
 
     async def build_docs_lookup_table(self, page_types):
