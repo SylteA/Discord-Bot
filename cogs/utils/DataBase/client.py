@@ -9,6 +9,7 @@ from .user import User
 from .poll import Poll
 from .message import Message
 from .gconfig import FilterConfig
+from .coc_user import CocUser
 
 
 class DataBase(object):
@@ -121,3 +122,24 @@ class DataBase(object):
         if record is not None:
             return Tag(bot=self.bot, **record)
         return record
+
+    async def get_coc_user(self, *, discord_id: int = None, coc_id: str = None):
+        if discord_id is None and coc_id is None:
+            raise ValueError("Provide a discord_id or a coc_id.")
+
+        if discord_id is not None and coc_id is not None:
+            raise ValueError("Only provide a discord_id or a coc_id.")
+
+        if discord_id is not None:
+            query = """SELECT * FROM coc_users WHERE discord_id = $1"""
+            record = await self.fetchrow(query, discord_id)
+            if record is not None:
+                return CocUser(bot=self.bot, **record)
+            return record
+
+        elif discord_id is not None:
+            query = """SELECT * FROM coc_users WHERE coc_id = $1"""
+            record = await self.fetchrow(query, coc_id)
+            if record is not None:
+                return CocUser(bot=self.bot, **record)
+            return record
