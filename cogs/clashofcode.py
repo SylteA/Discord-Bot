@@ -27,7 +27,8 @@ class ClashOfCode(commands.Cog):
 
     @staticmethod
     def clean(name: str):
-        return name.replace("_", "\\_").replace("*", "\\*").replace("`", "`\u200b")
+        return name.replace("_", "\\_").replace("*", "\\*").replace(
+            "`", "`\u200b").replace("@", "\\@")
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
@@ -104,7 +105,7 @@ class ClashOfCode(commands.Cog):
         async with aiohttp.ClientSession() as session:
             while not json["started"]:
                 await asyncio.sleep(10)  # wait 10s to avoid flooding the API
-                async with session.post(API_URL, json=[id]) as resp:
+                async with session.post(COC_URL, json=[id]) as resp:
                     json = await resp.json()
 
         players = len(json["players"])
@@ -121,7 +122,7 @@ class ClashOfCode(commands.Cog):
                 ) for p in json["players"]
             ):
                 await asyncio.sleep(10)  # wait 10s to avoid flooding the API
-                async with session.post(API_URL, json=[id]) as resp:
+                async with session.post(COC_URL, json=[id]) as resp:
                     json = await resp.json()
 
                 if len(json["players"]) != players:
