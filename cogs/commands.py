@@ -362,19 +362,29 @@ class Commands(commands.Cog):
     @commands.command(name="result", aliases=["show"])
     async def result(self, ctx, msg_link: str):
         """Get result of poll"""
-        channel_id = int(msg_link.split('/')[-2])
-        msg_id = int(msg_link.split('/')[-1])
-        channel = ctx.guild.get_channel(channel_id)
-        message = await channel.fetch_message(msg_id)
-        reaction_upvote = get(message.reactions, emoji='👍')
-        reaction_downvote = get(message.reactions, emoji='👎')
-        poll_embed = message.embeds[0]
-        embed = discord.Embed(description=f'Suggestion: {poll_embed.description}')
-        embed.set_author(name=poll_embed.author.name, icon_url= poll_embed.author.icon_url)
-        embed.add_field(name='Upvotes:', value=f'{reaction_upvote.count} 👍')
-        embed.add_field(name='Downvotes:', value=f'{reaction_downvote.count} 👎')
-        await ctx.send(embed=embed)
-
+        try:
+            channel_id = int(msg_link.split('/')[-2])
+            msg_id = int(msg_link.split('/')[-1])
+            channel = ctx.guild.get_channel(channel_id)
+            message = await channel.fetch_message(msg_id)
+            reaction_upvote = get(message.reactions, emoji='👍')
+            reaction_downvote = get(message.reactions, emoji='👎')
+            if message.author != ctx.bot.user:
+                emb = discord.Embed(title="Message Is not a poll!", colour=discord.Colour.red())
+                emb.set_author(name=ctx.bot.user, icon_url=ctx.bot.user.avatar_url)
+                return await ctx.send(embed=emb)
+            else:
+                poll_embed = message.embeds[0]
+                embed = discord.Embed(description=f'Suggestion: {poll_embed.description}')
+                embed.set_author(name=poll_embed.author.name, icon_url= poll_embed.author.icon_url)
+                embed.add_field(name='Upvotes:', value=f'{reaction_upvote.count} 👍')
+                embed.add_field(name='Downvotes:', value=f'{reaction_downvote.count} 👎')
+                await ctx.send(embed=embed)
+        except:
+            emb = discord.Embed(title="Suggestion Not Found")
+            emb.set_author(name=ctx.bot.user, icon_url=ctx.bot.user.avatar_url)
+            return await ctx.send(embed=emb)
+            
     async def build_docs_lookup_table(self, page_types):
         cache = {}
         for key, page in page_types.items():
