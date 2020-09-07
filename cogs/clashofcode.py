@@ -196,8 +196,4 @@ class ClashOfCode(commands.Cog):
                         "Do `t.tag codingamer biography` to find out how to add the verification token."
                     )
                 except discord.HTTPException:
-                    await ctx.send(
-                        "Add this token to your CodinGamer profile: "
-                        f"{self.tokens[codingamer['publicHandle']]}\n"
-                        "Do `t.tag codingamer biography` to find out how to add the verification token."
-                    )
+                    await ctx.send("Please open your DMs so you can get your verification token in DMs. Otherwise you can't bind your CodinGame account.")
