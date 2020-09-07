@@ -4,6 +4,9 @@ import discord
 import aiohttp
 import asyncio
 import re
+import secrets
+
+from .utils.DataBase.coc_user import CocUser
 
 
 coc_role = 729342805855567934
@@ -11,6 +14,7 @@ coc_channel = 729352136588263456
 coc_message = 729355074085584918
 REGEX = re.compile(r"https://www.codingame.com/clashofcode/clash/([0-9a-f]{39})")
 COC_URL = "https://www.codingame.com/services/ClashOfCode/findClashByHandle"
+USER_URL = "https://www.codingame.com/services/CodinGamer/findCodingamePointsStatsByHandle"
 
 
 def setup(bot: commands.Bot):
@@ -20,6 +24,7 @@ def setup(bot: commands.Bot):
 class ClashOfCode(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.tokens = {}
 
     @property
     def role(self):
@@ -59,7 +64,7 @@ class ClashOfCode(commands.Cog):
         except discord.HTTPException:
             pass
 
-    @commands.command(name="clash-of-code", aliases=("coc", "invite"))
+    @commands.group(name="clash-of-code", aliases=("coc", "invite"), invoke_without_command=True)
     @commands.has_any_role(
         511334601977888798,  # Tim
         580911082290282506,  # Admin
@@ -69,7 +74,7 @@ class ClashOfCode(commands.Cog):
     )
     @commands.check(lambda ctx: ctx.channel.id == 729352136588263456)
     @commands.cooldown(1, 60, commands.BucketType.channel)
-    async def coc_invite(self, ctx: commands.Context, *, url: str):
+    async def coc(self, ctx: commands.Context, *, url: str):
         """Mentions all the users with the `Clash Of Code` role that are currently online."""
         await ctx.message.delete()
 
@@ -146,3 +151,53 @@ class ClashOfCode(commands.Cog):
                 ]
             )
         )
+
+    @coc.command()
+    async def bind(self, ctx: commands.Context, coc_id: str):
+        """Binds a discord user to a CodinGame user."""
+
+        coc_user: CocUser = await self.bot.db.get_coc_user(coc_id=coc_id)
+        if coc_user is not None:
+            return await ctx.send(f"You are already binded with CodinGamer '{coc_user.coc_id}'.")
+
+        async with aiohttp.ClientSession() as session:
+            async with session.post(USER_URL, json=[coc_id]) as resp:
+                json = await resp.json()
+
+            if json is None:
+                return await ctx.send(
+                    "Invalid CodinGamer id.\n"
+                    "Do `t.tag codingamer id` to find your CodinGamer id."
+                )
+
+            codingamer = json["codingamer"]
+
+            if codingamer["publicHandle"] in self.tokens.keys():
+                if self.tokens[codingamer["publicHandle"]] in (
+                    codingamer.get("tagline", ""),
+                    codingamer.get("biography", "")
+                ):
+                    del self.tokens[codingamer["publicHandle"]]
+                    coc_user = CocUser(self.bot, discord_id=ctx.author.id, coc_id=codingamer["publicHandle"])
+                    await coc_user.post()
+                    return await ctx.send(f"Succesfully binded with CodinGamer '{coc_user.coc_id}'.")
+                else:
+                    return await ctx.send(
+                        f"Couldn't find the verification token on the profile of CodinGamer '{coc_user.coc_id}'.\n"
+                        "Do `t.tag codingamer biography` to find out how to add the verification token."
+                    )
+
+            else:
+                self.tokens[codingamer["publicHandle"]] = secrets.token_hex(16)
+                try:
+                    await ctx.author.send(
+                        "Add this token to your CodinGamer profile: "
+                        f"{self.tokens[codingamer['publicHandle']]}\n"
+                        "Do `t.tag codingamer biography` to find out how to add the verification token."
+                    )
+                except discord.HTTPException:
+                    await ctx.send(
+                        "Add this token to your CodinGamer profile: "
+                        f"{self.tokens[codingamer['publicHandle']]}\n"
+                        "Do `t.tag codingamer biography` to find out how to add the verification token."
+                    )
