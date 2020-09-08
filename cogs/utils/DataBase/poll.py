@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime
 from json import dumps
 import discord
@@ -62,12 +63,10 @@ class Poll(object):
         if vote is None:
             return
         if str(payload.user_id) in self.replies:
-            return await self.message.remove_reaction(emoji, self.guild.get_member(payload.user_id))
+            reaction = list(self.reactions.keys())[int(self.replies[str(payload.user_id)]) - 1]
+            await self.message.remove_reaction(reaction, self.guild.get_member(payload.user_id))
         self.replies[str(payload.user_id)] = vote
         await self._update()
-        await self.message.remove_reaction(emoji, self.guild.get_member(payload.user_id))
-        await self.channel.send(f'Thank you {self.bot.get_user(payload.user_id)} for voting, any further attempts '
-                                f'to vote will be ignored.', delete_after=5.0)
 
     def clean_reactions(self) -> dict:
         new_dict = {}

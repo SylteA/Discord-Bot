@@ -107,9 +107,9 @@ class DataBase(object):
         config = FilterConfig(bot=self.bot, guild_id=guild_id, blacklist_urls=[], whitelist_channels=[])
         return await config.post()
 
-    async def get_current_poll(self, guild_id: int):
-        query = """SELECT * FROM polls WHERE guild_id = $1 ORDER BY created_at ASC LIMIT 1"""
-        record = await self.fetchrow(query, guild_id)
+    async def get_poll(self, guild_id: int, message_id: int):
+        query = """SELECT * FROM polls WHERE guild_id = $1 AND message_id = $2 ORDER BY created_at ASC LIMIT 1"""
+        record = await self.fetchrow(query, guild_id, message_id)
         if record is None:
             return None
         record = dict(record)

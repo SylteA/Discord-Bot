@@ -4,7 +4,6 @@ import discord
 import asyncio
 
 from .utils.DataBase.poll import Poll
-from .utils.checks import is_mod
 
 
 class SyltesPolls(commands.Cog, name="Polls"):
@@ -19,37 +18,63 @@ class SyltesPolls(commands.Cog, name="Polls"):
     async def _cleanup_polls(self):
         for poll in self.listeners:
             if poll is not None:
-                await poll.stop
+                poll.cancel()
 
-    async def cog_check(self, ctx):
-        if ctx.guild is None:
-            return
-
-        return is_mod(ctx.author)
-
-    async def cog_before_invoke(self, ctx):
-        if self.polls.get(str(ctx.guild.id), False) is False:
-            poll = await self.bot.db.get_current_poll(ctx.guild.id)
-            self.polls[str(ctx.guild.id)] = poll
-            if isinstance(poll, Poll):
-                if str(ctx.guild.id) not in self.listeners:
-                    self.listeners[str(ctx.guild.id)] = await poll.listen()
+    @property
+    def reactions(self) -> dict:
+        return {
+            '1️⃣': '1',
+            '2️⃣': '2',
+            '3️⃣': '3',
+            '4️⃣': '4',
+            '5️⃣': '5',
+            '6️⃣': '6',
+            '7️⃣': '7',
+            '8️⃣': '8',
+            '9️⃣': '9',
+            '🔟': '10'
+        }
 
     @commands.Cog.listener()
-    async def on_raw_reaction_add(self, payload):
+    async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
         if not payload.guild_id:
             return
 
-        if self.polls.get(str(payload.guild_id), False) is False:
-            poll = await self.bot.db.get_current_poll(payload.guild_id)
-            self.polls[str(payload.guild_id)] = poll
+        message = await self.bot.get_channel(payload.channel_id).fetch_message(payload.message_id)
+        if message.author != self.bot.user:
+            return
+
+        if self.polls.get(str(payload.message_id), False) is False:
+            poll = await self.bot.db.get_poll(payload.guild_id, payload.message_id)
+            self.polls[str(payload.message_id)] = poll
             if isinstance(poll, Poll):
-                if str(payload.guild_id) not in self.listeners:
-                    self.listeners[str(payload.guild_id)] = await poll.listen()
+                if str(payload.message_id) not in self.listeners:
+                    self.listeners[str(payload.message_id)] = await poll.listen()
                     await poll.handle_payload(payload)
 
-    @commands.group(hidden=True)  # TODO: Fix // find out why this malfunctioned
+    @commands.Cog.listener()
+    async def on_raw_reaction_remove(self, payload: discord.RawReactionActionEvent):
+        if not payload.guild_id or payload.user_id == self.bot.user.id:
+            return
+
+        poll = await self.bot.db.get_poll(payload.guild_id, payload.message_id)
+        if poll is not None:
+            channel = self.bot.get_channel(payload.channel_id)
+            message = await channel.fetch_message(payload.message_id)
+            react = False
+            user = self.bot.get_user(payload.user_id)
+            for reaction in message.reactions:
+                users = await reaction.users().flatten()
+                if user in users:
+                    react = True
+
+            if not react:
+                del poll.replies[str(payload.user_id)]
+                await poll._update()
+
+    @commands.group()
     async def poll(self, ctx):
+        """ Poll"""
         if ctx.invoked_subcommand is None:
             return await ctx.send_help(self.bot.get_command('poll new'))
 
@@ -62,16 +87,9 @@ class SyltesPolls(commands.Cog, name="Polls"):
             except (discord.Forbidden, TypeError):
                 pass
 
-    async def _end_active_poll(self, guild_id: int):
-        for g_id, poll in zip(self.listeners.keys(), self.listeners.values()):
-            if g_id == str(guild_id):
-                if poll is not None:
-                    await poll.stop()
-
     @poll.command()
     async def new(self, ctx, *, description: str):
-        if not is_mod(ctx.author):
-            return
+        """ Create a new Poll """
         to_clean = []
         poll = Poll(bot=self.bot, guild_id=ctx.guild.id, author_id=ctx.author.id, channel_id=ctx.channel.id,
                     message_id=0, description=description, options={}, replies={}, created_at=ctx.message.created_at)
@@ -88,6 +106,7 @@ class SyltesPolls(commands.Cog, name="Polls"):
                     to_clean.append(await ctx.send(f'Timed out, doing nothing.'))
                     return await self.cleanup(to_clean)
                 break
+            message.add_reaction("<:tickk:582492589152927782>")
             to_clean.append(message)
             content = await self.bot.clean_text.convert(ctx, message.content)
             if content == 'break':
@@ -112,11 +131,10 @@ class SyltesPolls(commands.Cog, name="Polls"):
         if content.lower() == 'yes':
             asyncio.ensure_future(self.cleanup(to_clean), loop=self.bot.loop)
             message = await poll.display(ctx)
-            await self._end_active_poll(ctx.guild.id)
             poll.message_id = message.id
             await poll.listen()
             await poll.post()
-            await ctx.send(f'Poll posted, cleaning up...', delete_after=4)
+            await ctx.send('Poll posted, cleaning up...', delete_after=4.0)
         else:
             to_clean.append(await ctx.send('Okay then, cleaning up...'))
             return await self.cleanup(to_clean)

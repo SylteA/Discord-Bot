@@ -349,7 +349,7 @@ class Commands(commands.Cog):
                 em.colour = discord.Colour.red()
             await ctx.send(embed=em)
     
-    @commands.command(name="suggest", aliases=["poll"])
+    @commands.command(name="suggest")
     async def suggestion(self, ctx, *, suggestion: str):
         """Make a poll/suggestion"""
         await ctx.message.delete()
