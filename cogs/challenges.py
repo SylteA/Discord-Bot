@@ -36,11 +36,11 @@ class ChallengeHandler(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):  # Submitted role.
-        if message.author.bot:
-            return
 
         if message.channel.id == 680851820587122700:  # weekly
-
+            if message.author.bot:
+                return await message.delete()
+            
             submitted = self.bot.guild.get_role(687417501931536478)
             participant = self.bot.guild.get_role(687417513918857232)
             submission_channel = self.bot.guild.get_channel(729453161885990924)
@@ -63,7 +63,9 @@ class ChallengeHandler(commands.Cog):
                 await submission_channel.send(embed=embed)
 
         elif message.channel.id == 713841306253656064:  # monthly 
-
+            if message.author.bot:
+                return await message.delete()
+            
             submitted = self.bot.guild.get_role(715676464573317220)
             participant = self.bot.guild.get_role(715676023387062363)
             submission_channel = self.bot.guild.get_channel(729453201081761862)
