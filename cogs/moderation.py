@@ -53,9 +53,9 @@ class Moderation(commands.Cog):
 
         if len(mentions) > 5:
             await self.am_action(message.channel, message.author, "mute", "Mass mention")
-
-            self.report_channel.send(embed=discord.Embed(
-                description="**Members who got pinged**\n" + ", ".join(x.mention for x in mentions)
+            pings = "**Members who got pinged**\n" + ", ".join(x.mention for x in mentions)
+            await self.report_channel.send(embed=discord.Embed(
+                description=pings
             ))
 
         elif 501089409379205161 in [x.id for x in mentions]:  # if pinged tim
