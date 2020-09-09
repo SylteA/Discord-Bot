@@ -61,8 +61,9 @@ class Moderation(commands.Cog):
                 self.am_action(message.channel, message.author, "mute", "Tim ping (twice)")
 
             else:
+                self.am_action(message.channel, message.author, "report", "Tim ping")
                 await message.channel.send(f"{message.author.mention} Please **do not** ping Tim, it's in"
-                                           f" <#753023867118813353>, pinging Tim again will result in a mute.")
+                                           f" <#511343933415096323>, pinging Tim again will result in a mute.")
 
                 self.ttp.append(message.author.id)
                 await asyncio.sleep(36000.0)
