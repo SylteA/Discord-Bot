@@ -26,16 +26,18 @@ class Moderation(commands.Cog):
     def muted_role(self):
         return self.bot.get_guild(501090983539245061).get_role(583350495117312010)
 
-    def am_action(self, channel, member, action, reason):
+    async def am_action(self, channel, member, action, reason):
         embed = discord.Embed()
 
         if action == "mute":
             await member.add_roles(self.muted_role, reason=reason)
-            embed.description = f"{member.mention} got muted for {reason}"
+            embed.title = "Mute"
+            embed.description = f"{member.mention} got muted for `{reason}`"
             await channel.send(embed=embed)
 
         elif action == "report":
-            embed.description = f"{member.mention}\n got reported for {reason}"
+            embed.title = "Report"
+            embed.description = f"{member.mention} got reported for `{reason}`"
 
         else:
             raise ValueError(f"Action '{action}' not found")
@@ -50,7 +52,7 @@ class Moderation(commands.Cog):
         mentions = [x for x in message.mentions if not x.bot]
 
         if len(mentions) > 5:
-            self.am_action(message.channel, message.author, "mute", "Mass mention")
+            await self.am_action(message.channel, message.author, "mute", "Mass mention")
 
             self.report_channel.send(embed=discord.Embed(
                 description="**Members who got pinged**\n" + ", ".join(x.mention for x in mentions)
@@ -58,10 +60,10 @@ class Moderation(commands.Cog):
 
         elif 501089409379205161 in [x.id for x in mentions]:  # if pinged tim
             if message.author.id in self.ttp:
-                self.am_action(message.channel, message.author, "mute", "Tim ping (twice)")
+                await self.am_action(message.channel, message.author, "mute", "Tim ping (twice)")
 
             else:
-                self.am_action(message.channel, message.author, "report", "Tim ping")
+                await self.am_action(message.channel, message.author, "report", "Tim ping")
                 await message.channel.send(f"{message.author.mention} Please **do not** ping Tim, it's in"
                                            f" <#511343933415096323>, pinging Tim again will result in a mute.")
 
