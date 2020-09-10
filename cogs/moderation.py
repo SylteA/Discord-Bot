@@ -23,29 +23,45 @@ class Moderation(commands.Cog):
         return self.bot.get_channel(749742688521158656)
 
     @property
+    def mod_logs_channel(self):
+        return self.bot.get_channel(613182021606440960)
+
+    @property
     def muted_role(self):
         return self.bot.get_guild(501090983539245061).get_role(583350495117312010)
 
+    @staticmethod
+    def embeder(action, member, reason) -> discord.Embed:
+        embed = discord.Embed(title=action.title())
+        embed.add_field(name="User", value=member.mention)
+        embed.add_field(name="Reason", value=reason)
+        embed.set_footer(text=f"#ID : {member.id}")
+        return embed
+
     async def am_action(self, channel, member, action, reason):
-        embed = discord.Embed()
+
+        embed = self.embeder(action, member, reason)
 
         if action == "mute":
-            await member.add_roles(self.muted_role, reason=reason)
-            embed.title = "Mute"
-            embed.description = f"{member.mention} got muted for `{reason}`"
-            await channel.send(embed=embed)
-            await asyncio.sleep(1800.0) # 30 min
             if self.muted_role in member.roles:
-                await member.remove_roles(self.muted_role, reason = "Auto")
+                return
+
+            await member.add_roles(self.muted_role, reason=reason)
+            await channel.send(embed=embed)
+
+        elif action == "unmute":
+            if self.muted_role not in member.roles:
+                return
+
+            await member.remove_roles(self.muted_role, reason=reason)
 
         elif action == "report":
-            embed.title = "Report"
-            embed.description = f"{member.mention} got reported for `{reason}`"
+            return await self.report_channel.send(embed=embed)
 
         else:
             raise ValueError(f"Action '{action}' not found")
 
-        await self.report_channel.send(embed=embed)
+        await self.mod_logs_channel.send(embed=embed)
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
@@ -56,12 +72,14 @@ class Moderation(commands.Cog):
 
         if len(mentions) > 5:
             await self.am_action(message.channel, message.author, "mute", "Mass mention")
-            pings = "**Members who got pinged**\n" + ", ".join(x.mention for x in mentions)
-            await self.report_channel.send(embed=discord.Embed(description=pings))
+            await asyncio.sleep(1800.0)  # 30 min
+            await self.am_action(message.channel, message.author, "unmute", "Auto")
 
         elif 501089409379205161 in [x.id for x in mentions]:  # if pinged tim
             if message.author.id in self.ttp:
                 await self.am_action(message.channel, message.author, "mute", "Tim ping (twice)")
+                await asyncio.sleep(1800.0)  # 30 min
+                await self.am_action(message.channel, message.author, "unmute", "Auto")
 
             else:
                 await self.am_action(message.channel, message.author, "report", "Tim ping")
@@ -69,7 +87,7 @@ class Moderation(commands.Cog):
                                            f" <#511343933415096323>, pinging Tim again will result in a mute.")
 
                 self.ttp.append(message.author.id)
-                await asyncio.sleep(3600.0) # 1 hour instead of 10
+                await asyncio.sleep(3600.0)  # 1 hour instead of 10
                 self.ttp.remove(message.author.id)
 
     @commands.command("report")
