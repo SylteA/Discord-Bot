@@ -34,6 +34,9 @@ class Moderation(commands.Cog):
             embed.title = "Mute"
             embed.description = f"{member.mention} got muted for `{reason}`"
             await channel.send(embed=embed)
+            await asyncio.sleep(1800.0) # 30 min
+            if self.muted_role in member.roles:
+                await member.remove_roles(self.muted_role, reason = "Auto")
 
         elif action == "report":
             embed.title = "Report"
@@ -66,7 +69,7 @@ class Moderation(commands.Cog):
                                            f" <#511343933415096323>, pinging Tim again will result in a mute.")
 
                 self.ttp.append(message.author.id)
-                await asyncio.sleep(36000.0)
+                await asyncio.sleep(3600.0) # 1 hour instead of 10
                 self.ttp.remove(message.author.id)
 
     @commands.command("report")
