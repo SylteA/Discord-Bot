@@ -370,9 +370,8 @@ class Commands(commands.Cog):
             reaction_upvote = get(message.reactions, emoji='👍')
             reaction_downvote = get(message.reactions, emoji='👎')
             if message.author != ctx.bot.user:
-                emb = discord.Embed(title="Message Is not a poll!", colour=discord.Colour.red())
-                emb.set_author(name=ctx.bot.user, icon_url=ctx.bot.user.avatar_url)
-                return await ctx.send(embed=emb)
+                if not message.embeds[0].author.name.startswith("Poll"):
+                    return await ctx.send("That message is not a poll!")
             else:
                 poll_embed = message.embeds[0]
                 embed = discord.Embed(description=f'Suggestion: {poll_embed.description}')
@@ -381,10 +380,8 @@ class Commands(commands.Cog):
                 embed.add_field(name='Downvotes:', value=f'{reaction_downvote.count} 👎')
                 await ctx.send(embed=embed)
         except:
-            emb = discord.Embed(title="Suggestion Not Found")
-            emb.set_author(name=ctx.bot.user, icon_url=ctx.bot.user.avatar_url)
-            return await ctx.send(embed=emb)
-            
+            return await ctx.send("That message is not a poll!")
+
     async def build_docs_lookup_table(self, page_types):
         cache = {}
         for key, page in page_types.items():
