@@ -1,6 +1,6 @@
 from discord.ext import commands
 import discord
-
+from discord.utils import get
 from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
 from tabulate import tabulate
@@ -358,6 +358,29 @@ class Commands(commands.Cog):
         msg = await ctx.send(embed=em)
         await msg.add_reaction('👍')
         await msg.add_reaction('👎')
+
+    @commands.command(name="result", aliases=["show"])
+    async def result(self, ctx, msg_link: str):
+        """Get result of poll"""
+        try:
+            channel_id = int(msg_link.split('/')[-2])
+            msg_id = int(msg_link.split('/')[-1])
+            channel = ctx.guild.get_channel(channel_id)
+            message = await channel.fetch_message(msg_id)
+            reaction_upvote = get(message.reactions, emoji='👍')
+            reaction_downvote = get(message.reactions, emoji='👎')
+            if message.author != ctx.bot.user:
+                if not message.embeds[0].author.name.startswith("Poll"):
+                    return await ctx.send("That message is not a poll!")
+            else:
+                poll_embed = message.embeds[0]
+                embed = discord.Embed(description=f'Suggestion: {poll_embed.description}')
+                embed.set_author(name=poll_embed.author.name, icon_url= poll_embed.author.icon_url)
+                embed.add_field(name='Upvotes:', value=f'{reaction_upvote.count} 👍')
+                embed.add_field(name='Downvotes:', value=f'{reaction_downvote.count} 👎')
+                await ctx.send(embed=embed)
+        except:
+            return await ctx.send("That message is not a poll!")
 
     async def build_docs_lookup_table(self, page_types):
         cache = {}
