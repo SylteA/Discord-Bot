@@ -124,7 +124,7 @@ class Tim(commands.AutoShardedBot):
             return await ctx.send(f'You are missing these roles to do this command:'
                                   f'\n{self.lts(error.missing_roles or [error.missing_role])}')
 
-        elif isinstance(error, BadArgument) and ctx.command.name in ('rep', 'report'):
+        elif isinstance(error, BadArgument) and ctx.command.name in ('rep', 'report', 'messages', 'reps'):
             return await ctx.send(f"Can't find that member. Please try again.")
 
         else:
