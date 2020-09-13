@@ -169,8 +169,13 @@ class Commands(commands.Cog):
         for page in pages:
             page = page.replace("`", "`\u200b")
             await ctx.send(f'```py\n{page}```')
-
-    @commands.command(name='website', aliases=['web'])
+    
+    @commands.group(name='tim', aliases=['twt'])
+    async def techwithtim(self, ctx):
+        """Group of commands that have to do with Tim's stuff"""
+        pass # Idk what to send lol
+    
+    @techwithtim.command(name='website', aliases=['web'])
     async def web_(self, ctx):
         """Get the link to Tims website!"""
         embed = discord.Embed(title="Tim's Website", description="[Visit the website!](https://techwithtim.net/)")
@@ -185,7 +190,7 @@ class Commands(commands.Cog):
         await ctx.message.delete()
         await ctx.send(embed=embed)
 
-    @commands.command()
+    @techwithtim.command()
     async def twitter(self, ctx):
         """View Tims Twitter"""
         embed = discord.Embed(title="Tech With Tim Twitter!",
@@ -193,7 +198,7 @@ class Commands(commands.Cog):
         await ctx.message.delete()
         await ctx.send(embed=embed)
 
-    @commands.command(name='instagram', aliases=['insta'])
+    @techwithtim.command(name='instagram', aliases=['insta'])
     async def insta_(self, ctx):
         """View Tims Instagram"""
         embed = discord.Embed(title="Tech With Tim Instagram!",
