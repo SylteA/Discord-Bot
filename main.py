@@ -72,6 +72,8 @@ class Tim(commands.AutoShardedBot):
         print(f"{message.channel}: {message.author}: {message.clean_content}")
         if not message.guild:
             return
+        if message.channel.id == 582956491435278374:
+            await message.add_reaction('👍')
         await self.process_commands(message)
 
     async def process_commands(self, message):
