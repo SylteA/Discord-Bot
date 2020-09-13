@@ -3,6 +3,7 @@ from discord.ext import commands
 
 import datetime
 
+from .utils.checks import is_mod
 
 def setup(bot: commands.Bot):
     bot.add_cog(Moderation(bot=bot))
@@ -11,6 +12,12 @@ def setup(bot: commands.Bot):
 class Moderation(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        
+    @commands.Cog.listener()
+    async def on_reaction_add(self, reaction:discord.Reaction, user:discord.Member):
+        if reaction.message.author != self.bot.user and is_mod(user) and 'x' in str(reaction.emoji.name).lower():
+            await reaction.message.delete()
+        
 
     @property
     def report_channel(self):
