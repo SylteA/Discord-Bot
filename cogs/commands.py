@@ -1,8 +1,9 @@
 from discord.ext import commands
 import discord
-from discord.utils import get
+
 from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
+from discord.utils import get
 from tabulate import tabulate
 import inspect
 import aiohttp
@@ -163,9 +164,9 @@ class Commands(commands.Cog):
         url = self.get_github_link(base_url=base_url, branch='master', command=command)
 
         pages = to_pages_by_lines(source, max_size=1900)
-        
+
         await ctx.send(f'Command {cmd.qualified_name}: {url}')
-        
+
         for page in pages:
             page = page.replace("`", "`\u200b")
             await ctx.send(f'```py\n{page}```')
@@ -244,14 +245,19 @@ class Commands(commands.Cog):
                        f"{human_timedelta(started_counting, suffix=False, brief=True, accuracy=2)}")
 
     @commands.command(name='messages', aliases=['my_messages'])
-    async def messages_(self, ctx, member: typing.Optional[commands.MemberConverter]):
+    async def messages_(self, ctx, member: commands.MemberConverter = None):
         """How many messages have you sent?"""
         member = member or ctx.author
-        user = await self.bot.db.get_user(member.id)
-        await ctx.send(f"Messages: {user.messages_sent}"
-                       f"\nSince: {human_timedelta(user.joined_at, brief=True, accuracy=2)}")
 
-    @commands.command()
+        user = await self.bot.db.get_user(member.id)
+        embed = discord.Embed(color=member.top_role.color, description=member.mention)
+        embed.set_author(name=str(member), icon_url=member.avatar_url)
+        embed.add_field(name="Count", value=str(user.messages_sent))
+        embed.add_field(name="Since", value=human_timedelta(user.joined_at, accuracy=2))
+        embed.set_footer(text=str(ctx.author), icon_url=ctx.author.avatar_url)
+        await ctx.send(embed=embed)
+
+    @commands.command(aliases=['lb'])
     async def scoreboard(self, ctx):
         """Scoreboard over users message count"""
         records = await self.bot.db.fetch('SELECT * FROM users ORDER BY messages_sent DESC LIMIT 10')
@@ -264,7 +270,7 @@ class Commands(commands.Cog):
         await ctx.send(f'>>> ```prolog\n{tabulate(table, headers=("User", "Messages",), tablefmt="fancy_grid")}\n```')
 
     @commands.command(name='reps', aliases=['my_reps'])
-    async def reps_(self, ctx, member: typing.Optional[commands.MemberConverter]):
+    async def reps_(self, ctx, member: commands.MemberConverter = None):
         """How many reps do you have?"""
         member = member or ctx.author
         user = await self.bot.db.get_user(member.id, get_reps=True)
@@ -287,7 +293,7 @@ class Commands(commands.Cog):
 
         await ctx.send(ret)
 
-    @commands.command()
+    @commands.command(aliases=['rlb'])
     async def rep_scoreboard(self, ctx):
         """Rep scoreboard!"""
         users = await self.bot.db.get_all_users(get_reps=True, get_messages=False)
@@ -296,7 +302,7 @@ class Commands(commands.Cog):
         for user in sorted(users, key=lambda u: len(u.reps), reverse=True)[:10]:
             table.append((str(user), len(user.reps)))
 
-        await ctx.send(f'>>> ```prolog\n{tabulate(table, headers=("User", "Reps", ), tablefmt="fancy_grid")}\n```')
+        await ctx.send(f'>>> ```prolog\n{tabulate(table, headers=("User", "Reps",), tablefmt="fancy_grid")}\n```')
 
     @commands.command(name='rep')
     async def rep(self, ctx, member: commands.MemberConverter):
@@ -321,7 +327,8 @@ class Commands(commands.Cog):
 
     @commands.command('pipsearch', aliases=['pip', 'pypi'])
     @commands.cooldown(2, 5, commands.BucketType.user)
-    async def pipsearch(self, ctx, term, order: lambda string: string.lower() = 'relevance', amount: lambda x: min(int(x), 10) = 10):
+    async def pipsearch(self, ctx, term, order: lambda string: string.lower() = 'relevance',
+                        amount: lambda x: min(int(x), 10) = 10):
         """Search pypi.org for packages.
         Specify term, order (relevance, trending, updated) and amount (10 is default) you want to show."""
         if order not in ('relevance', 'trending', 'updated'):
@@ -338,8 +345,9 @@ class Commands(commands.Cog):
             bs = BeautifulSoup(text.decode('utf-8'), 'html5lib')
             packages = bs.find_all("a", class_="package-snippet")
             results = int(
-                (bs.find("div", class_="split-layout split-layout--table split-layout--wrap-on-tablet").find("div").find(
-                    "p").find("strong").text).replace(',','').replace('+',''))
+                (bs.find("div", class_="split-layout split-layout--table split-layout--wrap-on-tablet").find(
+                    "div").find(
+                    "p").find("strong").text).replace(',', '').replace('+', ''))
             if results > 0:
                 em = discord.Embed(title=f"Searched {term}",
                                    description=f"[Showing {amount}/{results} results.]({search})" if results > amount else f"[Showing {results} results.]({search})")
