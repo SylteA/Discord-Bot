@@ -269,11 +269,21 @@ class Commands(commands.Cog):
         member = member or ctx.author
         user = await self.bot.db.get_user(member.id, get_reps=True)
 
-        reps = len(user.reps)
-        ret = f'{member.display_name} has received `{reps}` reps'
-        if reps > 0:
-            last_rep = max(user.reps, key=lambda r: r.repped_at)
+        reps = user.reps
+
+        ret = f'{member.display_name} has received `{len(reps)}` reps'
+
+        if len(reps) > 0:
+            last_rep = max(reps, key=lambda r: r.repped_at)
             ret += f'\nLast rep: {human_timedelta(last_rep.repped_at)}'
+
+            user_reps = {int(rep.user_id): len(list(filter(lambda x: x.user_id == rep.user_id, reps))) for rep in reps}
+
+            table = []
+            for user_id, reps in sorted(user_reps.items(), key=lambda i: i[1], reverse=True):
+                table.append((str(self.bot.get_user(user_id)), str(reps)))
+
+            ret += f"\n>>> ```prolog\n{tabulate(table, headers=('User', 'Reps', ), tablefmt='fancy_grid')}\n```"
 
         await ctx.send(ret)
 
