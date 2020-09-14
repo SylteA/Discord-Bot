@@ -6,7 +6,6 @@ import asyncio
 from .tag import Tag
 from .rep import Rep
 from .user import User
-from .poll import Poll
 from .message import Message
 from .gconfig import FilterConfig
 
@@ -106,14 +105,6 @@ class DataBase(object):
             return FilterConfig(bot=self.bot, **record)
         config = FilterConfig(bot=self.bot, guild_id=guild_id, blacklist_urls=[], whitelist_channels=[])
         return await config.post()
-
-    async def get_current_poll(self, guild_id: int):
-        query = """SELECT * FROM polls WHERE guild_id = $1 ORDER BY created_at ASC LIMIT 1"""
-        record = await self.fetchrow(query, guild_id)
-        if record is None:
-            return None
-        record = dict(record)
-        return Poll(bot=self.bot, options=loads(record.pop('options')), replies=loads(record.pop('replies')), **record)
 
     async def get_tag(self, guild_id: int, name: str):
         query = """SELECT * FROM tags WHERE guild_id = $1 AND name = $2"""
