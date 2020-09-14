@@ -35,10 +35,10 @@ class Polls(commands.Cog):
         channel: discord.TextChannel = self.__bot.get_channel(payload.channel_id)
         message: discord.Message = await channel.fetch_message(payload.message_id)
 
-        if not self.poll_check(message):
+        if payload.user_id == self.__bot.user.id:
             return
 
-        if payload.user_id == self.__bot.user.id:
+        if not self.poll_check(message):
             return
 
         emojis = list(self.reactions.values())
