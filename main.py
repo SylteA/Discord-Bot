@@ -68,11 +68,15 @@ class Tim(commands.AutoShardedBot):
 
     async def on_message(self, message):
         await self.wait_until_ready()
+
         if message.author.bot:
             return
+
         print(f"{message.channel}: {message.author}: {message.clean_content}")
+
         if not message.guild:
             return
+
         await self.process_commands(message)
 
     async def process_commands(self, message):
