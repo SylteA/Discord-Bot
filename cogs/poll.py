@@ -25,7 +25,10 @@ class Polls(commands.Cog):
         }
 
     def poll_check(self, message: discord.Message):
-        embed = message.embeds[0]
+        try:
+            embed = message.embeds[0]
+        except:
+            return False
         if str(embed.footer.text).count("Poll by") == 1:
             return message.author == self.__bot.user
         return False
@@ -92,7 +95,10 @@ class Polls(commands.Cog):
             return await ctx.send("Please provide only one message link")
 
         if not len(data):
-            message = await ctx.channel.fetch_message(message)
+            try:
+                message = await ctx.channel.fetch_message(message)
+            except:
+                return await ctx.send("Please provide the message ID/link for a valid poll")
         else:
             link = data[0].split("/")
 
@@ -101,7 +107,10 @@ class Polls(commands.Cog):
 
             channel = self.__bot.get_channel(channel_id)
 
-            message = await channel.fetch_message(msg_id)
+            try:
+                message = await channel.fetch_message(msg_id)
+            except:
+                return await ctx.send("Please provide the message ID/link for a valid poll")
 
         if self.poll_check(message):
             poll_embed = message.embeds[0]

@@ -250,7 +250,7 @@ class Commands(commands.Cog):
         member = member or ctx.author
 
         user = await self.bot.db.get_user(member.id)
-        embed = discord.Embed(color=member.top_role.color, description=member.mention)
+        embed = discord.Embed(color=member.color, description=member.mention)
         embed.set_author(name=str(member), icon_url=member.avatar_url)
         embed.add_field(name="Count", value=str(user.messages_sent))
         embed.add_field(name="Since", value=human_timedelta(user.joined_at, accuracy=2))
@@ -283,10 +283,10 @@ class Commands(commands.Cog):
             last_rep = max(reps, key=lambda r: r.repped_at)
             ret += f'\nLast rep: {human_timedelta(last_rep.repped_at)}'
 
-            user_reps = {int(rep.user_id): len(list(filter(lambda x: x.user_id == rep.user_id, reps))) for rep in reps}
+            user_reps = {int(rep.author_id): len(list(filter(lambda x: x.author_id == rep.author_id, reps))) for rep in reps}
 
             table = []
-            for user_id, reps in sorted(user_reps.items(), key=lambda i: i[1], reverse=True):
+            for user_id, reps in sorted(user_reps.items(), key=lambda i: i[1], reverse=True)[:10]:
                 table.append((str(self.bot.get_user(user_id)), str(reps)))
 
             ret += f"\n>>> ```prolog\n{tabulate(table, headers=('User', 'Reps', ), tablefmt='fancy_grid')}\n```"
