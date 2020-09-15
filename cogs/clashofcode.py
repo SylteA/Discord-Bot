@@ -44,7 +44,8 @@ class ClashOfCode(commands.Cog):
         if self.session_message != 0:
             if payload.message_id == self.session_message:
                 if str(payload.emoji) == "🖐️":
-                    self.session_users.append(payload.user_id)
+                    if payload.user_id not in self.session_users:
+                        self.session_users.append(payload.user_id)
 
         if payload.message_id != coc_message:
             return
@@ -66,7 +67,8 @@ class ClashOfCode(commands.Cog):
         if self.session_message != 0:
             if payload.message_id == self.session_message:
                 if str(payload.emoji) == "🖐️":
-                    self.session_users.remove(payload.user_id)
+                    if payload.user_id in self.session_users:
+                        self.session_users.remove(payload.user_id)
 
         if payload.message_id != coc_message:
             return
@@ -81,15 +83,16 @@ class ClashOfCode(commands.Cog):
         except discord.HTTPException:
             pass
 
-    @commands.group(name="coc")
+    @commands.group(aliases=["coc"])
     @commands.check(lambda ctx: ctx.channel.id == 729352136588263456)
-    async def _coc(self, ctx: commands.Context):
+    async def clash_of_code(self, ctx: commands.Context):
+        """Clash of Code"""
         if ctx.invoked_subcommand is None:
             if self.session_message == 0:
                 return await ctx.send_help(self.bot.get_command("coc session"))
             return await ctx.send_help(self.bot.get_command("coc invite"))
 
-    @_coc.group(aliases=['s'])
+    @clash_of_code.group(aliases=['s'])
     @commands.check(lambda ctx: ctx.channel.id == 729352136588263456)
     async def session(self, ctx: commands.Context):
         """ Start or End a clash of code session """
@@ -117,6 +120,7 @@ class ClashOfCode(commands.Cog):
 
         self.session = True
         self.last_clash = int(time.time())
+        self.session_users.append(ctx.author.id)
 
         msg = await ctx.send(pager.pages[0])
         self.session_message = msg.id
@@ -143,6 +147,24 @@ class ClashOfCode(commands.Cog):
                 self.session = False
                 break
 
+    @session.command(aliases=['j'])
+    @commands.check(lambda ctx: ctx.channel.id == 729352136588263456)
+    async def join(self, ctx: commands.Context):
+        if ctx.author.id in self.session_users:
+            return await ctx.send("You are already in the session. Have fun playing.\n"
+                                  "If you want to leave remove your reaction or use `t.coc session leave`")
+        self.session_users.append(ctx.author.id)
+        return await ctx.send("You have joined the session. Have fun playing")
+
+    @session.command(aliases=['l'])
+    @commands.check(lambda ctx: ctx.channel.id == 729352136588263456)
+    async def leave(self, ctx: commands.Context):
+        if ctx.author.id not in self.session_users:
+            return await ctx.send("You aren't in a clash of code session right now.\n"
+                                  "If you want to join react to session message or use `t.coc session join`")
+        self.session_users.remove(ctx.author.id)
+        return await ctx.send("You have left the session. No more pings for now")
+
     @session.command(name="end", aliases=["e"])
     @commands.check(lambda ctx: ctx.channel.id == 729352136588263456)
     async def session_end(self, ctx: commands.context):
@@ -164,9 +186,9 @@ class ClashOfCode(commands.Cog):
         self.session_message = 0
         self.session = False
 
-        await ctx.send("Clash session has been closed")
+        return await ctx.send("Clash session has been closed")
 
-    @_coc.command(name="invite", aliases=["i"])
+    @clash_of_code.command(name="invite", aliases=["i"])
     @commands.has_any_role(
         511334601977888798,  # Tim
         580911082290282506,  # Admin
@@ -177,7 +199,7 @@ class ClashOfCode(commands.Cog):
     @commands.check(lambda ctx: ctx.channel.id == 729352136588263456)
     @commands.cooldown(1, 60, commands.BucketType.channel)
     async def coc_invite(self, ctx: commands.Context, *, url: str=None):
-        """Mentions all the users with the `Clash Of Code` role that are currently online."""
+        """Mentions all the users with the `Clash Of Code` role that are in the current session."""
         await ctx.message.delete()
         if self.session_message == 0:
             return await ctx.send("No active Clash of Code session please create one to start playing "
