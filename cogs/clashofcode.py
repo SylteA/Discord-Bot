@@ -89,7 +89,7 @@ class ClashOfCode(commands.Cog):
                 return await ctx.send_help(self.bot.get_command("coc session"))
             return await ctx.send_help(self.bot.get_command("coc invite"))
 
-    @_coc.group()
+    @_coc.group(aliases=['s'])
     @commands.check(lambda ctx: ctx.channel.id == 729352136588263456)
     async def session(self, ctx: commands.Context):
         """ Start or End a clash of code session """
@@ -98,7 +98,7 @@ class ClashOfCode(commands.Cog):
                 return await ctx.send_help(self.bot.get_command("coc session start"))
             return await ctx.send_help(self.bot.get_command("coc session end"))
 
-    @session.command(name="start")
+    @session.command(name="start", aliases=["s"])
     @commands.check(lambda ctx: ctx.channel.id == 729352136588263456)
     async def session_start(self, ctx: commands.context):
         """ Start a new coc session """
@@ -143,7 +143,7 @@ class ClashOfCode(commands.Cog):
                 self.session = False
                 break
 
-    @session.command(name="end")
+    @session.command(name="end", aliases=["e"])
     @commands.check(lambda ctx: ctx.channel.id == 729352136588263456)
     async def session_end(self, ctx: commands.context):
         """ Ends the current coc session """

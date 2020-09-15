@@ -76,8 +76,7 @@ class Polls(commands.Cog):
             ctx.command.reset_cooldown(ctx)
             return await ctx.send("You can't make a poll with more than 10 choices")
 
-        embed = discord.Embed(title=desc,
-                              description="\n\n".join(
+        embed = discord.Embed(description=f"**{desc}**\n\n"+"\n\n".join(
                                   f"{str(self.reactions[i])}  {choice}" for i, choice in enumerate(choices, 1)),
                               timestamp=datetime.datetime.utcnow(), color=discord.colour.Color.gold())
         embed.set_footer(text=f"Poll by {str(ctx.author)}")
