@@ -1,6 +1,6 @@
 ---
 name: Feature Request
-about: Suggest a feature for this library
+about: Suggest a feature for this bot.
 ---
 
 ### The Problem
