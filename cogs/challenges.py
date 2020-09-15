@@ -1,6 +1,7 @@
 from discord.ext import commands
 import discord
 import re
+from .utils.checks import is_mod_check
 
 GITHUB_REGEX = re.compile(r"(https://github.com/[a-zA-Z0-9]+/[a-zA-Z0-9]+)")
 
@@ -12,6 +13,35 @@ def setup(bot):
 class ChallengeHandler(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        
+    @property
+    async def weekly_winner(self):
+        return self.bot.guild.get_role("""ROLE HERE""")
+        
+    @property
+    async def weekly_submitted(self):
+        return self.bot.guild.get_role("""ROLE HERE""")
+    
+    @is_mod_check
+    @commands.command(name='reset_winners')
+    async def reset_winners(self, ctx):
+        """Remove the weekly challenge winner and submitted roles from all members!"""
+        for member in self.weekly_winner.members:
+            await member.remove_roles(self.weekly_winner)
+           
+    @is_mod_check
+    @commands.command(name='add_winners')
+    async def add_winners(self, ctx, *members:commands.MemberConverter):
+        """Add the list of members to the weekly roles"""
+        for member in members:
+            await member.add_roles(self.weekly_winner)
+           
+    @is_mod_check            
+    @commands.command(name='remove_winners')
+    async def remove_winners(self, ctx, *members:commands.MemberConverter):
+        """Remove the list of members to the weekly roles"""
+        for member in members:
+            await member.remove_roles(self.weekly_winner)
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):  # Participant role.
