@@ -103,7 +103,7 @@ class ClashOfCode(commands.Cog):
     async def session_start(self, ctx: commands.context):
         """ Start a new coc session """
         if self.session_message != 0:
-            return ctx.send("There is an active session right now. Join to play")
+            return await ctx.send("There is an active session right now. Join to play")
 
         pager = commands.Paginator(prefix=f"**Hey, {ctx.author.mention} is starting a coc session. React to join**", suffix="")
 
@@ -166,7 +166,7 @@ class ClashOfCode(commands.Cog):
 
         await ctx.send("Clash session has been closed")
 
-    @_coc.command(name="invite")
+    @_coc.command(name="invite", aliases=["i"])
     @commands.has_any_role(
         511334601977888798,  # Tim
         580911082290282506,  # Admin
@@ -176,7 +176,7 @@ class ClashOfCode(commands.Cog):
     )
     @commands.check(lambda ctx: ctx.channel.id == 729352136588263456)
     @commands.cooldown(1, 60, commands.BucketType.channel)
-    async def coc_invite(self, ctx: commands.Context, *, url: str):
+    async def coc_invite(self, ctx: commands.Context, *, url: str=None):
         """Mentions all the users with the `Clash Of Code` role that are currently online."""
         await ctx.message.delete()
         if self.session_message == 0:
@@ -186,6 +186,10 @@ class ClashOfCode(commands.Cog):
         if ctx.author.id not in self.session_users:
             return await ctx.send("You can't create a clash unless you participate in the session "
                                   "<:smilecat:727592135171244103>")
+
+        if url is None:
+            ctx.command.reset_cooldown(ctx)
+            return await ctx.send("You should provide a valid clash of code url")
 
         link = REGEX.fullmatch(url)
         if not link:
