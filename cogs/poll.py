@@ -66,6 +66,8 @@ class Polls(commands.Cog):
     @commands.cooldown(1, 10, commands.BucketType.channel)
     async def new(self, ctx, desc: str, *choices):
         """ Create a new poll """
+        await ctx.message.delete()
+        
         if len(choices) < 2:
             ctx.command.reset_cooldown(ctx)
             if len(choices) == 1:
@@ -86,6 +88,7 @@ class Polls(commands.Cog):
 
     @poll.command()
     async def show(self, ctx, message: str):
+        """Show a poll result"""
         await ctx.message.delete()
         
         try:
