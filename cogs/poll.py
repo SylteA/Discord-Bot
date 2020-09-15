@@ -86,28 +86,19 @@ class Polls(commands.Cog):
 
     @poll.command()
     async def show(self, ctx, message: str):
-        data = re.findall("(https://discordapp.com/channels/[0-9]+/[0-9]+/[0-9]+)", message)
-
         await ctx.message.delete()
-
-        if len(data) > 1:
-            return await ctx.send("Please provide only one message link")
-
-        if not len(data):
-            try:
-                message = await ctx.channel.fetch_message(message)
-            except:
-                return await ctx.send("Please provide the message ID/link for a valid poll")
-        else:
-            link = data[0].split("/")
-
-            channel_id = int(link[-2])
-            msg_id = int(link[-1])
-
+        
+        try:
+            *_, channel_id, msg_id = message.split("/")
             channel = self.__bot.get_channel(channel_id)
 
             try:
                 message = await channel.fetch_message(msg_id)
+            except:
+                return await ctx.send("Please provide the message ID/link for a valid poll")
+        except:
+            try:
+                message = await ctx.channel.fetch_message(message)
             except:
                 return await ctx.send("Please provide the message ID/link for a valid poll")
 
@@ -116,7 +107,7 @@ class Polls(commands.Cog):
             reactions = message.reactions
             reactions_total = sum([reaction.count - 1 for reaction in reactions])
 
-            options = list(map(lambda option: option.split()[1], poll_embed.description.split('\n\n')))
+            options = list(map(lambda o:' '.join(o.split()[1:]), poll_embed.description.split('1️')[1].split("\n\n")))
 
             embed = discord.Embed(title=poll_embed.title, timestamp=poll_embed.timestamp, color=discord.Color.gold())
 
@@ -127,7 +118,7 @@ class Polls(commands.Cog):
                     indicator = ("█" * int(((reaction_count / reactions_total) * 100) / 5) +
                                  "░" * int((((reactions_total - reaction_count) / reactions_total) * 100) / 5))
 
-                embed.add_field(name=option, value=f"{indicator}  {int((reaction_count / (reactions_total or 1) * 100))}%"
+                embed.add_field(name=option, value=f"{indicator}  {int((reaction_count / (reactions_total or 1)*100))}%"
                                                    f" (**{reaction_count} votes**)", inline=False)
 
             embed.set_footer(text="Poll Result")
