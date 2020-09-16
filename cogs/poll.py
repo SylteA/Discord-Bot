@@ -93,10 +93,10 @@ class Polls(commands.Cog):
         
         try:
             *_, channel_id, msg_id = message.split("/")
-            channel = self.__bot.get_channel(channel_id)
 
             try:
-                message = await channel.fetch_message(msg_id)
+                channel = self.__bot.get_channel(int(channel_id))
+                message = await channel.fetch_message(int(msg_id))
             except:
                 return await ctx.send("Please provide the message ID/link for a valid poll")
         except:
@@ -108,7 +108,8 @@ class Polls(commands.Cog):
         if self.poll_check(message):
             poll_embed = message.embeds[0]
             reactions = message.reactions
-            reactions_total = sum([reaction.count - 1 for reaction in reactions])
+            reactions_total = sum([reaction.count - 1 if str(reaction.emoji) in self.reactions.values() else 0
+                                   for reaction in reactions])
 
             options = list(map(lambda o:' '.join(o.split()[1:]), poll_embed.description.split('1️')[1].split("\n\n")))
 
