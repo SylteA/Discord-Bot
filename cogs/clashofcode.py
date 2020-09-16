@@ -5,7 +5,6 @@ import aiohttp
 import asyncio
 import re
 
-import time
 
 coc_role = 729342805855567934
 coc_channel = 729352136588263456
@@ -21,10 +20,6 @@ def setup(bot: commands.Bot):
 class ClashOfCode(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.session = False
-        self.session_message: int = 0
-        self.session_users = []
-        self.last_clash: int = 0
 
     @property
     def role(self):
@@ -38,14 +33,6 @@ class ClashOfCode(commands.Cog):
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
-        if payload.user_id == self.bot.user.id:
-            return
-
-        if self.session_message != 0:
-            if payload.message_id == self.session_message:
-                if str(payload.emoji) == "🖐️":
-                    self.session_users.append(payload.user_id)
-
         if payload.message_id != coc_message:
             return
 
@@ -60,14 +47,6 @@ class ClashOfCode(commands.Cog):
 
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload: discord.RawReactionActionEvent):
-        if payload.user_id == self.bot.user.id:
-            return
-
-        if self.session_message != 0:
-            if payload.message_id == self.session_message:
-                if str(payload.emoji) == "🖐️":
-                    self.session_users.remove(payload.user_id)
-
         if payload.message_id != coc_message:
             return
 
@@ -81,92 +60,7 @@ class ClashOfCode(commands.Cog):
         except discord.HTTPException:
             pass
 
-    @commands.group(name="coc")
-    @commands.check(lambda ctx: ctx.channel.id == 729352136588263456)
-    async def _coc(self, ctx: commands.Context):
-        if ctx.invoked_subcommand is None:
-            if self.session_message == 0:
-                return await ctx.send_help(self.bot.get_command("coc session"))
-            return await ctx.send_help(self.bot.get_command("coc invite"))
-
-    @_coc.group()
-    @commands.check(lambda ctx: ctx.channel.id == 729352136588263456)
-    async def session(self, ctx: commands.Context):
-        """ Start or End a clash of code session """
-        if ctx.invoked_subcommand is None:
-            if self.session_message == 0:
-                return await ctx.send_help(self.bot.get_command("coc session start"))
-            return await ctx.send_help(self.bot.get_command("coc session end"))
-
-    @session.command(name="start")
-    @commands.check(lambda ctx: ctx.channel.id == 729352136588263456)
-    async def session_start(self, ctx: commands.context):
-        """ Start a new coc session """
-        if self.session_message != 0:
-            return ctx.send("There is an active session right now. Join to play")
-
-        pager = commands.Paginator(prefix=f"**Hey, {ctx.author.mention} is starting a coc session. React to join**", suffix="")
-
-        for member in self.role.members:
-            if member != ctx.author:
-                if member.status != discord.Status.offline:
-                    pager.add_line(member.mention + ", ")
-
-        if not len(pager.pages):
-            return await ctx.send(f"{ctx.author.mention}, Nobody is online to play with <:pepesad:733816214010331197>")
-
-        self.session = True
-        self.last_clash = int(time.time())
-
-        msg = await ctx.send(pager.pages[0])
-        self.session_message = msg.id
-        await msg.add_reaction("🖐️")
-
-        try:
-            await msg.pin()
-        except:
-            await ctx.send("Failed to pin message")
-
-        while self.session_message != 0:
-            await asyncio.sleep(10)
-
-            if self.last_clash + 1800 < int(time.time()) and self.session_message != 0:
-                await ctx.send("Clash session has been closed due to inactivity")
-                try:
-                    await msg.unpin()
-                except:
-                    await ctx.send("Failed to unpin message")
-
-                self.last_clash = 0
-                self.session_users = []
-                self.session_message = 0
-                self.session = False
-                break
-
-    @session.command(name="end")
-    @commands.check(lambda ctx: ctx.channel.id == 729352136588263456)
-    async def session_end(self, ctx: commands.context):
-        """ Ends the current coc session """
-        if self.session_message == 0:
-            return await ctx.send("There is no active clash of code session")
-
-        try:
-            msg = await ctx.channel.fetch_message(self.session_message)
-            try:
-                await msg.unpin()
-            except:
-                await ctx.send("Failed to unpin message")
-        except:
-            await ctx.send("Error while fetching message to unpin")
-
-        self.last_clash = 0
-        self.session_users = []
-        self.session_message = 0
-        self.session = False
-
-        await ctx.send("Clash session has been closed")
-
-    @_coc.command(name="invite")
+    @commands.command(name="clash-of-code", aliases=("coc", "invite"))
     @commands.has_any_role(
         511334601977888798,  # Tim
         580911082290282506,  # Admin
@@ -179,20 +73,11 @@ class ClashOfCode(commands.Cog):
     async def coc_invite(self, ctx: commands.Context, *, url: str):
         """Mentions all the users with the `Clash Of Code` role that are currently online."""
         await ctx.message.delete()
-        if self.session_message == 0:
-            return await ctx.send("No active Clash of Code session please create one to start playing "
-                                  "<:smilecat:727592135171244103>")
-
-        if ctx.author.id not in self.session_users:
-            return await ctx.send("You can't create a clash unless you participate in the session "
-                                  "<:smilecat:727592135171244103>")
 
         link = REGEX.fullmatch(url)
         if not link:
             ctx.command.reset_cooldown(ctx)
             return await ctx.send('Could not find any valid "clashofcode" urls.')
-
-        self.last_clash = time.time()
 
         id = link[1]
 
@@ -210,10 +95,10 @@ class ClashOfCode(commands.Cog):
             suffix="",
         )
 
-        for member_id in self.session_users:
-            if member_id != ctx.author.id:
-                member = self.bot.get_user(member_id)
-                pager.add_line(member.mention + ", ")
+        for member in self.role.members:
+            if member != ctx.author:
+                if member.status != discord.Status.offline:
+                    pager.add_line(member.mention + ", ")
 
         if not len(pager.pages):
             return await ctx.send(f"{ctx.author.mention}, Nobody is online to play with <:pepesad:733816214010331197>")
@@ -254,4 +139,3 @@ class ClashOfCode(commands.Cog):
                 ]
             )
         )
-
