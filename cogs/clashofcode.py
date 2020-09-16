@@ -84,7 +84,7 @@ class ClashOfCode(commands.Cog):
             pass
 
     @commands.group(aliases=["coc"])
-    @commands.check(lambda ctx: ctx.channel.id == 729352136588263456)
+    @commands.check(lambda ctx: ctx.channel.id == coc_channel)
     async def clash_of_code(self, ctx: commands.Context):
         """Clash of Code"""
         if ctx.invoked_subcommand is None:
@@ -93,7 +93,7 @@ class ClashOfCode(commands.Cog):
             return await ctx.send_help(self.bot.get_command("coc invite"))
 
     @clash_of_code.group(aliases=['s'])
-    @commands.check(lambda ctx: ctx.channel.id == 729352136588263456)
+    @commands.check(lambda ctx: ctx.channel.id == coc_channel)
     async def session(self, ctx: commands.Context):
         """ Start or End a clash of code session """
         if ctx.invoked_subcommand is None:
@@ -102,13 +102,15 @@ class ClashOfCode(commands.Cog):
             return await ctx.send_help(self.bot.get_command("coc session end"))
 
     @session.command(name="start", aliases=["s"])
-    @commands.check(lambda ctx: ctx.channel.id == 729352136588263456)
+    @commands.check(lambda ctx: ctx.channel.id == coc_channel)
     async def session_start(self, ctx: commands.context):
         """ Start a new coc session """
         if self.session_message != 0:
-            return await ctx.send("There is an active session right now. Join to play")
+            return await ctx.send("There is an active session right now.\n"
+                                  "Join by reacting to the pinned message or using `t.coc session join`. Have fun!")
 
-        pager = commands.Paginator(prefix=f"**Hey, {ctx.author.mention} is starting a coc session. React to join**", suffix="")
+        pager = commands.Paginator(prefix=f"**Hey, {ctx.author.mention} is starting a coc session.\n"
+                                          f"Use `t.coc session join` or react to this message to join**", suffix="")
 
         for member in self.role.members:
             if member != ctx.author:
@@ -147,18 +149,26 @@ class ClashOfCode(commands.Cog):
                 self.session = False
                 break
 
-    @session.command(aliases=['j'])
-    @commands.check(lambda ctx: ctx.channel.id == 729352136588263456)
-    async def join(self, ctx: commands.Context):
+    @session.command(name='join', aliases=['j'])
+    @commands.check(lambda ctx: ctx.channel.id == coc_channel)
+    async def session_join(self, ctx: commands.Context):
+        """Join the current active coc session"""
+        if self.session_message == 0:
+            return await ctx.send("There is no active coc session right now"
+                                  "use `t.coc session start` to start a coc session")
         if ctx.author.id in self.session_users:
             return await ctx.send("You are already in the session. Have fun playing.\n"
                                   "If you want to leave remove your reaction or use `t.coc session leave`")
         self.session_users.append(ctx.author.id)
         return await ctx.send("You have joined the session. Have fun playing")
 
-    @session.command(aliases=['l'])
-    @commands.check(lambda ctx: ctx.channel.id == 729352136588263456)
-    async def leave(self, ctx: commands.Context):
+    @session.command(name='leave', aliases=['l'])
+    @commands.check(lambda ctx: ctx.channel.id == coc_channel)
+    async def session_leave(self, ctx: commands.Context):
+        """Leave the current active coc session"""
+        if self.session_message == 0:
+            return await ctx.send("There is no active coc session right now"
+                                  "use `t.coc session start` to start a coc session")
         if ctx.author.id not in self.session_users:
             return await ctx.send("You aren't in a clash of code session right now.\n"
                                   "If you want to join react to session message or use `t.coc session join`")
@@ -166,7 +176,7 @@ class ClashOfCode(commands.Cog):
         return await ctx.send("You have left the session. No more pings for now")
 
     @session.command(name="end", aliases=["e"])
-    @commands.check(lambda ctx: ctx.channel.id == 729352136588263456)
+    @commands.check(lambda ctx: ctx.channel.id == coc_channel)
     async def session_end(self, ctx: commands.context):
         """ Ends the current coc session """
         if self.session_message == 0:
@@ -186,7 +196,7 @@ class ClashOfCode(commands.Cog):
         self.session_message = 0
         self.session = False
 
-        return await ctx.send("Clash session has been closed")
+        return await ctx.send(f"Clash session has been closed by {ctx.author.mention}. See you later")
 
     @clash_of_code.command(name="invite", aliases=["i"])
     @commands.has_any_role(
@@ -196,17 +206,18 @@ class ClashOfCode(commands.Cog):
         541272748161499147,  # Helper
         coc_role
     )
-    @commands.check(lambda ctx: ctx.channel.id == 729352136588263456)
+    @commands.check(lambda ctx: ctx.channel.id == coc_channel)
     @commands.cooldown(1, 60, commands.BucketType.channel)
     async def coc_invite(self, ctx: commands.Context, *, url: str=None):
         """Mentions all the users with the `Clash Of Code` role that are in the current session."""
         await ctx.message.delete()
         if self.session_message == 0:
-            return await ctx.send("No active Clash of Code session please create one to start playing "
-                                  "<:smilecat:727592135171244103>")
+            return await ctx.send("No active Clash of Code session please create one to start playing\n"
+                                  "Use `t.coc session start` to start a coc session <:smilecat:727592135171244103>")
 
         if ctx.author.id not in self.session_users:
-            return await ctx.send("You can't create a clash unless you participate in the session "
+            return await ctx.send("You can't create a clash unless you participate in the session\n"
+                                  "Use `t.coc session join` or react to the pinned message to join the coc session "
                                   "<:smilecat:727592135171244103>")
 
         if url is None:
@@ -216,7 +227,7 @@ class ClashOfCode(commands.Cog):
         link = REGEX.fullmatch(url)
         if not link:
             ctx.command.reset_cooldown(ctx)
-            return await ctx.send('Could not find any valid "clashofcode" urls.')
+            return await ctx.send('Could not find any valid "clashofcode" url')
 
         self.last_clash = time.time()
 
@@ -254,7 +265,7 @@ class ClashOfCode(commands.Cog):
                     json = await resp.json()
 
         players = len(json["players"])
-        players_text = ', '.join([p['codingamerNickname'] for p in sorted(json['players'], key=lambda p: p['position'])])
+        players_text = ', '.join([p['codingamerNickname']for p in sorted(json['players'], key=lambda p: p['position'])])
         start_message = await ctx.send(embed=self.em(json['mode'], players_text))
 
         async with aiohttp.ClientSession() as session:
