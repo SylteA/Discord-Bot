@@ -205,7 +205,7 @@ class TagCommands(commands.Cog, name="Tags"):
         new_txt = tag.text + " " + text
 
         if len(new_txt) > 2000:
-            return await ctx.send("Cannot append, because it will reach char limit.")
+            return await ctx.send("Cannot append, content length will exceed discords maximum message length.")
 
         await tag.update(text=new_txt)
         await ctx.send('You have successfully appended to your tag content.')
