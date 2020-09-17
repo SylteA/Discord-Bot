@@ -202,5 +202,10 @@ class TagCommands(commands.Cog, name="Tags"):
             if not is_admin(ctx.author):
                 return await ctx.send(f'You don\'t have permission to do that.')
 
-        await tag.update(text=tag.text + " " + text)
+        new_txt = tag.text + " " + text
+
+        if len(new_txt) > 2000:
+            return await ctx.send("Cannot append, because it will reach char limit.")
+
+        await tag.update(text=new_txt)
         await ctx.send('You have successfully appended to your tag content.')
