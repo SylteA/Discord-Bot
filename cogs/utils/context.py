@@ -92,3 +92,11 @@ class SyltesContext(commands.Context):
         """Shortcut to send embeds with `bot.em`"""
 
         return await self.send(embed=self.bot.em(**kwargs), delete_after=delete_after)
+    
+    async def send_help(self, *args):
+        """No more cheating on getting help from other channels :P"""
+        if self.command.name in ('help', 'scoreboard', 'rep_scoreboard', 'reps', 'member_count', 'top_user', 'users',
+                                'server_messages', 'messages'):
+            if self.channel.id not in (511344208955703306, 536199577284509696):
+                return await self.send("**Please use #bot-commands channel**")
+        return await super().send_help(*args)
