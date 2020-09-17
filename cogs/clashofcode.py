@@ -212,10 +212,12 @@ class ClashOfCode(commands.Cog):
         """Mentions all the users with the `Clash Of Code` role that are in the current session."""
         await ctx.message.delete()
         if self.session_message == 0:
+            ctx.command.reset_cooldown(ctx)
             return await ctx.send("No active Clash of Code session please create one to start playing\n"
                                   "Use `t.coc session start` to start a coc session <:smilecat:727592135171244103>")
 
         if ctx.author.id not in self.session_users:
+            ctx.command.reset_cooldown(ctx)
             return await ctx.send("You can't create a clash unless you participate in the session\n"
                                   "Use `t.coc session join` or react to the pinned message to join the coc session "
                                   "<:smilecat:727592135171244103>")
