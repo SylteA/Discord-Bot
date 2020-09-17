@@ -112,8 +112,9 @@ class Polls(commands.Cog):
                                    for reaction in reactions])
 
             options = list(map(lambda o:' '.join(o.split()[1:]), poll_embed.description.split('1️')[1].split("\n\n")))
+            desc = poll_embed.description.split('1️')[0]
 
-            embed = discord.Embed(title=poll_embed.title, timestamp=poll_embed.timestamp, color=discord.Color.gold())
+            embed = discord.Embed(description=desc, timestamp=poll_embed.timestamp, color=discord.Color.gold())
 
             for i, option in enumerate(options):
                 reaction_count = reactions[i].count - 1
