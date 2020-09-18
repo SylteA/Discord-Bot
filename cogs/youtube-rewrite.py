@@ -49,6 +49,9 @@ class Youtube(Cog):
 
     @tasks.loop(seconds=120.0)
     async def _get_last_video(self):
+        if not self.bot.is_ready():
+            await self.bot.wait_until_ready()
+        while not self.bot.is_closed():
             url = 'https://www.youtube.com/feeds/videos.xml?channel_id=UC4JX40jDee_tINbkjycV4Sg'
             try:
                 async with request("GET",url) as resp:
