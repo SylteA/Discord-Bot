@@ -209,3 +209,31 @@ class TagCommands(commands.Cog, name="Tags"):
 
         await tag.update(text=new_txt)
         await ctx.send('You have successfully appended to your tag content.')
+        
+    @tag.command()
+    @is_engineer_check()
+    async def alias(self, ctx, name: lambda inp: inp.lower(), *, new_name: lambda inp: inp.lower()):
+        """Make an alias for a tag."""
+
+        tag = await self.bot.db.get_tag(guild_id=ctx.guild.id, name=name)
+
+        if tag is None:
+            await ctx.message.delete(delay=10.0)
+            message = await ctx.send('Could not find a tag with that name.')
+            return await message.delete(delay=10.0)
+
+        if tag.creator_id != ctx.author.id:
+            if not is_admin(ctx.author):
+                return await ctx.send(f'You don\'t have permission to do that.')
+
+        text = await commands.clean_content().convert(ctx=ctx, argument=tag.text)
+
+        tag = await self.bot.db.get_tag(guild_id=ctx.guild.id, name=text)
+        if tag is not None:
+            return await ctx.send('A tag with that name already exists.')
+
+        tag = Tag(bot=self.bot, guild_id=ctx.guild.id,
+                  creator_id=ctx.author.id, name=new_name, text=text)
+
+        await tag.post()
+        await ctx.send('You have successfully created an alias for your tag.')
