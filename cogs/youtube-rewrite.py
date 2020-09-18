@@ -51,63 +51,63 @@ class Youtube(Cog):
     async def _get_last_video(self):
         if not self.bot.is_ready():
             await self.bot.wait_until_ready()
-        while not self.bot.is_closed():
-            url = 'https://www.youtube.com/feeds/videos.xml?channel_id=UC4JX40jDee_tINbkjycV4Sg'
-            try:
-                async with request("GET",url) as resp:
-                    data = resp.content
-                    with open('channelFeed.xml', 'wb') as f:
-                        f.write(await data.read())
-            except:
-                print("AN ERROR OCCURED WHILE FETCHING THE YOUTUBE XML")
-                return
-            tree = ET.parse('channelFeed.xml')
-            videoitems = []
-            ns = '{http://www.w3.org/2005/Atom}'
-            md = '{http://search.yahoo.com/mrss/}'
-            for entry in tree.findall(ns + "entry"):
-                video = {}
-                url = entry.find(ns+"link")
-                video["video_url"] = url.attrib["href"]
-                title = entry.find(ns+"title")
-                video["title"] = f"{title.text}"
-                date_str=str(entry.find((ns+"published")).text)
-                video["time"] = date_str
+        
+        url = 'https://www.youtube.com/feeds/videos.xml?channel_id=UC4JX40jDee_tINbkjycV4Sg'
+        try:
+            async with request("GET",url) as resp:
+                data = resp.content
+                with open('channelFeed.xml', 'wb') as f:
+                    f.write(await data.read())
+        except:
+            print("AN ERROR OCCURED WHILE FETCHING THE YOUTUBE XML")
+            return
+        tree = ET.parse('channelFeed.xml')
+        videoitems = []
+        ns = '{http://www.w3.org/2005/Atom}'
+        md = '{http://search.yahoo.com/mrss/}'
+        for entry in tree.findall(ns + "entry"):
+            video = {}
+            url = entry.find(ns+"link")
+            video["video_url"] = url.attrib["href"]
+            title = entry.find(ns+"title")
+            video["title"] = f"{title.text}"
+            date_str=str(entry.find((ns+"published")).text)
+            video["time"] = date_str
 
-                for mediagroup in entry.findall(md + 'group'):
-                    thumbnail = mediagroup.find(md + 'thumbnail')
-                    video['image'] = thumbnail.attrib['url']
-                    description = mediagroup.find(md + 'description')
-                    video['description'] = description.text
+            for mediagroup in entry.findall(md + 'group'):
+                thumbnail = mediagroup.find(md + 'thumbnail')
+                video['image'] = thumbnail.attrib['url']
+                description = mediagroup.find(md + 'description')
+                video['description'] = description.text
 
-                videoitems.append(video)
-                break
-            new_video = videoitems[0]
-            video = await self._get_stored_video("videos")
+            videoitems.append(video)
+            break
+        new_video = videoitems[0]
+        video = await self._get_stored_video("videos")
 
-            if video == None:
-                await self.savetoJson(new_video, "videos")
-                return
+        if video == None:
+            await self.savetoJson(new_video, "videos")
+            return
 
-            if video['video_url']!=new_video['video_url']:
-                print("new") #debug message let it be there
-                description = to_pages_by_lines(new_video["description"], max_size=500)[0].replace('*', '').strip()
-                embed = discord.Embed(title=new_video['title'],
-                                      url=new_video['video_url'],
-                                      description=description,
-                                      color=discord.Colour.red(),
-                                      timestamp=datetime.strptime(new_video["time"], '%Y-%m-%dT%H:%M:%S%z'))
-                url = new_video["image"]
-                embed.set_image(url=url)
-                embed.set_thumbnail(url=self.bot.guild.icon_url)
-                embed.set_author(name="Tech With Tim", url="https://www.youtube.com/c/TechWithTim/featured",
-                                 icon_url=self.bot.guild.icon_url)
-                embed.set_footer(text='Uploaded:', icon_url=self.bot.guild.icon_url)
-                await self.NOTIFICATION_ROLE.edit(mentionable=True)
-                await self.webhook.send(content=f'{self.NOTIFICATION_ROLE.mention} New upload!', embed=embed)
-                await self.savetoJson(new_video, "videos")
-                await self.NOTIFICATION_ROLE.edit(mentionable=False)
-                return
+        if video['video_url']!=new_video['video_url']:
+            print("new") #debug message let it be there
+            description = to_pages_by_lines(new_video["description"], max_size=500)[0].replace('*', '').strip()
+            embed = discord.Embed(title=new_video['title'],
+                                    url=new_video['video_url'],
+                                    description=description,
+                                    color=discord.Colour.red(),
+                                    timestamp=datetime.strptime(new_video["time"], '%Y-%m-%dT%H:%M:%S%z'))
+            url = new_video["image"]
+            embed.set_image(url=url)
+            embed.set_thumbnail(url=self.bot.guild.icon_url)
+            embed.set_author(name="Tech With Tim", url="https://www.youtube.com/c/TechWithTim/featured",
+                                icon_url=self.bot.guild.icon_url)
+            embed.set_footer(text='Uploaded:', icon_url=self.bot.guild.icon_url)
+            await self.NOTIFICATION_ROLE.edit(mentionable=True)
+            await self.webhook.send(content=f'{self.NOTIFICATION_ROLE.mention} New upload!', embed=embed)
+            await self.savetoJson(new_video, "videos")
+            await self.NOTIFICATION_ROLE.edit(mentionable=False)
+            return
 
     @commands.command(name='subscribe', aliases=['sub'])
     @commands.guild_only()
