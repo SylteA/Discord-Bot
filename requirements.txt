@@ -8,3 +8,4 @@ asyncpg
 pandas
 psutil
 tabulate
+aiofiles
