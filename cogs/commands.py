@@ -7,6 +7,7 @@ from discord.utils import get
 from tabulate import tabulate
 import inspect
 import aiohttp
+import math
 import typing
 import zlib
 import re
@@ -244,6 +245,48 @@ class Commands(commands.Cog):
         await ctx.send(f"I have read `{count}` messages after "
                        f"{human_timedelta(started_counting, suffix=False, brief=True, accuracy=2)}")
 
+    @commands.command(name="emojis", aliases=['elb'])
+    async def emojis_scoreboard(self, ctx, page: int = 1):
+        """Scoreboard over emojis"""
+        async with ctx.typing():
+            messages = await self.bot.db.get_messages()
+            messages_has_emojis = \
+                list(filter(lambda x: len(x), [re.findall("(<:[a-zA-z0-9]+:[0-9]+>)", message.content)
+                                               for message in messages]))
+            emojis = {}
+            for message in messages_has_emojis:
+                for emoji in message:
+                    if str(emoji) not in list(map(str, ctx.guild.emojis)):
+                        continue
+                    if emoji not in list(emojis.keys()):
+                        uses = 0
+                        for _message in messages_has_emojis:
+                            if emoji in _message:
+                                uses += 1
+                        emojis[emoji] = uses
+
+            emojis = dict(sorted(emojis.items(), key=lambda x: x[1], reverse=True))
+
+            pages = math.ceil(len(emojis)/10)
+            if page > pages:
+                return await ctx.send(f"Page number out of range. Enter a number between 1 - {pages}")
+
+            embed = discord.Embed()
+            embed.set_author(name=str(ctx.channel.guild), icon_url=ctx.channel.guild.icon_url)
+            embed.set_footer(text=f"Page {page}/{pages}")
+
+            enumberated_emojis = list(enumerate(list(emojis.items()), 1))
+
+            if len(emojis) > page * 10:
+                leaderboard_list = enumberated_emojis[(page-1) * 10:page * 10]
+            else:
+                leaderboard_list = enumberated_emojis[(page - 1) * 10:]
+
+            embed.description = "\n" + "\n".join(f"**{i}.** " + f"{emoji} - {uses}"
+                                                 for i, (emoji, uses) in leaderboard_list)
+
+            await ctx.send(embed=embed)
+
     @commands.command(name='messages', aliases=['my_messages'])
     async def messages_(self, ctx, member: commands.MemberConverter = None):
         """How many messages have you sent?"""
@@ -283,13 +326,14 @@ class Commands(commands.Cog):
             last_rep = max(reps, key=lambda r: r.repped_at)
             ret += f'\nLast rep: {human_timedelta(last_rep.repped_at)}'
 
-            user_reps = {int(rep.author_id): len(list(filter(lambda x: x.author_id == rep.author_id, reps))) for rep in reps}
+            user_reps = {int(rep.author_id): len(list(filter(lambda x: x.author_id == rep.author_id, reps))) for rep in
+                         reps}
 
             table = []
             for user_id, reps in sorted(user_reps.items(), key=lambda i: i[1], reverse=True)[:10]:
                 table.append((str(self.bot.get_user(user_id)), str(reps)))
 
-            ret += f"\n>>> ```prolog\n{tabulate(table, headers=('User', 'Reps', ), tablefmt='fancy_grid')}\n```"
+            ret += f"\n>>> ```prolog\n{tabulate(table, headers=('User', 'Reps',), tablefmt='fancy_grid')}\n```"
 
         await ctx.send(ret)
 
@@ -366,7 +410,7 @@ class Commands(commands.Cog):
                 em = discord.Embed(title=f"Searched for {term}", description=f"No [results]({search}) found.")
                 em.colour = discord.Colour.red()
             await ctx.send(embed=em)
-    
+
     @commands.command(name="suggest")
     async def suggestion(self, ctx, *, suggestion: str):
         """Make a poll/suggestion"""
@@ -393,7 +437,7 @@ class Commands(commands.Cog):
             else:
                 poll_embed = message.embeds[0]
                 embed = discord.Embed(description=f'Suggestion: {poll_embed.description}')
-                embed.set_author(name=poll_embed.author.name, icon_url= poll_embed.author.icon_url)
+                embed.set_author(name=poll_embed.author.name, icon_url=poll_embed.author.icon_url)
                 embed.add_field(name='Upvotes:', value=f'{reaction_upvote.count} 👍')
                 embed.add_field(name='Downvotes:', value=f'{reaction_downvote.count} 👎')
                 await ctx.send(embed=embed)

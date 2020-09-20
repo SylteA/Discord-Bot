@@ -81,9 +81,13 @@ class DataBase(object):
 
         return [x for x in list(users.values())]
 
-    async def get_messages(self, author_id: int) -> List[Message]:
-        query = """SELECT * FROM messages WHERE author_id = $1"""
-        records = await self.fetch(query, author_id)
+    async def get_messages(self, author_id: int = None) -> List[Message]:
+        if author_id is not None:
+            query = """SELECT * FROM messages WHERE author_id = $1"""
+            records = await self.fetch(query, author_id)
+        else:
+            query = """SELECT * FROM messages"""
+            records = await self.fetch(query)
         return [Message(bot=self.bot, **record) for record in records]
 
     async def get_message(self, message_id: int) -> Message:
