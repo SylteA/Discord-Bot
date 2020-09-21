@@ -367,7 +367,7 @@ class Commands(commands.Cog):
                 em.colour = discord.Colour.red()
             await ctx.send(embed=em)
     
-    @commands.command(name="suggest")
+    @commands.group(name="suggest")
     async def suggestion(self, ctx, *, suggestion: str):
         """Make a poll/suggestion"""
         await ctx.message.delete()
@@ -377,7 +377,7 @@ class Commands(commands.Cog):
         await msg.add_reaction('👍')
         await msg.add_reaction('👎')
 
-    @commands.command(name="result", aliases=["show"])
+    @suggestion.command(name="result", aliases=["show"])
     async def result(self, ctx, msg_link: str):
         """Get result of poll"""
         try:
@@ -399,6 +399,35 @@ class Commands(commands.Cog):
                 await ctx.send(embed=embed)
         except:
             return await ctx.send("That message is not a poll!")
+    
+    @suggestion.command(name="edit", aliases=["change"]
+    async def edit_suggestion(self, ctx, msg_link:str, *, suggestion:str):
+        """Edit a suggestion"""
+        try:
+            channel_id = int(msg_link.split('/')[-2])
+            msg_id = int(msg_link.split('/')[-1])
+            channel = ctx.guild.get_channel(channel_id)
+            message = await channel.fetch_message(msg_id)
+            if message.author != ctx.bot.user:
+                if not message.embeds[0].author.name.startswith("Poll"):
+                    return await ctx.send("That message is not a poll!")
+            else:
+                em = message.embeds[0]
+                if is_mod(ctx):
+                    em.description = suggestion
+                    await message.edit(embed=em)
+                    return await ctx.send("Successfully edited suggestion.")
+                if message.edited_at is not None or datetime.now().replace(microsecond=0)-message.created_at.replace(microsecond=0) > timedelta(minutes=5): # If it has been edited yet, or was sent more than 5 minutes ago
+                    return await ctx.send("You cannot edit anymore")
+                if ctx.author.display_name in em.author.name:
+                    em.description = suggestion
+                    await message.edit(embed=em)
+                    return await ctx.send("Successfully edited suggestion.")
+                return await ctx.send("You don't have permission to do that!")
+        except:
+            return await ctx.send("That message is not a poll!")
+            
+            
 
     async def build_docs_lookup_table(self, page_types):
         cache = {}
