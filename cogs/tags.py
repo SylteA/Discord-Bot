@@ -184,3 +184,28 @@ class TagCommands(commands.Cog, name="Tags"):
 
         await tag.rename(new_name=new_name)
         await ctx.send('You have successfully renamed your tag.')
+        
+    @tag.command()
+    @is_engineer_check()
+    async def append(self, ctx, name: lambda inp: inp.lower(), *, text: str):
+        """Append some content to the end of a tag"""
+        text = await commands.clean_content().convert(ctx=ctx, argument=text)
+
+        tag = await self.bot.db.get_tag(guild_id=ctx.guild.id, name=name)
+
+        if tag is None:
+            await ctx.message.delete(delay=10.0)
+            message = await ctx.send('Could not find a tag with that name.')
+            return await message.delete(delay=10.0)
+
+        if tag.creator_id != ctx.author.id:
+            if not is_admin(ctx.author):
+                return await ctx.send(f'You don\'t have permission to do that.')
+
+        new_txt = tag.text + " " + text
+
+        if len(new_txt) > 2000:
+            return await ctx.send("Cannot append, content length will exceed discords maximum message length.")
+
+        await tag.update(text=new_txt)
+        await ctx.send('You have successfully appended to your tag content.')
