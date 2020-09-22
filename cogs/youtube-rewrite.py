@@ -1,18 +1,21 @@
-from discord.ext.commands import Cog
-from discord.ext import commands
-import discord
-import asyncio
-from discord.ext import tasks
-from aiohttp import request
-import xml.etree.ElementTree as ET
-import aiofiles
+"""
+Youtube notifications cog rewrite for twt videos
+"""
 import json
 from datetime import datetime
+import xml.etree.ElementTree as ET
+import discord
+import asyncio
+from discord.ext.commands import Cog
+from discord.ext import commands, tasks
+from aiohttp import request
+import aiofiles
 from config import YOUTUBE_API_KEY, NOTIFICATION_CHANNEL_ID, NOTIFICATION_ROLE_ID
 from .utils.checks import in_twt
 
 
 def to_pages_by_lines(content: str, max_size: int):
+    """Function to truncate the youtube description"""
     pages = ['']
     i = 0
     for line in content.splitlines(keepends=True):
@@ -28,8 +31,8 @@ class Youtube(Cog):
         self.bot = bot
         self.webhook = self.bot.guild.get_channel(NOTIFICATION_CHANNEL_ID)
         self.NOTIFICATION_ROLE = self.bot.guild.get_role(NOTIFICATION_ROLE_ID)
-        self._get_last_video.start()  #Check for new in every two minutes
-    
+        self._get_last_video.start()  # Check for new video in every two minutes
+
     def cog_unload(self):
         self._get_last_video.stop()
 
@@ -37,13 +40,13 @@ class Youtube(Cog):
         async with aiofiles.open(f"{filename}.json", 'w') as jsonfile:
             await jsonfile.write(json.dumps(video))
 
-    async def _get_stored_video(self,filename):
+    async def _get_stored_video(self, filename):
         try:
-            async with aiofiles.open(f"{filename}.json","r") as jsonfile:
-                    video=dict()
-                    resp=await jsonfile.read()
-                    video=json.loads(resp)
-                    return video
+            async with aiofiles.open(f"{filename}.json", "r") as jsonfile:
+                video = dict()
+                resp = await jsonfile.read()
+                video = json.loads(resp)
+                return video
         except:
             return None
 
@@ -51,10 +54,10 @@ class Youtube(Cog):
     async def _get_last_video(self):
         if not self.bot.is_ready():
             await self.bot.wait_until_ready()
-        
+
         url = 'https://www.youtube.com/feeds/videos.xml?channel_id=UC4JX40jDee_tINbkjycV4Sg'
         try:
-            async with request("GET",url) as resp:
+            async with request("GET", url) as resp:
                 data = resp.content
                 with open('channelFeed.xml', 'wb') as f:
                     f.write(await data.read())
@@ -67,11 +70,11 @@ class Youtube(Cog):
         md = '{http://search.yahoo.com/mrss/}'
         for entry in tree.findall(ns + "entry"):
             video = {}
-            url = entry.find(ns+"link")
+            url = entry.find(ns + "link")
             video["video_url"] = url.attrib["href"]
-            title = entry.find(ns+"title")
+            title = entry.find(ns + "title")
             video["title"] = f"{title.text}"
-            date_str=str(entry.find((ns+"published")).text)
+            date_str = str(entry.find((ns + "published")).text)
             video["time"] = date_str
 
             for mediagroup in entry.findall(md + 'group'):
@@ -89,20 +92,22 @@ class Youtube(Cog):
             await self.savetoJson(new_video, "videos")
             return
 
-        if video['video_url']!=new_video['video_url']:
-            print("new") #debug message let it be there
-            description = to_pages_by_lines(new_video["description"], max_size=500)[0].replace('*', '').strip()
+        if video['video_url'] != new_video['video_url']:
+            print("new")  # debug message let it be there
+            description = to_pages_by_lines(new_video["description"],max_size=500)[0].replace('*', '').strip()  # pylint: disable=C0301
             embed = discord.Embed(title=new_video['title'],
-                                    url=new_video['video_url'],
-                                    description=description,
-                                    color=discord.Colour.red(),
-                                    timestamp=datetime.strptime(new_video["time"], '%Y-%m-%dT%H:%M:%S%z'))
+                                  url=new_video['video_url'],
+                                  description=description,
+                                  color=discord.Colour.red(),
+                                  timestamp=datetime.strptime(new_video["time"], '%Y-%m-%dT%H:%M:%S%z'))  # pylint: disable=C0301
             url = new_video["image"]
             embed.set_image(url=url)
             embed.set_thumbnail(url=self.bot.guild.icon_url)
-            embed.set_author(name="Tech With Tim", url="https://www.youtube.com/c/TechWithTim/featured",
-                                icon_url=self.bot.guild.icon_url)
-            embed.set_footer(text='Uploaded:', icon_url=self.bot.guild.icon_url)
+            embed.set_author(name="Tech With Tim",
+                             url="https://www.youtube.com/c/TechWithTim/featured",
+                             icon_url=self.bot.guild.icon_url)
+            embed.set_footer(text='Uploaded:',
+                             icon_url=self.bot.guild.icon_url)
             await self.NOTIFICATION_ROLE.edit(mentionable=True)
             await self.webhook.send(content=f'{self.NOTIFICATION_ROLE.mention} New upload!', embed=embed)
             await self.savetoJson(new_video, "videos")
@@ -140,5 +145,3 @@ class Youtube(Cog):
 
 def setup(bot):
     bot.add_cog(Youtube(bot))
-
-    
