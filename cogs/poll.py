@@ -66,6 +66,8 @@ class Polls(commands.Cog):
     @commands.cooldown(1, 10, commands.BucketType.channel)
     async def new(self, ctx, desc: str, *choices):
         """ Create a new poll """
+        await ctx.message.delete()
+        
         if len(choices) < 2:
             ctx.command.reset_cooldown(ctx)
             if len(choices) == 1:
@@ -76,8 +78,7 @@ class Polls(commands.Cog):
             ctx.command.reset_cooldown(ctx)
             return await ctx.send("You can't make a poll with more than 10 choices")
 
-        embed = discord.Embed(title=desc,
-                              description="\n\n".join(
+        embed = discord.Embed(description=f"**{desc}**\n\n"+"\n\n".join(
                                   f"{str(self.reactions[i])}  {choice}" for i, choice in enumerate(choices, 1)),
                               timestamp=datetime.datetime.utcnow(), color=discord.colour.Color.gold())
         embed.set_footer(text=f"Poll by {str(ctx.author)}")
@@ -87,39 +88,33 @@ class Polls(commands.Cog):
 
     @poll.command()
     async def show(self, ctx, message: str):
-        data = re.findall("(https://discordapp.com/channels/[0-9]+/[0-9]+/[0-9]+)", message)
-
+        """Show a poll result"""
         await ctx.message.delete()
+        
+        try:
+            *_, channel_id, msg_id = message.split("/")
 
-        if len(data) > 1:
-            return await ctx.send("Please provide only one message link")
-
-        if not len(data):
             try:
-                message = await ctx.channel.fetch_message(message)
+                channel = self.__bot.get_channel(int(channel_id))
+                message = await channel.fetch_message(int(msg_id))
             except:
                 return await ctx.send("Please provide the message ID/link for a valid poll")
-        else:
-            link = data[0].split("/")
-
-            channel_id = int(link[-2])
-            msg_id = int(link[-1])
-
-            channel = self.__bot.get_channel(channel_id)
-
+        except:
             try:
-                message = await channel.fetch_message(msg_id)
+                message = await ctx.channel.fetch_message(message)
             except:
                 return await ctx.send("Please provide the message ID/link for a valid poll")
 
         if self.poll_check(message):
             poll_embed = message.embeds[0]
             reactions = message.reactions
-            reactions_total = sum([reaction.count - 1 for reaction in reactions])
+            reactions_total = sum([reaction.count - 1 if str(reaction.emoji) in self.reactions.values() else 0
+                                   for reaction in reactions])
 
-            options = list(map(lambda option: option.split()[1], poll_embed.description.split('\n\n')))
+            options = list(map(lambda o:' '.join(o.split()[1:]), poll_embed.description.split('1️')[1].split("\n\n")))
+            desc = poll_embed.description.split('1️')[0]
 
-            embed = discord.Embed(title=poll_embed.title, timestamp=poll_embed.timestamp, color=discord.Color.gold())
+            embed = discord.Embed(description=desc, timestamp=poll_embed.timestamp, color=discord.Color.gold())
 
             for i, option in enumerate(options):
                 reaction_count = reactions[i].count - 1
@@ -128,7 +123,7 @@ class Polls(commands.Cog):
                     indicator = ("█" * int(((reaction_count / reactions_total) * 100) / 5) +
                                  "░" * int((((reactions_total - reaction_count) / reactions_total) * 100) / 5))
 
-                embed.add_field(name=option, value=f"{indicator}  {int((reaction_count / (reactions_total or 1) * 100))}%"
+                embed.add_field(name=option, value=f"{indicator}  {int((reaction_count / (reactions_total or 1)*100))}%"
                                                    f" (**{reaction_count} votes**)", inline=False)
 
             embed.set_footer(text="Poll Result")

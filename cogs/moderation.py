@@ -18,7 +18,7 @@ class Moderation(commands.Cog):
 
     @commands.command("report")
     @commands.guild_only()
-    @commands.cooldown(1, 15, commands.BucketType.channel)
+    @commands.cooldown(1, 15, commands.BucketType.member)
     async def report(self, ctx, member: discord.Member, *, reason: str):
         """Report a user to staff for a reason."""
         await ctx.message.delete()
