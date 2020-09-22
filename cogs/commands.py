@@ -398,9 +398,9 @@ class Commands(commands.Cog):
                 embed.add_field(name='Downvotes:', value=f'{reaction_downvote.count} 👎')
                 await ctx.send(embed=embed)
         except:
-            return await ctx.send("That message is not a poll!")
+            return await ctx.send("Something went wrong :confused:")
     
-    @suggestion.command(name="edit", aliases=["change"]
+    @suggestion.command(name="edit", aliases=["change"])
     async def edit_suggestion(self, ctx, msg_link:str, *, suggestion:str):
         """Edit a suggestion"""
         try:
@@ -425,8 +425,31 @@ class Commands(commands.Cog):
                     return await ctx.send("Successfully edited suggestion.")
                 return await ctx.send("You don't have permission to do that!")
         except:
-            return await ctx.send("That message is not a poll!")
-            
+            return await ctx.send("Something went wrong :confused:")
+                       
+    @suggestion.command(name="delete", aliases=["remove"])
+    async def delete_suggestion(self, ctx, msg_link:str):
+        """Deletes a certain suggestion."""
+        try:
+            channel_id = int(msg_link.split('/')[-2])
+            msg_id = int(msg_link.split('/')[-1])
+            channel = ctx.guild.get_channel(channel_id)
+            message = await channel.fetch_message(msg_id)
+            if message.author != ctx.bot.user:
+                if not message.embeds[0].author.name.startswith("Poll"):
+                    return await ctx.send("That message is not a poll!")
+            else:
+                if is_mod(ctx):
+                    await message.delete()
+                    return await ctx.send("Successfully deleted suggestion.")
+                if message.edited_at is not None or datetime.now().replace(microsecond=0)-message.created_at.replace(microsecond=0) > timedelta(minutes=5): # If it has been edited yet, or was sent more than 5 minutes ago
+                    return await ctx.send("You cannot delete this suggestion anymore")
+                if ctx.author.display_name in em.author.name:
+                    await message.delete()
+                    return await ctx.send("Successfully deleted suggestion.")
+                return await ctx.send("You don't have permission to do that!")
+        except:
+            return await ctx.send("Something went wrong :confused:")
             
 
     async def build_docs_lookup_table(self, page_types):
