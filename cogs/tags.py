@@ -56,7 +56,7 @@ class TagCommands(commands.Cog, name="Tags"):
         """Create a new tag."""
         text = await commands.clean_content().convert(ctx=ctx, argument=text)
 
-        tag = await self.bot.db.get_tag(guild_id=ctx.guild.id, name=text)
+        tag = await self.bot.db.get_tag(guild_id=ctx.guild.id, name=name)
         if tag is not None:
             return await ctx.send('A tag with that name already exists.')
 
