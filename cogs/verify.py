@@ -17,12 +17,14 @@ class UserVerification:
     self.time = time
     self.tries = 0
     self.member = member
+    self.notified = False
   
   async def verify(self, verification, bot):
     self.tries += 1
-    if self.tries > 5:
-      staff_channel = bot.guild.get_channel(534693705442131988)
-      await staff_channel.send(f"{self.member.mention} has tried verifying the same code more than 5 times")
+    if self.tries > 5 and not self.notified:
+      log_channel = bot.guild.get_channel(536617175369121802)
+      await log_channel.send(f"{self.member.mention} has tried verifying the same code more than 5 times")
+      self.notified = True  
     if str(verification) == self.verification:
       return True
     return False
@@ -72,7 +74,7 @@ class Verify(commands.Cog):
     verify = message.content
     try:
       if self.users[message.author.id].time + 300 < int(time.time()):
-        return message.channel.send(f"{message.author.mention}, The verification code you have has timedout please get another one", delete_after=10)
+        return await message.channel.send(f"{message.author.mention}, The verification code you have has timedout please get another one", delete_after=10)
       verified = await self.users[message.author.id].verify(verify, self.__bot)
       if verified:
         await message.channel.send(f"{message.author.mention}, You have been verified. Welcome to the server.", delete_after=10)
