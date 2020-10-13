@@ -29,7 +29,8 @@ initial_cogs = [
     'cogs.clashofcode',
     'cogs.moderation',
     'cogs.roles',
-    'cogs.poll'
+    'cogs.poll',
+    'cogs.verify'
 ]
 
 print('Connecting...')
