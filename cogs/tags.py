@@ -174,6 +174,8 @@ class TagCommands(commands.Cog, name="Tags"):
     async def rename(self, ctx, name: lambda inp: inp.lower(), *, new_name: lambda inp: inp.lower()):
         """Rename a tag."""
 
+        new_name = await commands.clean_content().convert(ctx=ctx, argument=new_name)
+
         tag = await self.bot.db.get_tag(guild_id=ctx.guild.id, name=name)
 
         if tag is None:
