@@ -54,6 +54,7 @@ class TagCommands(commands.Cog, name="Tags"):
     @is_engineer_check()
     async def create(self, ctx, name: lambda inp: inp.lower(), *, text: str):
         """Create a new tag."""
+        name = await commands.clean_content().convert(ctx=ctx, argument=name)
         text = await commands.clean_content().convert(ctx=ctx, argument=text)
 
         tag = await self.bot.db.get_tag(guild_id=ctx.guild.id, name=name)
