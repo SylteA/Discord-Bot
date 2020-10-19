@@ -330,7 +330,7 @@ class Commands(commands.Cog):
     async def pipsearch(self, ctx, term, order: lambda string: string.lower() = 'relevance',
                         amount: lambda x: min(int(x), 10) = 10):
         """Search pypi.org for packages.
-        Specify term, order (relevance, trending, updated) and amount (10 is default) you want to show."""
+        Specify term, order (relev butance, trending, updated) and amount (10 is default) you want to show."""
         if order not in ('relevance', 'trending', 'updated'):
             return await ctx.send(f"{order} is not a valid order type.")
 
@@ -366,7 +366,15 @@ class Commands(commands.Cog):
                 em = discord.Embed(title=f"Searched for {term}", description=f"No [results]({search}) found.")
                 em.colour = discord.Colour.red()
             await ctx.send(embed=em)
-    
+            
+    @commands.command(name="codeblock")
+    async def cb(self, ctx, *, text):
+        """Puts your code into a copyable codeblock"""
+        await ctx.message.delete()
+        em = discord.Embed(description=f'>>> \```\n{text}\n```')
+        em.set_author(name=ctx.author.display_name, icon_url=ctx.author.avatar_url)
+        await ctx.send(embed=em)
+        
     @commands.command(name="suggest")
     async def suggestion(self, ctx, *, suggestion: str):
         """Make a poll/suggestion"""
