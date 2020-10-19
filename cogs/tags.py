@@ -74,9 +74,11 @@ class TagCommands(commands.Cog, name="Tags"):
         query = """SELECT name FROM tags WHERE guild_id = $1 AND creator_id = $2 ORDER BY name"""
         records = await self.bot.db.fetch(query, ctx.guild.id, member.id)
         if not records:
-            return await ctx.send(f'No tags found.')
-        
-        await ctx.send(f"**{len(records)} tags by {'you' if member == ctx.author else str(member)} found on this server.**")
+            return await ctx.send('No tags found.')
+
+        await ctx.send(
+            f"**{len(records)} tags by {'you' if member == ctx.author else str(member)} found on this server.**"
+        )
 
         pager = commands.Paginator()
 
@@ -87,7 +89,7 @@ class TagCommands(commands.Cog, name="Tags"):
             await ctx.send(page)
 
     @tag.command()
-    @commands.cooldown(1, 3600*24, commands.BucketType.user)
+    @commands.cooldown(1, 3600 * 24, commands.BucketType.user)
     async def all(self, ctx: commands.Context):
         """List all existing tags alphabetically ordered and sends them in DMs."""
         records = await self.bot.db.fetch(
@@ -112,7 +114,7 @@ class TagCommands(commands.Cog, name="Tags"):
         for page in pager.pages:
             await asyncio.sleep(1)
             await ctx.author.send(page)
-            
+
         await ctx.send("Tags sent in DMs.")
 
     @tag.command()
@@ -130,7 +132,7 @@ class TagCommands(commands.Cog, name="Tags"):
 
         if tag.creator_id != ctx.author.id:
             if not is_admin(ctx.author):
-                return await ctx.send(f'You don\'t have permission to do that.')
+                return await ctx.send('You don\'t have permission to do that.')
 
         await tag.update(text=text)
         await ctx.send('You have successfully edited your tag.')
@@ -148,11 +150,11 @@ class TagCommands(commands.Cog, name="Tags"):
 
         if tag.creator_id != ctx.author.id:
             if not is_admin(ctx.author):
-                return await ctx.send(f'You don\'t have permission to do that.')
+                return await ctx.send('You don\'t have permission to do that.')
 
         await tag.delete()
         await ctx.send('You have successfully deleted your tag.')
-    
+
     @tag.command()
     @commands.cooldown(1, 1, commands.BucketType.user)
     async def search(self, ctx, *, term: str):
@@ -181,11 +183,11 @@ class TagCommands(commands.Cog, name="Tags"):
 
         if tag.creator_id != ctx.author.id:
             if not is_admin(ctx.author):
-                return await ctx.send(f'You don\'t have permission to do that.')
+                return await ctx.send('You don\'t have permission to do that.')
 
         await tag.rename(new_name=new_name)
         await ctx.send('You have successfully renamed your tag.')
-        
+
     @tag.command()
     @is_engineer_check()
     async def append(self, ctx, name: lambda inp: inp.lower(), *, text: str):
@@ -201,7 +203,7 @@ class TagCommands(commands.Cog, name="Tags"):
 
         if tag.creator_id != ctx.author.id:
             if not is_admin(ctx.author):
-                return await ctx.send(f'You don\'t have permission to do that.')
+                return await ctx.send('You don\'t have permission to do that.')
 
         new_txt = tag.text + " " + text
 
