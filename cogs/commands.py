@@ -330,7 +330,7 @@ class Commands(commands.Cog):
     async def pipsearch(self, ctx, term, order: lambda string: string.lower() = 'relevance',
                         amount: lambda x: min(int(x), 10) = 10):
         """Search pypi.org for packages.
-        Specify term, order (relev butance, trending, updated) and amount (10 is default) you want to show."""
+        Specify term, order (relevance, trending, updated) and amount (10 is default) you want to show."""
         if order not in ('relevance', 'trending', 'updated'):
             return await ctx.send(f"{order} is not a valid order type.")
 
