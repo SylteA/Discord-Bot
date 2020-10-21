@@ -371,9 +371,7 @@ class Commands(commands.Cog):
     async def cb(self, ctx, *, text):
         """Puts your code into a copyable codeblock"""
         await ctx.message.delete()
-        em = discord.Embed(description=f'>>> \```\n{text}\n```')
-        em.set_author(name=ctx.author.display_name, icon_url=ctx.author.avatar_url)
-        await ctx.send(embed=em)
+        await ctx.send(f'>>> \```\n{text}\n```')
         
     @commands.command(name="suggest")
     async def suggestion(self, ctx, *, suggestion: str):
