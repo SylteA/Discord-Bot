@@ -74,7 +74,7 @@ class Verify(commands.Cog):
     verify = message.content
     try:
       if self.users[message.author.id].time + 300 < int(time.time()):
-        return await message.channel.send(f"{message.author.mention}, The verification code you have has timedout please get another one", delete_after=10)
+        return await message.channel.send(f"{message.author.mention}, The verification code you have has timed out please get another one", delete_after=10)
       verified = await self.users[message.author.id].verify(verify, self.__bot)
       if verified:
         await message.channel.send(f"{message.author.mention}, You have been verified. Welcome to the server.", delete_after=10)
@@ -83,7 +83,7 @@ class Verify(commands.Cog):
       else:
         await message.channel.send(f"{message.author.mention}, Invalid verification code. Please try again", delete_after=10)
     except KeyError:
-      await message.channel.send(f"{message.author.mention}, make sure that you recived a verification code before trying to verify", delete_after=10)
+      await message.channel.send(f"{message.author.mention}, make sure that you received a verification code before trying to verify", delete_after=10)
 
 
 def setup(bot):
