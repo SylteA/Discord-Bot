@@ -381,18 +381,25 @@ class Commands(commands.Cog):
     async def on_raw_reaction_add(self, payload):
         user = payload.member
         if user.bot:return
-        msg = await self.client.get_guild(payload.guild_id).get_channel(payload.channel_id).fetch_message(payload.message_id)
+        msg = await self.bot.get_guild(payload.guild_id).get_channel(payload.channel_id).fetch_message(payload.message_id)
         emoji = payload.emoji
         users = []
-        if msg.channel.id == 571684366145683468 and msg.author.bot:
+        if msg.channel.id == 749525793759035414 and msg.author.bot:
             for react in msg.reactions:
-                if str(react)=="👍"or str(react)=="👎":
+                if str(react)=="👍":
                     async for reactor in react.users():
                         if reactor.bot:continue
                         if reactor in users:
                             await msg.remove_reaction(emoji, user)
                             return
                         users.append(reactor)
+                elif str(react)=="👎":
+                    async for reactor in react.users():
+                        if reactor.bot:continue
+                        if reactor in users:
+                            await msg.remove_reaction(emoji, user)
+                            return
+                    return
 
     @commands.command(name="result", aliases=["show"])
     async def result(self, ctx, msg_link: str):
