@@ -384,7 +384,7 @@ class Commands(commands.Cog):
         msg = await self.bot.get_guild(payload.guild_id).get_channel(payload.channel_id).fetch_message(payload.message_id)
         emoji = payload.emoji
         users = []
-        if msg.channel.id == 749525793759035414 and msg.author.bot:
+        if msg.author.bot and ("👍"and"👎")in [str(i)for i in msg.reactions]:
             for react in msg.reactions:
                 if str(react)=="👍":
                     async for reactor in react.users():
