@@ -379,7 +379,7 @@ class Commands(commands.Cog):
                        
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
-        user = await self.client.fetch_user(payload.user_id)
+        user = payload.member
         if user.bot:return
         msg = await self.client.get_guild(payload.guild_id).get_channel(payload.channel_id).fetch_message(payload.message_id)
         emoji = payload.emoji
