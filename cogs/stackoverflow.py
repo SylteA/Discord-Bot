@@ -143,8 +143,8 @@ class Stackoverflow(commands.Cog):
         
 
     @commands.cooldown(1, 10, commands.BucketType.user)
-    @commands.command(name="wikstackoverflowi", aliases=["stack", "stacko"])
-    async def stackoverflowwiki(self, ctx, *, search):
+    @commands.command(name="stackoverflow", aliases=["stack", "stacko"])
+    async def stackoverflow(self, ctx, *, search):
         contents = await self.stack_request(ctx, search)
         if contents:
             await self.pagination(ctx, contents)
