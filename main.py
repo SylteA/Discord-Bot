@@ -44,6 +44,7 @@ class Tim(commands.AutoShardedBot):
         self.session = ClientSession(loop=self.loop)
         self.start_time = datetime.datetime.utcnow()
         self.clean_text = commands.clean_content(escape_markdown=True, fix_channel_mentions=True)
+        self.plus_one = "<:plus1:572280122330185743>"
 
     """  Events   """
 
@@ -77,6 +78,9 @@ class Tim(commands.AutoShardedBot):
 
         if not message.guild:
             return
+
+        if message.channel.id == 582956491435278374:
+            await message.add_reaction(self.plus_one)
 
         await self.process_commands(message)
 
