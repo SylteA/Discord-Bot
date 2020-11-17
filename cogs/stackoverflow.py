@@ -2,6 +2,7 @@ import re
 import asyncio
 import aiohttp
 import logging
+from urllib.parse import quote
 from typing import List
 from html.parser import HTMLParser
 
@@ -25,17 +26,22 @@ class Stackoverflow(commands.Cog):
 
     async def stack_request(self, ctx, title: str) -> List[dict]:
         """-------------- STACKOVERFLOW REQUEST --------------"""
-        title = "&".join(x for x in list(title.split(" ")))
+        title = quote(title)
         filtered_request = {}
-        api = f"https://api.stackexchange.com/2.2/search/advanced?page=1&pagesize=10&order=desc&sort=votes&accepted=True&closed=False&migrated=False&title={title}&views=100&site=stackoverflow"
+        api = f"https://api.stackexchange.com/2.2/search/advanced?key=U4DMV*8nvpm3EOpvf69Rxw((&site=stackoverflow&order=desc&sort=votes&closed=False&title={title}&filter=default"
+        print(api)
         async with self.session.get(url=api) as response:
             if response.status == 200:
                 request = await response.json()
                 results_found = request["items"]
+                print(results_found)
                 if results_found:
                     formatted_request = []
                     for result in results_found:
-                        filtered_request[result['accepted_answer_id']] = result
+                        try:
+                            filtered_request[result['accepted_answer_id']] = result
+                        except KeyError:
+                            continue
                     for current_request in filtered_request: # save the first 10 search results in results
                         formatted_request.append({
                             'title' : HTMLParser().unescape(filtered_request.get(current_request)['title']),
@@ -49,18 +55,22 @@ class Stackoverflow(commands.Cog):
             else:
                 await ctx.send('Whoops, the Stackoverflow API is having some issues right now. Try again later') 
 
-    async def pagination(self, ctx, contents):
+    async def pagination(self, ctx, content):
         """-------------- EMBED PAGINATION BUILDER -------------- """
         embed_pages = []
 
-        for info in contents:
+        for x in range(0, len(content), 3):
             """  -------------- EMBED PAGE BUILDER --------------"""
             embed = Embed(
-                title='Stackoverflow Search', 
-                description=f"[Link to page]({info['Link']}) (View count: {info['ViewCount']})", 
+                title='Stackoverflow Search',
                 colour=Colour.green()
             )
-            embed.add_field(name='Title: '+info['title'], value='Tags: '+', '.join(tag for tag in info['tags']))
+            try:
+                embed.add_field(name='Title: '+content[x]['title'], value=f"[Tags: "+', '.join(tag for tag in content[x]['tags']) + f"]({content[x]['Link']})", inline=False)
+                embed.add_field(name='Title: '+content[x+1]['title'], value=f"[Tags: "+', '.join(tag for tag in content[x+1]['tags']) + f"]({content[x]['Link']})", inline=False)
+                embed.add_field(name='Title: '+content[x+2]['title'], value=f"[Tags: "+', '.join(tag for tag in content[x+2]['tags']) + f"]({content[x]['Link']})", inline=False)
+            except IndexError:
+                continue
             embed.set_thumbnail(url='https://camo.githubusercontent.com/db5c28745fde3010e4f8d24e6b2cdbf604362ee7/68747470733a2f2f67697465652e636f6d2f7961646f6e672e7a68616e672f7374617469632f7261772f6d61737465722f4a757374417574682f737461636b6f766572666c6f772e706e67')
             embed_pages.append(embed)
             log.trace(f"Appending '{embed.description}' to  embed pages")
