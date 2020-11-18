@@ -34,7 +34,7 @@ class Stackoverflow(commands.Cog):
             if response.status == 200:
                 request = await response.json()
                 results_found = request["items"]
-                print(results_found)
+                # print(results_found)
                 if results_found:
                     formatted_request = []
                     for result in results_found:
