@@ -33,6 +33,9 @@ initial_cogs = [
     'cogs.verify'
 ]
 
+PLUS_ONE = "<:plus1:572280122330185743>"
+SHOWCASE_CHANNEL = 582956491435278374
+
 print('Connecting...')
 
 
@@ -44,8 +47,6 @@ class Tim(commands.AutoShardedBot):
         self.session = ClientSession(loop=self.loop)
         self.start_time = datetime.datetime.utcnow()
         self.clean_text = commands.clean_content(escape_markdown=True, fix_channel_mentions=True)
-        self.PLUS_ONE = "<:plus1:572280122330185743>"
-        self.SHOWCASE_CHANNEL = 582956491435278374
 
     """  Events   """
 
@@ -80,8 +81,8 @@ class Tim(commands.AutoShardedBot):
         if not message.guild:
             return
 
-        if message.channel.id == self.SHOWCASE_CHANNEL:
-            await message.add_reaction(self.PLUS_ONE)
+        if message.channel.id == SHOWCASE_CHANNEL:
+            await message.add_reaction(PLUS_ONE)
 
         await self.process_commands(message)
 
