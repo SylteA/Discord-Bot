@@ -39,7 +39,8 @@ print('Connecting...')
 class Tim(commands.AutoShardedBot):
     def __init__(self, **kwargs):
         super().__init__(command_prefix=kwargs.pop('command_prefix', ('t.', 'T.', 'tim.')),
-                         case_insensitive=True, intents=discord.Intents.all()
+                         intents=discord.Intents.all(),
+                         case_insensitive=True, 
                          **kwargs)
         self.session = ClientSession(loop=self.loop)
         self.start_time = datetime.datetime.utcnow()
