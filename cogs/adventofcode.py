@@ -191,7 +191,7 @@ class AdventOfCode(commands.Cog, name='Advent of Code'):
 
     @adventofcode_group.command(
         name="leaderboard",
-        aliases=("board", "lb"),
+        aliases=("board", "aoc_lb"),
         brief="Get a snapshot of the TWT private AoC leaderboard",
     )
     async def aoc_leaderboard(self, ctx: commands.Context):
