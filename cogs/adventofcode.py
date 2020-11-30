@@ -21,7 +21,7 @@ API_URL = 'https://adventofcode.com/2020/leaderboard/private/view/975452.json'
 AOC_CHANNEL = 778324114213175323
 INTERVAL = 120
 AOC_REQUEST_HEADER = {"user-agent": "TWT AoC Event Bot"}
-AOC_SESSION_COOKIE =  {'session': '53616c7465645f5fb7684bded4af8d913993655e1e024380e992343fe33f08329cd776543fead327a2be781944007a31'}
+AOC_SESSION_COOKIE =  {'session': '.....'}
 ENGINE = inflect.engine()
 AOC_ROLE = int(782842606761148417)
 
