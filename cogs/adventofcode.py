@@ -72,7 +72,7 @@ async def day_countdown(bot: commands.Bot) -> None:
         # the puzzle page before it's available by making a small HEAD request.
         for retry in range(1, 5):
             log.debug(f"Checking if the puzzle is already available (attempt {retry}/4)")
-            async with bot.http_session.head(puzzle_url, raise_for_status=False) as resp:
+            async with bot.session.head(puzzle_url, raise_for_status=False) as resp:
                 if resp.status == 200:
                     log.debug("Puzzle is available; let's send an announcement message.")
                     break
