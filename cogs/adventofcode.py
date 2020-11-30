@@ -224,6 +224,7 @@ class AdventOfCode(commands.Cog, name='Advent of Code'):
     )
     async def global_leaderboard(self, ctx: commands.Context, number_of_people_to_display: int = 10):
         aoc_url = f"https://adventofcode.com/2020/leaderboard"
+        number_of_people_to_display = min(25, number_of_people_to_display)
 
         async with aiohttp.ClientSession(headers=AOC_REQUEST_HEADER) as session:
             async with session.get(aoc_url) as resp:
