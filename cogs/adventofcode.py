@@ -260,7 +260,7 @@ class AdventOfCode(commands.Cog, name='Advent of Code'):
         
         print(lb_list)
 
-        s_desc = "\n".join(f"`{index}` {lb_list[index-1][2]} - {lb_list[index-1][1]} " for index, title in enumerate(lb_list[:10], start=1))
+        s_desc = "\n".join(f"`{index}` {lb_list[index-1][2]} - {lb_list[index-1][1]} " for index, title in enumerate(lb_list[:number_of_people_to_display], start=1))
 
         embed = discord.Embed(title=f"Advent of Code Global Leaderboard", colour=discord.Colour(0x68c290), url="https://adventofcode.com", description=s_desc)
         await ctx.send(embed=embed)
