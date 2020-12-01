@@ -13,6 +13,7 @@ from unicodedata import normalize
 import discord
 from discord.ext import commands
 
+from config import AOC_SESSION_COOKIE
 
 log = logging.getLogger(__name__)
 loop = asyncio.get_event_loop()
@@ -21,7 +22,7 @@ API_URL = 'https://adventofcode.com/2020/leaderboard/private/view/975452.json'
 AOC_CHANNEL = 778324114213175323
 INTERVAL = 120
 AOC_REQUEST_HEADER = {"user-agent": "TWT AoC Event Bot"}
-AOC_SESSION_COOKIE =  {'session': '.....'}
+AOC_SESSION_COOKIE =  {'session': AOC_SESSION_COOKIE}
 ENGINE = inflect.engine()
 AOC_ROLE = int(782842606761148417)
 
