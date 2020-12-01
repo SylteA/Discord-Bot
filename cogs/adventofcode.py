@@ -19,7 +19,7 @@ log = logging.getLogger(__name__)
 loop = asyncio.get_event_loop()
 
 API_URL = 'https://adventofcode.com/2020/leaderboard/private/view/975452.json'
-AOC_CHANNEL = 778324114213175323
+AOC_CHANNEL = 783319659390697482
 INTERVAL = 120
 AOC_REQUEST_HEADER = {"user-agent": "TWT AoC Event Bot"}
 AOC_SESSION_COOKIE =  {'session': AOC_SESSION_COOKIE}
