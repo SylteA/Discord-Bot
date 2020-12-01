@@ -7,3 +7,5 @@ NOTIFICATION_WEBHOOK = ""  # Webhook for notifications to tims youtube channel
 
 NOTIFICATION_ROLE_ID: int = 0  # Role to be mentioned in announcements
 NOTIFICATION_CHANNEL_ID: int = 0  # Channel to post notifications in
+
+AOC_SESSION_COOKIE = " " #Session Cookie for Advent Of Code Cog
