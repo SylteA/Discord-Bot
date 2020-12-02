@@ -36,7 +36,7 @@ class ChallengeHandler(commands.Cog):
 
         if message.channel.id in (680851820587122700, 713841306253656064):  # weekly
             
-             if message.author.id == self.bot.user.id:
+            if message.author.id == self.bot.user.id:
                 return
             
             if message.author.bot:
