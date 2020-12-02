@@ -35,13 +35,18 @@ class ChallengeHandler(commands.Cog):
     async def on_message(self, message):  # Submitted role.
 
         if message.channel.id in (680851820587122700, 713841306253656064):  # weekly
-            if message.author.bot and message.author.id != self.bot.user.id:
+            
+             if message.author.id == self.bot.user.id:
+                return
+            
+            if message.author.bot:
                 return await message.delete()
             
             if message.channel.id == 680851820587122700:  # weekly 1 
                 submitted = self.bot.guild.get_role(687417501931536478)
                 participant = self.bot.guild.get_role(687417513918857232)
                 submission_channel = self.bot.guild.get_channel(729453161885990924)
+            
             else:  # weekly 2
                 submitted = self.bot.guild.get_role(715676464573317220)
                 participant = self.bot.guild.get_role(715676023387062363)
