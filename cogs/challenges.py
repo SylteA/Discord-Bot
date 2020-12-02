@@ -42,14 +42,14 @@ class ChallengeHandler(commands.Cog):
             if message.author.bot:
                 return await message.delete()
             
+            participant = self.bot.guild.get_role(687417513918857232)
+            
             if message.channel.id == 680851820587122700:  # weekly 1 
                 submitted = self.bot.guild.get_role(687417501931536478)
-                participant = self.bot.guild.get_role(687417513918857232)
                 submission_channel = self.bot.guild.get_channel(729453161885990924)
             
             else:  # weekly 2
                 submitted = self.bot.guild.get_role(715676464573317220)
-                participant = self.bot.guild.get_role(715676023387062363)
                 submission_channel = self.bot.guild.get_channel(729453201081761862)
 
             if submitted not in message.author.roles:
@@ -61,7 +61,6 @@ class ChallengeHandler(commands.Cog):
                     return await message.channel.send(msg, delete_after=10.0)
 
                 await message.author.add_roles(submitted)
-                await message.author.remove_roles(participant)
                 embed = discord.Embed(description=message.content,
                                       color=message.guild.me.top_role.color)
                 embed.set_author(name=str(message.author), icon_url=message.author.avatar_url)
