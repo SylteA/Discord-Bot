@@ -93,7 +93,7 @@ class Tim(commands.AutoShardedBot):
         if ctx.command.name in ('help', 'scoreboard', 'rep_scoreboard', 'reps', 'member_count', 'top_user', 'users',
                                 'server_messages', 'messages'):
             if ctx.channel.id not in (511344208955703306, 536199577284509696):
-                return await message.channel.send("**Please use #bot-commands channel**")
+                return await message.channel.send("**Please use the <#536199577284509696> channel**")
 
         try:
             await self.invoke(ctx)
