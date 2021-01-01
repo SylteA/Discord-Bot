@@ -13,7 +13,7 @@ class Verify(commands.Cog):
         if not after.pending and before.pending:
             return await after.add_roles(discord.Object(id=612391389086351363))
         if (roles := (set(after.roles) - set(before.roles))):  # If there is a new role
-            if 605779930529136658 in [r.id for r in roles]:  # If lvl 1 is one of the roles
+            if 605779930529136658 in [r.id for r in roles] and 612391389086351363 not in [r.id for r in after.roles]:  # If lvl 1 is one of the roles
                 return await after.add_roles(discord.Object(id=612391389086351363))
 
 def setup(bot):
