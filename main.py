@@ -30,7 +30,8 @@ initial_cogs = [
     'cogs.moderation',
     'cogs.roles',
     'cogs.poll',
-    'cogs.verify'
+    'cogs.verify',
+    'cogs.qanda'
 ]
 
 print('Connecting...')
