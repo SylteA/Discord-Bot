@@ -1,10 +1,5 @@
-  
 from discord.ext import commands
 import discord
-import random
-import datetime
-import json
-now = datetime.datetime.now()
 
 class useinfo(commands.Cog, name='Userinfo'):
     def __init__(self, bot):
