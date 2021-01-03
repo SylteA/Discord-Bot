@@ -13,7 +13,7 @@ class QandA(commands.Cog):
         self.bot = bot
         
     @commands.Cog.listener()
-    async def on_message(self, message: discord.Message): -> None:
+    async def on_message(self, message: discord.Message) -> None:
         if message.channel =! 795256498958630952:
             return
         
