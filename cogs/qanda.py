@@ -14,7 +14,7 @@ class QandA(commands.Cog):
         
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message) -> None:
-        if message.channel != 795256498958630952:
+        if message.channel.id != 795256498958630952:
             return
         
         role = discord.Object(id=795257055093981194)
