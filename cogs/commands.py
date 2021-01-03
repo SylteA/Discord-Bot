@@ -269,61 +269,61 @@ class Commands(commands.Cog):
 
         await ctx.send(f'>>> ```prolog\n{tabulate(table, headers=("User", "Messages",), tablefmt="fancy_grid")}\n```')
 
-    @commands.command(name='reps', aliases=['my_reps'])
-    async def reps_(self, ctx, member: commands.MemberConverter = None):
-        """How many reps do you have?"""
-        member = member or ctx.author
-        user = await self.bot.db.get_user(member.id, get_reps=True)
+#     @commands.command(name='reps', aliases=['my_reps'])
+#     async def reps_(self, ctx, member: commands.MemberConverter = None):
+#         """How many reps do you have?"""
+#         member = member or ctx.author
+#         user = await self.bot.db.get_user(member.id, get_reps=True)
 
-        reps = user.reps
+#         reps = user.reps
 
-        ret = f'{member.display_name} has received `{len(reps)}` reps'
+#         ret = f'{member.display_name} has received `{len(reps)}` reps'
 
-        if len(reps) > 0:
-            last_rep = max(reps, key=lambda r: r.repped_at)
-            ret += f'\nLast rep: {human_timedelta(last_rep.repped_at)}'
+#         if len(reps) > 0:
+#             last_rep = max(reps, key=lambda r: r.repped_at)
+#             ret += f'\nLast rep: {human_timedelta(last_rep.repped_at)}'
 
-            user_reps = {int(rep.author_id): len(list(filter(lambda x: x.author_id == rep.author_id, reps))) for rep in reps}
+#             user_reps = {int(rep.author_id): len(list(filter(lambda x: x.author_id == rep.author_id, reps))) for rep in reps}
 
-            table = []
-            for user_id, reps in sorted(user_reps.items(), key=lambda i: i[1], reverse=True)[:10]:
-                table.append((str(self.bot.get_user(user_id)), str(reps)))
+#             table = []
+#             for user_id, reps in sorted(user_reps.items(), key=lambda i: i[1], reverse=True)[:10]:
+#                 table.append((str(self.bot.get_user(user_id)), str(reps)))
 
-            ret += f"\n>>> ```prolog\n{tabulate(table, headers=('User', 'Reps', ), tablefmt='fancy_grid')}\n```"
+#             ret += f"\n>>> ```prolog\n{tabulate(table, headers=('User', 'Reps', ), tablefmt='fancy_grid')}\n```"
 
-        await ctx.send(ret)
+#         await ctx.send(ret)
 
-    @commands.command(aliases=['rlb'])
-    async def rep_scoreboard(self, ctx):
-        """Rep scoreboard!"""
-        users = await self.bot.db.get_all_users(get_reps=True, get_messages=False)
+#     @commands.command(aliases=['rlb'])
+#     async def rep_scoreboard(self, ctx):
+#         """Rep scoreboard!"""
+#         users = await self.bot.db.get_all_users(get_reps=True, get_messages=False)
 
-        table = []
-        for user in sorted(users, key=lambda u: len(u.reps), reverse=True)[:10]:
-            table.append((str(user), len(user.reps)))
+#         table = []
+#         for user in sorted(users, key=lambda u: len(u.reps), reverse=True)[:10]:
+#             table.append((str(user), len(user.reps)))
 
-        await ctx.send(f'>>> ```prolog\n{tabulate(table, headers=("User", "Reps",), tablefmt="fancy_grid")}\n```')
+#         await ctx.send(f'>>> ```prolog\n{tabulate(table, headers=("User", "Reps",), tablefmt="fancy_grid")}\n```')
 
-    @commands.command(name='rep')
-    async def rep(self, ctx, member: commands.MemberConverter):
-        """Rep someone! 24hr cooldown."""
-        if member.id == ctx.author.id:
-            return await ctx.send('You cannot rep yourself.')
+#     @commands.command(name='rep')
+#     async def rep(self, ctx, member: commands.MemberConverter):
+#         """Rep someone! 24hr cooldown."""
+#         if member.id == ctx.author.id:
+#             return await ctx.send('You cannot rep yourself.')
 
-        if member.bot:
-            return await ctx.send('You cannot rep bots.')
+#         if member.bot:
+#             return await ctx.send('You cannot rep bots.')
 
-        user = await self.bot.db.get_user(member.id)
+#         user = await self.bot.db.get_user(member.id)
 
-        result = await user.add_rep(message_id=ctx.message.id, author_id=ctx.author.id,
-                                    repped_at=ctx.message.created_at, extra_info={"channel_id": ctx.channel.id})
+#         result = await user.add_rep(message_id=ctx.message.id, author_id=ctx.author.id,
+#                                     repped_at=ctx.message.created_at, extra_info={"channel_id": ctx.channel.id})
 
-        if result is not None:
-            delta = timedelta(days=1, hours=0, minutes=0, seconds=0, milliseconds=0, microseconds=0)
-            return await ctx.send(f'{ctx.author.mention} You can rep **{member.display_name}** '
-                                  f'again in {human_timedelta(result + delta, suffix=False, accuracy=2)}')
-        else:
-            await ctx.send(f"{ctx.author.mention} has repped **{member.display_name}**!")
+#         if result is not None:
+#             delta = timedelta(days=1, hours=0, minutes=0, seconds=0, milliseconds=0, microseconds=0)
+#             return await ctx.send(f'{ctx.author.mention} You can rep **{member.display_name}** '
+#                                   f'again in {human_timedelta(result + delta, suffix=False, accuracy=2)}')
+#         else:
+#             await ctx.send(f"{ctx.author.mention} has repped **{member.display_name}**!")
 
     @commands.command('pipsearch', aliases=['pip', 'pypi'])
     @commands.cooldown(2, 5, commands.BucketType.user)
