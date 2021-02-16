@@ -374,8 +374,8 @@ class Commands(commands.Cog):
         em = discord.Embed(description=suggestion)
         em.set_author(name=f"Poll by {ctx.author.display_name}", icon_url=ctx.author.avatar_url)
         msg = await ctx.send(embed=em)
-        await msg.add_reaction('👍')
-        await msg.add_reaction('👎')
+        await msg.add_reaction('<:PepeYes:738803803884617739>')
+        await msg.add_reaction('<:PepeNo:738441475578396712>')
 
     @commands.command(name="result", aliases=["show"])
     async def result(self, ctx, msg_link: str):
@@ -385,8 +385,8 @@ class Commands(commands.Cog):
             msg_id = int(msg_link.split('/')[-1])
             channel = ctx.guild.get_channel(channel_id)
             message = await channel.fetch_message(msg_id)
-            reaction_upvote = get(message.reactions, emoji='👍')
-            reaction_downvote = get(message.reactions, emoji='👎')
+            reaction_upvote = get(message.reactions, emoji='<:PepeYes:738803803884617739>')
+            reaction_downvote = get(message.reactions, emoji='<:PepeNo:738441475578396712>')
             if message.author != ctx.bot.user:
                 if not message.embeds[0].author.name.startswith("Poll"):
                     return await ctx.send("That message is not a poll!")
@@ -394,8 +394,8 @@ class Commands(commands.Cog):
                 poll_embed = message.embeds[0]
                 embed = discord.Embed(description=f'Suggestion: {poll_embed.description}')
                 embed.set_author(name=poll_embed.author.name, icon_url= poll_embed.author.icon_url)
-                embed.add_field(name='Upvotes:', value=f'{reaction_upvote.count} 👍')
-                embed.add_field(name='Downvotes:', value=f'{reaction_downvote.count} 👎')
+                embed.add_field(name='Upvotes:', value=f'{reaction_upvote.count} <:PepeYes:738803803884617739>')
+                embed.add_field(name='Downvotes:', value=f'{reaction_downvote.count} <:PepeNo:738441475578396712>')
                 await ctx.send(embed=embed)
         except:
             return await ctx.send("That message is not a poll!")
