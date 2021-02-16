@@ -27,10 +27,10 @@ initial_cogs = [
     'cogs.tags',
     'cogs.challenges',
     'cogs.clashofcode',
-    'cogs.moderation',
     'cogs.roles',
     'cogs.poll',
-    'cogs.verify'
+    'cogs.verify',
+    'cogs.qanda'
 ]
 
 print('Connecting...')
