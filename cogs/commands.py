@@ -270,7 +270,7 @@ class Commands(commands.Cog):
         await ctx.send(f'>>> ```prolog\n{tabulate(table, headers=("User", "Messages",), tablefmt="fancy_grid")}\n```')
                        
                        
-    @commands.command(aliases=['emj'])
+    @commands.command(aliases=['e'])
     async def emoji(self, ctx, *, name):
         """Send an emoji, useful for those who don't have nitro but want to send animated emojis"""
         emoji = discord.utils.get(ctx.guild.emojis, name=name)
