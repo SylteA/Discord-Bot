@@ -1,6 +1,11 @@
 from discord.ext import commands
 import discord
 
+
+def setup(bot):
+    bot.add_cog(Emoji(bot=bot))
+    
+  
 class Emoji(commands.Cog, name="emoji"):
     def __init__(self, bot):
         self.bot = bot
@@ -20,5 +25,4 @@ class Emoji(commands.Cog, name="emoji"):
             await ctx.send("Emoji not found")
       
 
-def setup(bot):
-    bot.add_cog(Emoji(bot=bot))
+
