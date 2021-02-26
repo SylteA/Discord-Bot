@@ -9,6 +9,12 @@ class Emoji(commands.Cog, name="emoji"):
         if ctx.guild is None:
             return False
         return True
+    
+    @commands.command()
+    async def emoji(self, ctx, *, name):
+        """Emoji"""
+        emoji = discord.utils.get(ctx.message.guild.emojis, name = name)
+        await ctx.send(emoji)
       
       
       
