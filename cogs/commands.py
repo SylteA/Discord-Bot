@@ -273,7 +273,7 @@ class Commands(commands.Cog):
     @commands.command(aliases = ['emj'])
     async def emoji(self, ctx, *, name):
         """Emoji"""
-        emoji = discord.utils.get(ctx.message.guild.emojis, name = name)
+        emoji = discord.utils.get(ctx.message.guild.emojis, name=name)
         try:
             await ctx.send(emoji)
         except:
