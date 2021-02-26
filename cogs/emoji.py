@@ -10,7 +10,7 @@ class Emoji(commands.Cog, name="emoji"):
             return False
         return True
     
-    @commands.command()
+    @commands.command(aliases = ['emj'])
     async def emoji(self, ctx, *, name):
         """Emoji"""
         emoji = discord.utils.get(ctx.message.guild.emojis, name = name)
