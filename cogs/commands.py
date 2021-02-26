@@ -273,7 +273,7 @@ class Commands(commands.Cog):
     @commands.command(aliases=['emj'])
     async def emoji(self, ctx, *, name):
         """Send an emoji, useful for those who don't have nitro but want to send animated emojis"""
-        emoji = discord.utils.get(ctx.message.guild.emojis, name=name)
+        emoji = discord.utils.get(ctx.guild.emojis, name=name)
         if emoji is not None:
             await ctx.send(emoji)
         else:
