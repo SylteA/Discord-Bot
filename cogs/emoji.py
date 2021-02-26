@@ -14,9 +14,10 @@ class Emoji(commands.Cog, name="emoji"):
     async def emoji(self, ctx, *, name):
         """Emoji"""
         emoji = discord.utils.get(ctx.message.guild.emojis, name = name)
-        await ctx.send(emoji)
-      
-      
+        try:
+            await ctx.send(emoji)
+        except:
+            await ctx.send("Emoji not found")
       
 
 def setup(bot):
