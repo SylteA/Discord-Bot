@@ -275,9 +275,9 @@ class Commands(commands.Cog):
         """Send an emoji, useful for those who don't have nitro but want to send animated emojis"""
         emoji = discord.utils.get(ctx.guild.emojis, name=name)
         if emoji is not None:
-            await ctx.send(emoji)
-        else:
-            await ctx.send("Emoji not found")
+            return await ctx.send(emoji)
+        
+        return await ctx.send("Emoji not found")
 
 #     @commands.command(name='reps', aliases=['my_reps'])
 #     async def reps_(self, ctx, member: commands.MemberConverter = None):
