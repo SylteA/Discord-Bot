@@ -181,24 +181,35 @@ class Commands(commands.Cog):
     @commands.command()
     async def git(self, ctx):
         """Git download link"""
-        embed = discord.Embed(title="Git Download Link",
-                              description="[Download GIT Here!](https://git-scm.com/downloads)")
+        embed = discord.Embed(title="Git Download Link", description="[Download GIT Here!](https://git-scm.com/downloads)")
+        await ctx.message.delete()
+        await ctx.send(embed=embed)
+
+    @commands.command()
+    async def python(self, ctx):
+        """Python download link"""
+        embed = discord.Embed(title="Python Download Link", description="[Download Python Here!](https://www.python.org/downloads)")
         await ctx.message.delete()
         await ctx.send(embed=embed)
 
     @commands.command()
     async def twitter(self, ctx):
         """View Tims Twitter"""
-        embed = discord.Embed(title="Tech With Tim Twitter!",
-                              description="[View Tim's Twitter!](https://twitter.com/TechWithTimm)")
+        embed = discord.Embed(title="Tech With Tim Twitter!", description="[View Tim's Twitter!](https://twitter.com/TechWithTimm)")
         await ctx.message.delete()
         await ctx.send(embed=embed)
 
     @commands.command(name='instagram', aliases=['insta'])
     async def insta_(self, ctx):
         """View Tims Instagram"""
-        embed = discord.Embed(title="Tech With Tim Instagram!",
-                              description="[View Tim's Instagram!](https://instagram.com/tech_with_tim)")
+        embed = discord.Embed(title="Tech With Tim Instagram!", description="[View Tim's Instagram!](https://instagram.com/tech_with_tim)")
+        await ctx.message.delete()
+        await ctx.send(embed=embed)
+
+    @commands.command(name="github", aliases=['github'])
+    async def github_(self, ctx):
+        """View Tims GitHub"""
+        embed = discord.Embed(title="Tech With Tim GitHub!", description="[View Tim's GitHub!](https://github.com/techwithtim)")
         await ctx.message.delete()
         await ctx.send(embed=embed)
 
