@@ -71,7 +71,7 @@ class Tim(commands.AutoShardedBot):
     async def on_message(self, message):
         await self.wait_until_ready()
 
-        if message.author.bot:
+        if message.author.bot or message.channel.id in [713841306253656064, 680851820587122700]:
             return
 
         print(f"{message.channel}: {message.author}: {message.clean_content}")
