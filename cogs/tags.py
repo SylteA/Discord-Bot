@@ -5,6 +5,7 @@ import asyncio
 
 from .utils.DataBase.tag import Tag
 from .utils.checks import is_engineer_check, is_admin
+from inspect import Parameter
 
 
 def setup(bot):
@@ -52,10 +53,15 @@ class TagCommands(commands.Cog, name="Tags"):
 
     @tag.command()
     @is_engineer_check()
-    async def create(self, ctx, name: lambda inp: inp.lower(), *, text: str):
+    async def create(self, ctx, name: lambda inp: inp.lower(), *, text: str = None):
         """Create a new tag."""
         name = await commands.clean_content().convert(ctx=ctx, argument=name)
-        text = await commands.clean_content().convert(ctx=ctx, argument=text)
+        if not text and not ctx.message.attachments:
+            raise commands.MissingRequiredArgument(Parameter("text", Parameter.POSITIONAL_OR_KEYWORD))
+        if not text:
+            text = "\n".join([i.url for i in ctx.message.attachments])
+        else:
+            text = await commands.clean_content().convert(ctx=ctx, argument=text)
 
         tag = await self.bot.db.get_tag(guild_id=ctx.guild.id, name=name)
         if tag is not None:
