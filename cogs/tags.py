@@ -52,7 +52,7 @@ class TagCommands(commands.Cog, name="Tags"):
 
     @tag.command()
     @is_engineer_check()
-    async def create(self, ctx, name: lambda inp: inp.lower(), *, text: str):
+    async def create(self, ctx, name: lambda inp: inp.lower().strip(), *, text: str):
         """Create a new tag."""
         name = await commands.clean_content().convert(ctx=ctx, argument=name)
         text = await commands.clean_content().convert(ctx=ctx, argument=text)
