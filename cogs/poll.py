@@ -63,7 +63,7 @@ class Polls(commands.Cog):
             return await ctx.send_help(self.__bot.get_command('poll'))
 
     @poll.command()
-    @commands.cooldown(1, 10, commands.BucketType.channel)
+    @commands.cooldown(1, 10, commands.BucketType.user)
     async def new(self, ctx, desc: str, *choices):
         """ Create a new poll """
         await ctx.message.delete()
