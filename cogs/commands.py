@@ -155,7 +155,9 @@ class Commands(commands.Cog):
         cmd = self.bot.get_command(command)
         if cmd is None:
             return await ctx.send(f'That command does not exist:\n{base_url}')
-
+        elif cmd == self.bot.help_command:
+            return await ctx.send(base_url + "/blob/master/cogs/_help.py") # sends the custom help command rather than a malformed link
+        
         try:
             source = inspect.getsource(cmd.callback)
         except AttributeError:
