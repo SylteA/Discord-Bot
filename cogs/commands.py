@@ -331,7 +331,7 @@ class Commands(commands.Cog):
                         amount: lambda x: min(int(x), 10) = 10):
         """Search pypi.org for packages.
         Specify term, order (relevance, trending, updated) and amount (10 is default) you want to show."""
-        order = commands.clean_content().convert(ctx=ctx, argument=order)
+        order = await commands.clean_content().convert(ctx=ctx, argument=order)
         if order not in ('relevance', 'trending', 'updated'):
             return await ctx.send(f"{order} is not a valid order type.")
 
