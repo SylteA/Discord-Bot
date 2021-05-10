@@ -3,7 +3,7 @@ import discord
 
 from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
-from discord.utils import get
+from discord.utils import get, escape_mentions
 from tabulate import tabulate
 import inspect
 import aiohttp
@@ -332,7 +332,7 @@ class Commands(commands.Cog):
         """Search pypi.org for packages.
         Specify term, order (relevance, trending, updated) and amount (10 is default) you want to show."""
         if order not in ('relevance', 'trending', 'updated'):
-            return await ctx.send(f"{order} is not a valid order type.")
+            return await ctx.send(f"{escape_mentions(order)} is not a valid order type.")
 
         async with ctx.typing():
             order_url = {'relevance': '', 'trending': '-zscore', 'updated': '-created'}
