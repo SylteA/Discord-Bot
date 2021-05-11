@@ -40,7 +40,8 @@ class Tim(commands.AutoShardedBot):
     def __init__(self, **kwargs):
         super().__init__(command_prefix=kwargs.pop('command_prefix', ('t.', 'T.', 'tim.')),
                          intents=discord.Intents.all(),
-                         case_insensitive=True, 
+                         case_insensitive=True,
+                         allowed_mentions=discord.AllowedMentions(everyone=False, roles=False),
                          **kwargs)
         self.session = ClientSession(loop=self.loop)
         self.start_time = datetime.datetime.utcnow()
