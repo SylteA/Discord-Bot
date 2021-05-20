@@ -49,15 +49,21 @@ class TagCommands(commands.Cog, name="Tags"):
         text = "Tag: {name}\n\n```prolog\nCreator: {author}\n   Uses: {uses}\n```"\
             .format(name=name, author=author, uses=tag.uses)
         await ctx.send(text)
-
+        
     @tag.command()
     @is_engineer_check()
     async def create(self, ctx, name: lambda inp: inp.lower(), *, text: str):
         """Create a new tag."""
         name = await commands.clean_content().convert(ctx=ctx, argument=name)
+        
+        INVITE_REGEX = re.compile(r"(https?://)?(www\.)?(discord\.(com|gg|io|me|li)|discordapp\.com/invite)/\S+")
 
-        if "discord.gg" in text or "discord.com" in text:
-            return await ctx.send('Discord server invites in tags are not allowed.')
+        if INVITE_REGEX.search(text) is not None:
+            if "cdn.discord" in text:
+                pass
+            
+            else:
+               return await ctx.send('Discord server invites in tags are not allowed.')
         
         else:
             text = await commands.clean_content().convert(ctx=ctx, argument=text)
