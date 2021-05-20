@@ -56,7 +56,7 @@ class TagCommands(commands.Cog, name="Tags"):
         """Create a new tag."""
         name = await commands.clean_content().convert(ctx=ctx, argument=name)
 
-        if "discord.gg" in text:
+        if "discord.gg" in text or "discord.com" in text:
             return await ctx.send('Discord server invites in tags are not allowed.')
         
         else:
