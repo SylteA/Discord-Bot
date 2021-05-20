@@ -55,9 +55,15 @@ class TagCommands(commands.Cog, name="Tags"):
     async def create(self, ctx, name: lambda inp: inp.lower(), *, text: str):
         """Create a new tag."""
         name = await commands.clean_content().convert(ctx=ctx, argument=name)
-        text = await commands.clean_content().convert(ctx=ctx, argument=text)
+
+        if "discord.gg" in text:
+            return await ctx.send('Discord server invites in tags are not allowed.')
+        
+        else:
+            text = await commands.clean_content().convert(ctx=ctx, argument=text)
 
         tag = await self.bot.db.get_tag(guild_id=ctx.guild.id, name=name)
+
         if tag is not None:
             return await ctx.send('A tag with that name already exists.')
 
