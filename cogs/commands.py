@@ -195,6 +195,11 @@ class Commands(commands.Cog):
                               description="[View Tim's Twitter!](https://twitter.com/TechWithTimm)")
         await ctx.message.delete()
         await ctx.send(embed=embed)
+        
+    @commands.command()
+    async def ping(self, ctx):
+        """Shows bot's latency"""
+        await ctx.send(f"Pong! {round(self.bot.latency * 1000)}")
 
     @commands.command(name='instagram', aliases=['insta'])
     async def insta_(self, ctx):
