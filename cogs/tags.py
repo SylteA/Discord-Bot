@@ -55,18 +55,7 @@ class TagCommands(commands.Cog, name="Tags"):
     async def create(self, ctx, name: lambda inp: inp.lower(), *, text: str):
         """Create a new tag."""
         name = await commands.clean_content().convert(ctx=ctx, argument=name)
-        
-        INVITE_REGEX = re.compile(r"(https?://)?(www\.)?(discord\.(com|gg|io|me|li)|discordapp\.com/invite)/\S+")
-
-        if INVITE_REGEX.search(text) is not None:
-            if "cdn.discord" in text:
-                pass
-            
-            else:
-               return await ctx.send('Discord server invites in tags are not allowed.')
-        
-        else:
-            text = await commands.clean_content().convert(ctx=ctx, argument=text)
+        text = await commands.clean_content().convert(ctx=ctx, argument=text)
 
         tag = await self.bot.db.get_tag(guild_id=ctx.guild.id, name=name)
 
