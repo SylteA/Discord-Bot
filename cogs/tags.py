@@ -49,7 +49,6 @@ class TagCommands(commands.Cog, name="Tags"):
         text = "Tag: {name}\n\n```prolog\nCreator: {author}\n   Uses: {uses}\n```"\
             .format(name=name, author=author, uses=tag.uses)
         await ctx.send(text)
-        
     @tag.command()
     @is_engineer_check()
     async def create(self, ctx, name: lambda inp: inp.lower(), *, text: str):
