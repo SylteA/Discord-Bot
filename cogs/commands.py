@@ -335,7 +335,7 @@ class Commands(commands.Cog):
         Specify term, order (relevance, trending, updated) and amount (10 is default) you want to show."""
         order = await commands.clean_content().convert(ctx=ctx, argument=order)
         if order not in ('relevance', 'trending', 'updated'):
-            return await ctx.send(f"{order} is not a valid order type.")
+            return await ctx.send("Invalid order type")
 
         async with ctx.typing():
             order_url = {'relevance': '', 'trending': '-zscore', 'updated': '-created'}
