@@ -29,7 +29,6 @@ initial_cogs = [
     'cogs.clashofcode',
     'cogs.roles',
     'cogs.poll',
-    'cogs.verify',
     'cogs.qanda'
 ]
 
