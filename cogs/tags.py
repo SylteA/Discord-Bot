@@ -17,9 +17,7 @@ class TagCommands(commands.Cog, name="Tags"):
         self.bot = bot
 
     def cog_check(self, ctx):
-        if ctx.guild is None:
-            return False
-        return True
+        return not ctx.guild  is None
 
     @commands.group(invoke_without_command=True)
     async def tag(self, ctx, *, name: lambda inp: inp.lower()):
