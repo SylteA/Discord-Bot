@@ -2,6 +2,7 @@ from discord.ext import commands
 import discord
 
 import asyncio
+import asyncpg
 
 from .utils.DataBase.tag import Tag
 from .utils.checks import is_engineer_check, is_admin
@@ -186,8 +187,12 @@ class TagCommands(commands.Cog, name="Tags"):
         if tag.creator_id != ctx.author.id:
             if not is_admin(ctx.author):
                 return await ctx.send('You don\'t have permission to do that.')
+        
+        try:
+            await tag.rename(new_name=new_name)
+        except asyncpg.UniqueViolationError:
+            return await ctx.send("A tag with that name already exists.")
 
-        await tag.rename(new_name=new_name)
         await ctx.send('You have successfully renamed your tag.')
 
     @tag.command()
