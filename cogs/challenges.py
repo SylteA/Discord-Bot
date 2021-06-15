@@ -54,17 +54,29 @@ class ChallengeHandler(commands.Cog):
 
             if submitted not in message.author.roles:
                 await message.delete()
-                if message.content.count("```") != 2:
-                    msg = f"{message.author.mention} make sure to submit in a code " \
-                          f"block and only include the code required for the challenge!" \
-                          f"\nUse `tim.tag discord code` for more information!"
+                attach = message.attachments and message.attachments[0]
+                
+                if not attach:
+                    msg = f"{message.author.mention} make sure to __upload a " \
+                          f"python file__ that only includes the code required " \
+                          f"for the challenge!"
                     return await message.channel.send(msg, delete_after=10.0)
-
+                
+                if attach.size > 2035:
+                    msg = f"{message.author.mention} attachment can't be __more" \
+                          f" than 2035 bytes__."
+                    return await message.channel.send(msg, delete_after=10.0)
+                
+                content = (await attach.read()).decode("u8")
+                if "```" in content:
+                    msg = f"{message.author.mention} code can't have \\```  in it."
+                    return await message.channel.send(msg, delete_after=10.0)
+                
+                content = "```py\n" + content + "```"
                 await message.author.add_roles(submitted)
-                embed = discord.Embed(description=message.content,
-                                      color=message.guild.me.top_role.color)
+                embed = discord.Embed(description=content)
                 embed.set_author(name=str(message.author), icon_url=message.author.avatar_url)
-                embed.set_footer(text=f'#ID: {message.author.id}')
+                embed.set_footer(text=f'#ID: {message.author.id} • {attach.size} bytes')
                 await submission_channel.send(embed=embed)
 
         elif message.channel.id in [680851798340272141, 713841395965624490]:  # Automatic reaction
