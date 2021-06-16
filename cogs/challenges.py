@@ -67,7 +67,7 @@ class ChallengeHandler(commands.Cog):
                     return await message.channel.send(msg, delete_after=10.0)
 
                 await message.author.add_roles(submitted)
-                embed = discord.Embed(description=content)
+                embed = discord.Embed(description=content, color=0x36393E)
                 embed.set_author(name=str(message.author), icon_url=message.author.avatar_url)
                 embed.set_footer(text=f'#ID: {message.author.id} • {len(content)-9} chars')
                 await submission_channel.send(embed=embed)
