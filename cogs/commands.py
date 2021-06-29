@@ -373,12 +373,37 @@ class Commands(commands.Cog):
     @commands.command(name="suggest")
     async def suggestion(self, ctx, *, suggestion: str):
         """Make a poll/suggestion"""
+
+        suggestion_channel = self.bot.get_channel(571684366145683468)
+
         await ctx.message.delete()
         em = discord.Embed(description=suggestion)
         em.set_author(name=f"Poll by {ctx.author.display_name}", icon_url=ctx.author.avatar_url)
-        msg = await ctx.send(embed=em)
-        await msg.add_reaction('👍')
-        await msg.add_reaction('👎')
+
+        if ctx.channel.id != suggestion_channel.id:
+            msg = await suggestion_channel.send(embed=em)
+            await msg.add_reaction('👍')
+            await msg.add_reaction('👎')
+        
+        else:
+            msg = await ctx.send(embed=em)
+            await msg.add_reaction('👍')
+            await msg.add_reaction('👎')
+
+
+    async def on_raw_reaction_add(self, payload):
+        """
+        For the suggestion channel
+        """
+        
+        suggestion_channel = self.bot.get_channel(571684366145683468)
+
+        if payload.channel.id == suggestion_channel.id:
+            suggestion = await suggestion_channel.fetch_message(payload.message_id)
+
+            for reaction in suggestion.reactions:
+                if reaction not in ['👍', '👎']:
+                    await suggestion.remove_reaction(reaction, payload.member)
 
     @commands.command(name="result", aliases=["show"])
     async def result(self, ctx, msg_link: str):
