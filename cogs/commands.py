@@ -491,6 +491,11 @@ class Commands(commands.Cog):
 
         Props to github.com/Rapptz"""
         await self.get_docs(ctx, 'aiohttp', obj)
+        
+    @commands.command(name="ping")    
+    async def ping():
+        '''Just sends "Pong!" back along with ping(latency)'''
+        await ctx.send(f"Pong!\nLatency - {str(round(self.bot.latency*1000))}")
 
 
 def setup(bot):
