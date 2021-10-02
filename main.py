@@ -79,6 +79,9 @@ class Tim(commands.AutoShardedBot):
         if not message.guild:
             return
 
+        if message.channel.id == 713841306253656064: #submit-challenge
+            return
+
         await self.process_commands(message)
 
     async def process_commands(self, message):
