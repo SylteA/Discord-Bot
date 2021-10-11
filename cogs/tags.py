@@ -5,7 +5,7 @@ import asyncio
 import asyncpg
 
 from .utils.DataBase.tag import Tag
-from .utils.checks import is_engineer_check, is_admin
+from .utils.checks import is_engineer_check, is_admin, is_staff
 
 
 def setup(bot):
@@ -150,7 +150,7 @@ class TagCommands(commands.Cog, name="Tags"):
             return await message.delete(delay=10.0)
 
         if tag.creator_id != ctx.author.id:
-            if not is_admin(ctx.author):
+            if not is_staff(ctx.author):
                 return await ctx.send('You don\'t have permission to do that.')
 
         await tag.delete()
