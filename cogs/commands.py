@@ -370,7 +370,7 @@ class Commands(commands.Cog):
                 em.colour = discord.Colour.red()
             await ctx.send(embed=em)
     
-    @commands.command(name="suggest")
+    @commands.group(name="suggest", invoke_without_command=True)
     async def suggestion(self, ctx, *, suggestion: str):
         """Make a poll/suggestion"""
         await ctx.message.delete()
@@ -379,6 +379,29 @@ class Commands(commands.Cog):
         msg = await ctx.send(embed=em)
         await msg.add_reaction('👍')
         await msg.add_reaction('👎')
+        
+    @suggestion.command(name='edit')
+    async def edit_suggestion(self, ctx, message: commands.MessageConverter, *, suggestion: str):
+        """Edit an existing poll/suggestion. You will have to rewrite the suggestion."""        
+        try:
+            if message.author != ctx.bot.user:
+                if not message.embeds[0].author.name.startswith("Poll"):
+                    return await ctx.send("That message is not a poll!")
+            else:
+                em = message.embeds[0]
+                if is_mod(ctx):
+                    em.description = suggestion
+                    await message.edit(embed=em)
+                    return await ctx.send("Successfully edited suggestion.")
+                if message.edited_at is not None or datetime.now().replace(microsecond=0)-message.created_at.replace(microsecond=0) > timedelta(minutes=5): # If it has been edited yet, or was sent more than 5 minutes ago
+                    return await ctx.send("You cannot edit the suggestion right now.")
+                if ctx.author.display_name in em.author.name:
+                    em.description = suggestion
+                    await message.edit(embed=em)
+                    return await ctx.send("Successfully edited suggestion.")
+                return await ctx.send("You don't have permission to do that!\nIf you think there was an error, please contact a staff.")
+        except:
+            return await ctx.send("Something went wrong.")
 
     @commands.command(name="result", aliases=["show"])
     async def result(self, ctx, msg_link: str):
