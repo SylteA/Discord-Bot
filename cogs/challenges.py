@@ -57,7 +57,7 @@ class ChallengeHandler(commands.Cog):
                 if not attach:
                     msg = (
                         f"{message.author.mention} make sure to __upload a "
-                        f"python file__ that only includes the code required "
+                        f"file__ that only includes the code required "
                         f"for the challenge!"
                     )
                     return await message.channel.send(msg, delete_after=10.0)
