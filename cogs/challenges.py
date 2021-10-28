@@ -64,9 +64,9 @@ class ChallengeHandler(commands.Cog):
 
                 filetype = attach.filename.split(".")[-1]
 
-                if len(filetype) > 4:  # Most filetypes are 2-3 chars, 4 just to be safe
+                if len(filetype) > 4 or len(filetype) == 4:  # Most filetypes are 2-3 chars, 4 just to be safe
                     return await message.channel.send(
-                        "Please upload a file with file extension __shorter than 5 chars__!",
+                        "Please upload a file with a __non-empty file extension shorter than 5 chars__!",
                         delete_after=10.0,
                     )
 
@@ -88,7 +88,7 @@ class ChallengeHandler(commands.Cog):
                     name=str(message.author), icon_url=message.author.avatar_url
                 )
                 embed.set_footer(
-                    text=f"#ID: {message.author.id} • {len(content)-9} chars • Filetype: {filetype}"
+                    text=f"#ID: {message.author.id} • {len(content)-9} chars • Language: {filetype}"
                 )
                 await submission_channel.send(embed=embed)
 
