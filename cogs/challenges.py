@@ -64,7 +64,7 @@ class ChallengeHandler(commands.Cog):
 
                 filetype = attach.filename.split(".")[-1]
 
-                if len(filetype) > 4 or len(filetype) == 4:  # Most filetypes are 2-3 chars, 4 just to be safe
+                if len(filetype) > 4 or len(filetype) == 0:  # Most filetypes are 2-3 chars, 4 just to be safe
                     return await message.channel.send(
                         "Please upload a file with a __non-empty file extension shorter than 5 chars__!",
                         delete_after=10.0,
