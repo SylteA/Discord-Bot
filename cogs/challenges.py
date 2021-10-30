@@ -66,7 +66,7 @@ class ChallengeHandler(commands.Cog):
 
                 if len(filetype) > 4 or len(filetype) == 0:  # Most filetypes are 2-3 chars, 4 just to be safe
                     return await message.channel.send(
-                        "Please upload a file with a __non-empty file extension shorter than 5 chars__!",
+                        f"{message.author.mention} attachement file extension must be between 1 and 4 characters long",
                         delete_after=10.0,
                     )
 
@@ -75,10 +75,13 @@ class ChallengeHandler(commands.Cog):
                     + (await attach.read()).decode("u8").replace("`", "\u200b`")
                     + "```"
                 )
-                if len(content) > 2040:
+                if len(content) > 4096 - (len(filetype) + 7):
+                    # 4096 = max embed description size
+                    # 7 = Length of ```\n```
+
                     msg = (
                         f"{message.author.mention} attachment can't be __more"
-                        f" than 2040 characters__."
+                        f" than {4096 - len(filetype) - 7} characters__."
                     )
                     return await message.channel.send(msg, delete_after=10.0)
 
