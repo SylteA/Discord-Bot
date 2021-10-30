@@ -70,17 +70,18 @@ class ChallengeHandler(commands.Cog):
                         delete_after=10.0,
                     )
 
+                code = (await attach.read()).decode("u8")
+
                 content = (
                     f"```{filetype}\n"
-                    + (await attach.read()).decode("u8").replace("`", "\u200b`")
+                    + code.replace("`", "\u200b`")
                     + "```"
                 )
-                if len(content) > 4096 - (len(filetype) + 7):
+                if len(content) > 4096:
                     # 4096 = max embed description size
-                    # 7 = Length of ```\n```
 
                     msg = (
-                        f"{message.author.mention} attachment can't be __more"
+                        f"{message.author.mention} your submission can't be __more"
                         f" than {4096 - len(filetype) - 7} characters__."
                     )
                     return await message.channel.send(msg, delete_after=10.0)
@@ -91,7 +92,7 @@ class ChallengeHandler(commands.Cog):
                     name=str(message.author), icon_url=message.author.avatar_url
                 )
                 embed.set_footer(
-                    text=f"#ID: {message.author.id} • {len(content)-9} chars • Language: {filetype}"
+                    text=f"#ID: {message.author.id} • {len(content)-9} chars • Language: {filetype} • Code Length: {len(code)}"
                 )
                 await submission_channel.send(embed=embed)
 
