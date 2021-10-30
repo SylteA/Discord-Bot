@@ -92,7 +92,7 @@ class ChallengeHandler(commands.Cog):
                     name=str(message.author), icon_url=message.author.avatar_url
                 )
                 embed.set_footer(
-                    text=f"#ID: {message.author.id} • {len(content)-9} chars • Language: {filetype} • Code Length: {len(code)}"
+                    text=f"#ID: {message.author.id} • {len(code)} chars • Language: {filetype}"
                 )
                 await submission_channel.send(embed=embed)
 
