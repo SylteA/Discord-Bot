@@ -16,6 +16,13 @@ def is_mod(member: Member):
     return is_admin(member)
 
 
+def is_staff(member: Member):
+    for role in member.roles:
+        if role.id == 838794595813818420:
+            return True
+    return False
+
+
 def is_engineer(member: Member):
     for role in member.roles:
         if role.id == 611734695587086370:
