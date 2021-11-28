@@ -27,10 +27,8 @@ initial_cogs = [
     'cogs.tags',
     'cogs.challenges',
     'cogs.clashofcode',
-    'cogs.moderation',
     'cogs.roles',
     'cogs.poll',
-    'cogs.verify',
     'cogs.adventofcode'
 ]
 
@@ -41,7 +39,8 @@ class Tim(commands.AutoShardedBot):
     def __init__(self, **kwargs):
         super().__init__(command_prefix=kwargs.pop('command_prefix', ('t.', 'T.', 'tim.')),
                          intents=discord.Intents.all(),
-                         case_insensitive=True, 
+                         case_insensitive=True,
+                         allowed_mentions=discord.AllowedMentions(everyone=False, roles=False),
                          **kwargs)
         self.session = ClientSession(loop=self.loop)
         self.start_time = datetime.datetime.utcnow()
@@ -80,6 +79,9 @@ class Tim(commands.AutoShardedBot):
         if not message.guild:
             return
 
+        if message.channel.id == 713841306253656064: #submit-challenge
+            return
+
         await self.process_commands(message)
 
     async def process_commands(self, message):
@@ -94,7 +96,7 @@ class Tim(commands.AutoShardedBot):
         if ctx.command.name in ('help', 'scoreboard', 'rep_scoreboard', 'reps', 'member_count', 'top_user', 'users',
                                 'server_messages', 'messages'):
             if ctx.channel.id not in (511344208955703306, 536199577284509696):
-                return await message.channel.send("**Please use #bot-commands channel**")
+                return await message.channel.send("**Please use the <#536199577284509696> channel**")
 
         try:
             await self.invoke(ctx)
