@@ -8,7 +8,6 @@ import inflect
 
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
-from unicodedata import normalize
 
 import discord
 from discord.ext import commands
@@ -18,11 +17,11 @@ from config import AOC_SESSION_COOKIE
 log = logging.getLogger(__name__)
 loop = asyncio.get_event_loop()
 
-API_URL = 'https://adventofcode.com/2020/leaderboard/private/view/975452.json'
+API_URL = "https://adventofcode.com/2021/leaderboard/private/view/975452.json"
 AOC_CHANNEL = 782573489772953600
 INTERVAL = 120
 AOC_REQUEST_HEADER = {"user-agent": "TWT AoC Event Bot"}
-AOC_SESSION_COOKIE =  {'session': AOC_SESSION_COOKIE}
+AOC_SESSION_COOKIE = {"session": AOC_SESSION_COOKIE}
 ENGINE = inflect.engine()
 AOC_ROLE = int(782842606761148417)
 
@@ -31,17 +30,14 @@ def time_left_to_aoc_midnight():
     """Calculates the amount of time left until midnight in UTC-5 (Advent of Code maintainer timezone)."""
     # Change all time properties back to 00:00
     todays_midnight = datetime.now(tz=pytz.timezone("EST")).replace(
-        microsecond=0,
-        second=0,
-        minute=0,
-        hour=0
+        microsecond=0, second=0, minute=0, hour=0
     )
 
     # We want tomorrow so add a day on
     tomorrow = todays_midnight + timedelta(days=1)
 
     # Calculate the timedelta between the current time and midnight
-    return tomorrow, tomorrow - datetime.now(tz=pytz.timezone('UTC'))
+    return tomorrow, tomorrow - datetime.now(tz=pytz.timezone("UTC"))
 
 
 async def day_countdown(bot: commands.Bot) -> None:
@@ -50,7 +46,10 @@ async def day_countdown(bot: commands.Bot) -> None:
     Once we have calculated this we should then sleep that number and when the time is reached, ping
     the Advent of Code role notifying them that the new challenge is ready.
     """
-    while int(datetime.now(tz=pytz.timezone("EST")).day) in range(1, 25) and int(datetime.now(tz=pytz.timezone("EST")).month) == 12:
+    while (
+        int(datetime.now(tz=pytz.timezone("EST")).day) in range(1, 25)
+        and int(datetime.now(tz=pytz.timezone("EST")).month) == 12
+    ):
         tomorrow, time_left = time_left_to_aoc_midnight()
 
         # Prevent bot from being slightly too early in trying to announce today's puzzle
@@ -59,28 +58,22 @@ async def day_countdown(bot: commands.Bot) -> None:
         channel = bot.get_channel(AOC_CHANNEL)
 
         if not channel:
-            log.error("Could not find the AoC channel to send notification in")
             break
 
         aoc_role = channel.guild.get_role(AOC_ROLE)
         if not aoc_role:
-            log.error("Could not find the AoC role to announce the daily puzzle")
             break
 
-        puzzle_url = f"https://adventofcode.com/2020/day/{tomorrow.day}"
+        puzzle_url = f"https://adventofcode.com/2021/day/{tomorrow.day}"
 
         # Check if the puzzle is already available to prevent our members from spamming
         # the puzzle page before it's available by making a small HEAD request.
         for retry in range(1, 5):
-            log.debug(f"Checking if the puzzle is already available (attempt {retry}/4)")
             async with bot.session.head(puzzle_url, raise_for_status=False) as resp:
                 if resp.status == 200:
-                    log.debug("Puzzle is available; let's send an announcement message.")
                     break
-            log.debug(f"The puzzle is not yet available (status={resp.status})")
             await asyncio.sleep(10)
         else:
-            log.error("The puzzle does does not appear to be available at this time, canceling announcement")
             break
 
         await channel.send(
@@ -90,7 +83,7 @@ async def day_countdown(bot: commands.Bot) -> None:
                 everyone=False,
                 users=False,
                 roles=[discord.Object(AOC_ROLE)],
-            )
+            ),
         )
 
 
@@ -104,13 +97,16 @@ class Member:
         self.id = results["id"]
         self.local_score = results["local_score"]
 
-class AdventOfCode(commands.Cog, name='Advent of Code'):
+
+class AdventOfCode(commands.Cog, name="Advent of Code"):
     def __init__(self, bot):
         self.bot = bot
 
-        self._base_url = f"https://adventofcode.com/2020"
-        self.global_leaderboard_url = f"https://adventofcode.com/2020/leaderboard"
-        self.private_leaderboard_url = f"{self._base_url}/leaderboard/private/view/975452"
+        self._base_url = f"https://adventofcode.com/2021"
+        self.global_leaderboard_url = f"https://adventofcode.com/2021/leaderboard"
+        self.private_leaderboard_url = (
+            f"{self._base_url}/leaderboard/private/view/975452"
+        )
 
         countdown_coro = day_countdown(self.bot)
         self.countdown_task = loop.create_task(countdown_coro)
@@ -120,11 +116,11 @@ class AdventOfCode(commands.Cog, name='Advent of Code'):
         """All of the Advent of Code commands."""
         if not ctx.invoked_subcommand:
             await ctx.send_help(ctx.command)
-    
+
     @adventofcode_group.command(
         name="subscribe",
         aliases=("sub", "notifications", "notify", "notifs"),
-        brief="Notifications for new days"
+        brief="Notifications for new days",
     )
     async def aoc_subscribe(self, ctx: commands.Context) -> None:
         """Assign the role for notifications about new days being ready."""
@@ -133,50 +129,66 @@ class AdventOfCode(commands.Cog, name='Advent of Code'):
 
         if role not in ctx.author.roles:
             await ctx.author.add_roles(role)
-            await ctx.send("Okay! You have been __subscribed__ to notifications about new Advent of Code tasks. "
-                           f"You can run `{unsubscribe_command}` to disable them again for you.")
+            await ctx.send(
+                "Okay! You have been __subscribed__ to notifications about new Advent of Code tasks. "
+                f"You can run `{unsubscribe_command}` to disable them again for you."
+            )
         else:
-            await ctx.send("Hey, you already are receiving notifications about new Advent of Code tasks. "
-                           f"If you don't want them any more, run `{unsubscribe_command}` instead.")
+            await ctx.send(
+                "Hey, you already are receiving notifications about new Advent of Code tasks. "
+                f"If you don't want them any more, run `{unsubscribe_command}` instead."
+            )
 
-    @adventofcode_group.command(name="unsubscribe", aliases=("unsub",), brief="Notifications for new days")
+    @adventofcode_group.command(
+        name="unsubscribe", aliases=("unsub",), brief="Notifications for new days"
+    )
     async def aoc_unsubscribe(self, ctx: commands.Context) -> None:
         """Remove the role for notifications about new days being ready."""
         role = ctx.guild.get_role(AOC_ROLE)
 
         if role in ctx.author.roles:
             await ctx.author.remove_roles(role)
-            await ctx.send("Okay! You have been __unsubscribed__ from notifications about new Advent of Code tasks.")
+            await ctx.send(
+                "Okay! You have been __unsubscribed__ from notifications about new Advent of Code tasks."
+            )
         else:
-            await ctx.send("Hey, you don't even get any notifications about new Advent of Code tasks currently anyway.")
+            await ctx.send(
+                "Hey, you don't even get any notifications about new Advent of Code tasks currently anyway."
+            )
 
-    @adventofcode_group.command(name="countdown", aliases=("count", "c"), brief="Return time left until Aoc Finishes")
+    @adventofcode_group.command(
+        name="countdown",
+        aliases=("count", "c"),
+        brief="Return time left until Aoc Finishes",
+    )
     async def aoc_countdown(self, ctx: commands.Context) -> None:
         """Return time left until Aoc Finishes."""
-        if  int(datetime.now(tz=pytz.timezone('EST')).day) in range(1, 25) and int(datetime.now(tz=pytz.timezone('EST')).month) == 12:
-            days = 24 - int(datetime.now().strftime('%d'))
-            hours = 23 - int(datetime.now().strftime('%H'))
-            minutes = 59 - int(datetime.now().strftime('%M'))
+        if (
+            int(datetime.now(tz=pytz.timezone("EST")).day) in range(1, 25)
+            and int(datetime.now(tz=pytz.timezone("EST")).month) == 12
+        ):
+            days = 24 - int(datetime.now().strftime("%d"))
+            hours = 23 - int(datetime.now().strftime("%H"))
+            minutes = 59 - int(datetime.now().strftime("%M"))
 
             embed = discord.Embed(
-            title='Advent of Code',
-            description=f"There are {str(days)} days {str(hours)} hours and {str(minutes)} minutes left until AOC gets over."
+                title="Advent of Code",
+                description=f"There are {str(days)} days {str(hours)} hours and {str(minutes)} minutes left until AOC gets over.",
             )
             embed.set_footer(
-                text=ctx.author.display_name,
-                icon_url=ctx.author.avatar_url
+                text=ctx.author.display_name, icon_url=ctx.author.avatar_url
             )
             await ctx.send(embed=embed)
 
         else:
             await ctx.send(f"Aoc Hasn't Started Yet!")
 
-
-    @adventofcode_group.command(name="join", aliases=("j",), brief="Learn how to join the leaderboard (via DM)")
+    @adventofcode_group.command(
+        name="join", aliases=("j",), brief="Learn how to join the leaderboard (via DM)"
+    )
     async def join_leaderboard(self, ctx: commands.Context) -> None:
         """DM the user the information for joining the TWT AoC private leaderboard."""
         author = ctx.message.author
-        log.info(f"{author.name} ({author.id}) has requested the PyDis AoC leaderboard code")
 
         info_str = (
             "Head over to https://adventofcode.com/leaderboard/private "
@@ -185,8 +197,9 @@ class AdventOfCode(commands.Cog, name='Advent of Code'):
         try:
             await author.send(info_str)
         except discord.errors.Forbidden:
-            log.debug(f"{author.name} ({author.id}) has disabled DMs from server members")
-            await ctx.send(f":x: {author.mention}, please (temporarily) enable DMs to receive the join code")
+            await ctx.send(
+                f":x: {author.mention}, please (temporarily) enable DMs to receive the join code"
+            )
         else:
             await ctx.message.add_reaction("\U0001F4E8")
 
@@ -198,24 +211,38 @@ class AdventOfCode(commands.Cog, name='Advent of Code'):
     async def aoc_leaderboard(self, ctx: commands.Context):
         api_url = API_URL
 
-        log.debug("Querying Advent of Code Private Leaderboard API")
-        async with aiohttp.ClientSession(cookies=AOC_SESSION_COOKIE, headers=AOC_REQUEST_HEADER) as session:
+        async with aiohttp.ClientSession(
+            cookies=AOC_SESSION_COOKIE, headers=AOC_REQUEST_HEADER
+        ) as session:
             async with session.get(api_url) as resp:
                 if resp.status == 200:
                     leaderboard = await resp.json()
                 else:
-                    log.warning(f"Bad response received from AoC ({resp.status}), check session cookie")
                     resp.raise_for_status()
 
         members = [Member(leaderboard["members"][id]) for id in leaderboard["members"]]
 
-        embed = discord.Embed(title=f"{ctx.guild.name} Advent of Code Leaderboard", colour=discord.Colour(0x68c290), url="https://adventofcode.com")
+        embed = discord.Embed(
+            title=f"{ctx.guild.name} Advent of Code Leaderboard",
+            colour=discord.Colour(0x68C290),
+            url="https://adventofcode.com",
+        )
 
-        leaderboard = {"owner_id":leaderboard["owner_id"], "event":leaderboard["event"], "members":members}
+        leaderboard = {
+            "owner_id": leaderboard["owner_id"],
+            "event": leaderboard["event"],
+            "members": members,
+        }
         members = leaderboard["members"]
+
         for member in members[:10]:
             place = members.index(member) + 1
-            embed.add_field(name=f"{ENGINE.ordinal(place)} Place: {member.name} ({member.stars} :star:)", value=f"Local Score: {member.local_score} | Global Score: {member.global_score}", inline=False)
+            embed.add_field(
+                name=f"{ENGINE.ordinal(place)} Place: {member.name} ({member.stars} :star:)",
+                value=f"Local Score: {member.local_score} | Global Score: {member.global_score}",
+                inline=False,
+            )
+
         await ctx.send(embed=embed)
 
     @adventofcode_group.command(
@@ -223,8 +250,10 @@ class AdventOfCode(commands.Cog, name='Advent of Code'):
         aliases=("globalboard", "gb"),
         brief="Get a snapshot of the global AoC leaderboard",
     )
-    async def global_leaderboard(self, ctx: commands.Context, number_of_people_to_display: int = 10):
-        aoc_url = f"https://adventofcode.com/2020/leaderboard"
+    async def global_leaderboard(
+        self, ctx: commands.Context, number_of_people_to_display: int = 10
+    ):
+        aoc_url = f"https://adventofcode.com/2021/leaderboard"
         number_of_people_to_display = min(25, number_of_people_to_display)
 
         async with aiohttp.ClientSession(headers=AOC_REQUEST_HEADER) as session:
@@ -232,7 +261,6 @@ class AdventOfCode(commands.Cog, name='Advent of Code'):
                 if resp.status == 200:
                     raw_html = await resp.text()
                 else:
-                    log.warning(f"Bad response received from AoC ({resp.status}), check session cookie")
                     resp.raise_for_status()
 
         soup = BeautifulSoup(raw_html, "html.parser")
@@ -259,49 +287,50 @@ class AdventOfCode(commands.Cog, name='Advent of Code'):
                 member = re.sub(r"[\(\)]", "", member).title()
 
             lb_list.append((rank, global_score, member))
-        
-        print(lb_list)
 
-        s_desc = "\n".join(f"`{index}` {lb_list[index-1][2]} - {lb_list[index-1][1]} " for index, title in enumerate(lb_list[:number_of_people_to_display], start=1))
+        s_desc = "\n".join(
+            f"`{index}` {lb_list[index-1][2]} - {lb_list[index-1][1]} "
+            for index, title in enumerate(
+                lb_list[:number_of_people_to_display], start=1
+            )
+        )
 
-        embed = discord.Embed(title=f"Advent of Code Global Leaderboard", colour=discord.Colour(0x68c290), url="https://adventofcode.com", description=s_desc)
+        embed = discord.Embed(
+            title=f"Advent of Code Global Leaderboard",
+            colour=discord.Colour(0x68C290),
+            url="https://adventofcode.com",
+            description=s_desc,
+        )
         await ctx.send(embed=embed)
-    
 
     @adventofcode_group.command(
-        name='info',
+        name="info",
         hidden=True,
-        aliases=['about', 'help', 'faq'],
-        brief="Learn about Advent of Code"
+        aliases=["about", "help", "faq"],
+        brief="Learn about Advent of Code",
     )
     async def aoc_help(self, ctx):
         if not ctx.channel.id == AOC_CHANNEL:
             return
+
         text = """
         **Introduction**
         Advent of Code is a series of small programming puzzles for a variety of skill sets and skill levels in any programming language you like. An event where 25 programming puzzles are scattered over 25 days in December. It's a great opportunity to flex your puzzle/problem solving muscles, and perhaps even learn a new programming language if you feel adventurous! Overall, the difficulty of the challenges does increase as we get further into the event. 
         Every day at `00:00 EST (05:00 UTC)` a new puzzle is released.
 
         **Leaderboards**
-        There is a [global leaderboard](https://adventofcode.com/2020/leaderboard) which will reward the first person to solve a given puzzle part with 100 points. The second fastest will get 99 and so on.
+        There is a [global leaderboard](https://adventofcode.com/2021/leaderboard) which will reward the first person to solve a given puzzle part with 100 points. The second fastest will get 99 and so on.
 
         **How to Participate**
         To participate, head on over to https://adventofcode.com/ and login.
 
         • Subscribe to reminders about Advent of Code with the command t.aoc subscribe.
         • Join the Tech With Tim leaderboard with the command t.aoc join. 
-        • View the [Community leaderboard](https://adventofcode.com/2020/leaderboard/private/view/975452)with the command t.aoc leaderboard."""
+        • View the [Community leaderboard](https://adventofcode.com/2021/leaderboard/private/view/975452)with the command t.aoc leaderboard."""
 
-        embed = discord.Embed(
-            title='Advent of Code',
-            description=text
-        )
-        embed.set_footer(
-            text=ctx.author.display_name,
-            icon_url=ctx.author.avatar_url
-        )
+        embed = discord.Embed(title="Advent of Code", description=text)
+        embed.set_footer(text=ctx.author.display_name, icon_url=ctx.author.avatar_url)
         await ctx.send(embed=embed)
-
 
 
 def setup(bot):
