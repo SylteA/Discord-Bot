@@ -303,35 +303,6 @@ class AdventOfCode(commands.Cog, name="Advent of Code"):
         )
         await ctx.send(embed=embed)
 
-    @adventofcode_group.command(
-        name="info",
-        hidden=True,
-        aliases=["about", "help", "faq"],
-        brief="Learn about Advent of Code",
-    )
-    async def aoc_help(self, ctx):
-        if not ctx.channel.id == AOC_CHANNEL:
-            return
-
-        text = """
-        **Introduction**
-        Advent of Code is a series of small programming puzzles for a variety of skill sets and skill levels in any programming language you like. An event where 25 programming puzzles are scattered over 25 days in December. It's a great opportunity to flex your puzzle/problem solving muscles, and perhaps even learn a new programming language if you feel adventurous! Overall, the difficulty of the challenges does increase as we get further into the event. 
-        Every day at `00:00 EST (05:00 UTC)` a new puzzle is released.
-
-        **Leaderboards**
-        There is a [global leaderboard](https://adventofcode.com/2021/leaderboard) which will reward the first person to solve a given puzzle part with 100 points. The second fastest will get 99 and so on.
-
-        **How to Participate**
-        To participate, head on over to https://adventofcode.com/ and login.
-
-        • Subscribe to reminders about Advent of Code with the command t.aoc subscribe.
-        • Join the Tech With Tim leaderboard with the command t.aoc join. 
-        • View the [Community leaderboard](https://adventofcode.com/2021/leaderboard/private/view/975452)with the command t.aoc leaderboard."""
-
-        embed = discord.Embed(title="Advent of Code", description=text)
-        embed.set_footer(text=ctx.author.display_name, icon_url=ctx.author.avatar_url)
-        await ctx.send(embed=embed)
-
 
 def setup(bot):
     bot.add_cog(AdventOfCode(bot))
