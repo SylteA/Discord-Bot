@@ -2,4 +2,4 @@ __pycache__
 .idea
 .vscode
 tokens.json
-config.py
+venv

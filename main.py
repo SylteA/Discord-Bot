@@ -29,7 +29,7 @@ initial_cogs = [
     'cogs.clashofcode',
     'cogs.roles',
     'cogs.poll',
-    'cogs.qanda'
+    'cogs.adventofcode'
 ]
 
 print('Connecting...')

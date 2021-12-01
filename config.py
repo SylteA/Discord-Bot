@@ -15,3 +15,5 @@ NOTIFICATION_ROLE_ID: int = int(
 NOTIFICATION_CHANNEL_ID: int = int(
     os.environ.get("NOTIFICATION_CHANNEL_ID")
 )  # Channel to post notifications in
+
+AOC_SESSION_COOKIE = os.environ.get("AOC_SESSION_COOKIE")
