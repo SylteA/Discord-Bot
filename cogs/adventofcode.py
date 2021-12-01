@@ -220,7 +220,11 @@ class AdventOfCode(commands.Cog, name="Advent of Code"):
                 else:
                     resp.raise_for_status()
 
-        members = [Member(leaderboard["members"][id]) for id in leaderboard["members"]]
+        members = sorted(
+            [Member(leaderboard["members"][id]) for id in leaderboard["members"]],
+            key=lambda member: member.local_score,
+            reverse=True
+        )
 
         embed = discord.Embed(
             title=f"{ctx.guild.name} Advent of Code Leaderboard",
