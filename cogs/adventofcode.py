@@ -225,7 +225,7 @@ class AdventOfCode(commands.Cog, name="Advent of Code"):
         embed = discord.Embed(
             title=f"{ctx.guild.name} Advent of Code Leaderboard",
             colour=discord.Colour(0x68C290),
-            url="https://adventofcode.com",
+            url="https://adventofcode.com/2021/leaderboard/private/view/975452",
         )
 
         leaderboard = {
