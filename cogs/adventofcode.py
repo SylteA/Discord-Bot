@@ -228,6 +228,7 @@ class AdventOfCode(commands.Cog, name="Advent of Code"):
             url="https://adventofcode.com/2021/leaderboard/private/view/975452",
         )
 
+
         leaderboard = {
             "owner_id": leaderboard["owner_id"],
             "event": leaderboard["event"],
@@ -243,6 +244,9 @@ class AdventOfCode(commands.Cog, name="Advent of Code"):
                 value=f"Local Score: {member.local_score} | Global Score: {member.global_score}",
                 inline=False,
             )
+
+        tomorrow, _ = time_left_to_aoc_midnight()
+        embed.set_footer(text=f"Current Day: {tomorrow.day}/25")
 
         await ctx.send(embed=embed)
 
