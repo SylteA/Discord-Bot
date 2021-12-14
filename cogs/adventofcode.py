@@ -226,8 +226,7 @@ class AdventOfCode(commands.Cog, name="Advent of Code"):
     )
     async def aoc_leaderboard(self, ctx: commands.Context):
         if ctx.channel.id != AOC_CHANNEL:
-            await ctx.send(f"Please use the <#{AOC_CHANNEL}>")
-            return
+            return await ctx.send(f"Please use the <#{AOC_CHANNEL}> channel")
 
         api_url = API_URL
         
