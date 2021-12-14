@@ -266,7 +266,7 @@ class AdventOfCode(commands.Cog, name="Advent of Code"):
             )
 
         tomorrow, _ = time_left_to_aoc_midnight()
-        embed.set_footer(text=f"Current Day: {tomorrow.day}/25")
+        embed.set_footer(text=f"Current Day: {tomorrow.day - 1}/25")
 
         await ctx.send(embed=embed)
 
