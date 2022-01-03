@@ -17,3 +17,7 @@ NOTIFICATION_CHANNEL_ID: int = int(
 )  # Channel to post notifications in
 
 AOC_SESSION_COOKIE = os.environ.get("AOC_SESSION_COOKIE")
+
+STAFF = os.environ.get("STAFF")
+CHALLENGE_HOST_HELPER = os.environ.get("CHALLENGE_HOST_HELPER")
+SUBMITTED = os.environ.get("SUBMITTED")

@@ -1,14 +1,9 @@
 from discord.ext import commands
 import discord
-
+from config import STAFF, SUBMITTED, CHALLENGE_HOST_HELPER
 
 def setup(bot):
     bot.add_cog(ChallengeHandler(bot))
-
-
-STAFF = 838794595813818420
-CHALLENGE_HOST_HELPER = 767389648048619553
-SUBMITTED = 715676464573317220
 
 
 class ChallengeHandler(commands.Cog):
@@ -26,19 +21,13 @@ class ChallengeHandler(commands.Cog):
         aliases=("rs",),
         brief="Resubmit Command to remove submitted role"
     )
+    @commands.has_any_role(STAFF, CHALLENGE_HOST_HELPER) # Staff role or challenge host helper
     async def challenges_resubmit(self, ctx: commands.Context, member: discord.Member):
-        
-        staff_role = ctx.guild.get_role(STAFF)  # Staff role
-        challenge_host_helper = ctx.guild.get_role(CHALLENGE_HOST_HELPER)  # Challenge Host Helper
-
-        # Checking if author is staff or challenge host helper
-        if staff_role not in ctx.author and challenge_host_helper not in ctx.author:
-            return
         
         submitted_role = ctx.guild.get_role(SUBMITTED)  # Submitted role
 
         if submitted_role in member.roles:  # Checking is user has the submitted role
-            member.remove_roles(submitted_role)
+            await member.remove_roles(submitted_role)
             await ctx.send(f"Submitted role removed from {member.mention}")
         else:
             await ctx.send(f"Member doesn't have the submitted role")
