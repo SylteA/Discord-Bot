@@ -18,6 +18,6 @@ NOTIFICATION_CHANNEL_ID: int = int(
 
 AOC_SESSION_COOKIE = os.environ.get("AOC_SESSION_COOKIE")
 
-STAFF = os.environ.get("STAFF")
-CHALLENGE_HOST_HELPER = os.environ.get("CHALLENGE_HOST_HELPER")
-SUBMITTED = os.environ.get("SUBMITTED")
+STAFF_ROLE_ID = os.environ.get("STAFF")
+CHALLENGE_HOST_HELPER_ROLE_ID = os.environ.get("CHALLENGE_HOST_HELPER")
+SUBMITTED_ROLE_ID = os.environ.get("SUBMITTED")
