@@ -24,17 +24,20 @@ class ChallengeHandler(commands.Cog):
     @challenges_group.command(
         name="resubmit",
         aliases=("rs",),
-        brief=("Resubmit Command to remove submitted role")
+        brief="Resubmit Command to remove submitted role"
     )
     async def challenges_resubmit(self, ctx: commands.Context, member: discord.Member):
-        staff_role = ctx.guild.get_role(STAFF)
-        challenge_host_helper = ctx.guild.get_role(CHALLENGE_HOST_HELPER)
+        
+        staff_role = ctx.guild.get_role(STAFF)  # Staff role
+        challenge_host_helper = ctx.guild.get_role(CHALLENGE_HOST_HELPER)  # Challenge Host Helper
 
+        # Checking if author is staff or challenge host helper
         if staff_role not in ctx.author and challenge_host_helper not in staff_role:
             return
         
-        submitted_role = ctx.guild.get_role(SUBMITTED)
-        if submitted_role in member.roles:
+        submitted_role = ctx.guild.get_role(SUBMITTED)  # Submitted role
+
+        if submitted_role in member.roles:  # Checking is user has the submitted role
             await ctx.send(f"Submitted role removed from {member.mention}")
         else:
             await ctx.send(f"Member doesn't have the submitted role")
