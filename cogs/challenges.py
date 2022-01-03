@@ -32,7 +32,7 @@ class ChallengeHandler(commands.Cog):
         challenge_host_helper = ctx.guild.get_role(CHALLENGE_HOST_HELPER)  # Challenge Host Helper
 
         # Checking if author is staff or challenge host helper
-        if staff_role not in ctx.author and challenge_host_helper not in staff_role:
+        if staff_role not in ctx.author and challenge_host_helper not in ctx.author:
             return
         
         submitted_role = ctx.guild.get_role(SUBMITTED)  # Submitted role
