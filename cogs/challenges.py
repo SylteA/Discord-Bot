@@ -38,6 +38,7 @@ class ChallengeHandler(commands.Cog):
         submitted_role = ctx.guild.get_role(SUBMITTED)  # Submitted role
 
         if submitted_role in member.roles:  # Checking is user has the submitted role
+            member.remove_roles(submitted_role)
             await ctx.send(f"Submitted role removed from {member.mention}")
         else:
             await ctx.send(f"Member doesn't have the submitted role")
