@@ -1,6 +1,6 @@
 from discord.ext import commands
 import discord
-
+from config import STAFF_ROLE_ID, SUBMITTED_ROLE_ID, CHALLENGE_HOST_HELPER_ROLE_ID
 
 def setup(bot):
     bot.add_cog(ChallengeHandler(bot))
@@ -10,6 +10,28 @@ class ChallengeHandler(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+    @commands.group(name="challenges", aliases=("c",))
+    async def challenges_group(self, ctx: commands.Context) -> None:
+        """All of the Challenges commands"""
+        if not ctx.invoked_subcommand:
+            await ctx.send_help(ctx.command)
+    
+    @challenges_group.command(
+        name="resubmit",
+        aliases=("rs",),
+        brief="Resubmit Command to remove submitted role"
+    )
+    @commands.has_any_role(STAFF_ROLE_ID, CHALLENGE_HOST_HELPER_ROLE_ID) # Staff role or challenge host helper
+    async def challenges_resubmit(self, ctx: commands.Context, member: discord.Member):
+        
+        submitted_role = ctx.guild.get_role(SUBMITTED_ROLE_ID)  # Submitted role
+
+        if submitted_role in member.roles:  # Checking is user has the submitted role
+            await member.remove_roles(submitted_role)
+            return await ctx.send(f"Submitted role removed from {member.mention}")
+    
+        return await ctx.send(f"Member doesn't have the submitted role")
+    
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):  # Participant role.
         if payload.emoji != discord.PartialEmoji(name="🖐️"):
