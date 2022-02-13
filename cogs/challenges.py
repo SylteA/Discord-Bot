@@ -1,6 +1,7 @@
 from discord.ext import commands
 import discord
-from config import STAFF_ROLE_ID, SUBMITTED_ROLE_ID, CHALLENGE_HOST_HELPER_ROLE_ID
+from config import (STAFF_ROLE_ID, CHALLENGE_HOST_ROLE_ID, SUBMITTED_ROLE_ID, 
+CHALLENGE_HOST_HELPER_ROLE_ID, CHALLENGE_WINNER_ROLE_ID, INFO_CHANNEL_ID, BOT_GAMES_CHANNEL_ID)
 
 def setup(bot):
     bot.add_cog(ChallengeHandler(bot))
@@ -21,7 +22,7 @@ class ChallengeHandler(commands.Cog):
         aliases=("rs",),
         brief="Resubmit Command to remove submitted role"
     )
-    @commands.has_any_role(STAFF_ROLE_ID, CHALLENGE_HOST_HELPER_ROLE_ID) # Staff role or challenge host helper
+    @commands.has_any_role(STAFF_ROLE_ID, CHALLENGE_HOST_ROLE_ID, CHALLENGE_HOST_HELPER_ROLE_ID) # Staff role or challenge host helper
     async def challenges_resubmit(self, ctx: commands.Context, member: discord.Member):
         
         submitted_role = ctx.guild.get_role(SUBMITTED_ROLE_ID)  # Submitted role
@@ -31,7 +32,18 @@ class ChallengeHandler(commands.Cog):
             return await ctx.send(f"Submitted role removed from {member.mention}")
     
         return await ctx.send(f"Member doesn't have the submitted role")
-    
+
+    @challenges_group.command(
+        name="winners",
+        aliases=("w",),
+        brief=("Command to annouce the distribution of :pancakes:")
+    )
+    @commands.has_any_role(STAFF_ROLE_ID, CHALLENGE_HOST_ROLE_ID, CHALLENGE_HOST_HELPER_ROLE_ID)
+    async def announce_winners(self, ctx: commands.Context):
+        info_channel = ctx.guild.get_channel(INFO_CHANNEL_ID)
+
+        return await info_channel.send(f"<@&{CHALLENGE_WINNER_ROLE_ID}> :pancakes: have been out, go deposit them in <#{BOT_GAMES_CHANNEL_ID}>")
+
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):  # Participant role.
         if payload.emoji != discord.PartialEmoji(name="🖐️"):
