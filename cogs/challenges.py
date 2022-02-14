@@ -1,7 +1,8 @@
 from discord.ext import commands
 import discord
-from config import (STAFF_ROLE_ID, CHALLENGE_HOST_ROLE_ID, SUBMITTED_ROLE_ID, 
-CHALLENGE_HOST_HELPER_ROLE_ID, CHALLENGE_WINNER_ROLE_ID, INFO_CHANNEL_ID, BOT_GAMES_CHANNEL_ID)
+from config import (PARTICIPANT_ROLE_ID, STAFF_ROLE_ID, CHALLENGE_HOST_ROLE_ID, SUBMIT_CHALLENGE_CHANNEL_ID, SUBMITTED_ROLE_ID, 
+CHALLENGE_HOST_HELPER_ROLE_ID, CHALLENGE_WINNER_ROLE_ID, INFO_CHANNEL_ID, BOT_GAMES_CHANNEL_ID,
+SUBMIT_CHALLENGE_CHANNEL_ID)
 
 def setup(bot):
     bot.add_cog(ChallengeHandler(bot))
@@ -34,8 +35,8 @@ class ChallengeHandler(commands.Cog):
         return await ctx.send(f"Member doesn't have the submitted role")
 
     @challenges_group.command(
-        name="winners",
-        aliases=("w",),
+        name="announce_winners",
+        aliases=("aw",),
         brief=("Command to annouce the distribution of :pancakes:")
     )
     @commands.has_any_role(STAFF_ROLE_ID, CHALLENGE_HOST_ROLE_ID, CHALLENGE_HOST_HELPER_ROLE_ID)
@@ -44,6 +45,43 @@ class ChallengeHandler(commands.Cog):
 
         return await info_channel.send(f"<@&{CHALLENGE_WINNER_ROLE_ID}> :pancakes: have been out, go deposit them in <#{BOT_GAMES_CHANNEL_ID}>")
 
+    @challenges_group.command(
+        name="open_submissions",
+        aliases=("os",),
+        brief=("Command to open submissions")
+    )
+    @commands.has_any_role(STAFF_ROLE_ID, CHALLENGE_HOST_ROLE_ID, CHALLENGE_HOST_HELPER_ROLE_ID)
+    async def open_submissions(self, ctx: commands.Context):
+        info_channel = ctx.guild.get_channel(INFO_CHANNEL_ID)
+
+        submit_channel = ctx.guild.get_channel(SUBMIT_CHALLENGE_CHANNEL_ID)
+        
+        # Allows people to submit
+        overwrite = submit_channel.overwrites_for(ctx.guild.default_role)
+        overwrite.send_messages = None
+        submit_channel.set_permissions(ctx.guild.default_role, overwrite=overwrite)
+
+        return info_channel.send(f"<@&{PARTICIPANT_ROLE_ID}>Submissions are open. Upload your code file with extension in <#{SUBMIT_CHALLENGE_CHANNEL_ID}>. t.tag submitting for more details")
+    
+
+    @challenges_group.command(
+        name="close_submissions",
+        aliases=("cs",),
+        brief=("Command to close submissions")
+    )
+    @commands.has_any_role(STAFF_ROLE_ID, CHALLENGE_HOST_ROLE_ID, CHALLENGE_HOST_HELPER_ROLE_ID)
+    async def close_submissions(self, ctx: commands.Context):
+        info_channel = ctx.guild.get_channel(INFO_CHANNEL_ID)
+        
+        submit_channel = ctx.guild.get_channel(SUBMIT_CHALLENGE_CHANNEL_ID)
+        
+        # Disallows people to submit
+        overwrite = submit_channel.overwrites_for(ctx.guild.default_role)
+        overwrite.send_messages = False
+        submit_channel.set_permissions(ctx.guild.default_role, overwrite=overwrite)
+
+        return info_channel.send(f"<@&{PARTICIPANT_ROLE_ID}> Submissions are closed. Testing will begin soon. See you in the next challenge")
+    
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):  # Participant role.
         if payload.emoji != discord.PartialEmoji(name="🖐️"):
