@@ -43,7 +43,7 @@ class ChallengeHandler(commands.Cog):
     async def announce_winners(self, ctx: commands.Context):
         info_channel = ctx.guild.get_channel(INFO_CHANNEL_ID)
 
-        return await info_channel.send(f"<@&{CHALLENGE_WINNER_ROLE_ID}> :pancakes: have been out, go deposit them in <#{BOT_GAMES_CHANNEL_ID}>")
+        return await info_channel.send(f"<@&{CHALLENGE_WINNER_ROLE_ID}> :pancakes: have been given out, go deposit them in <#{BOT_GAMES_CHANNEL_ID}>")
 
     @challenges_group.command(
         name="open_submissions",
@@ -61,7 +61,7 @@ class ChallengeHandler(commands.Cog):
         overwrite.send_messages = None
         submit_channel.set_permissions(ctx.guild.default_role, overwrite=overwrite)
 
-        return info_channel.send(f"<@&{PARTICIPANT_ROLE_ID}>Submissions are open. Upload your code file with extension in <#{SUBMIT_CHALLENGE_CHANNEL_ID}>. t.tag submitting for more details")
+        return await info_channel.send(f"<@&{PARTICIPANT_ROLE_ID}>Submissions are open. Upload your code file with extension in <#{SUBMIT_CHALLENGE_CHANNEL_ID}>. t.tag submitting for more details")
     
 
     @challenges_group.command(
@@ -80,7 +80,7 @@ class ChallengeHandler(commands.Cog):
         overwrite.send_messages = False
         submit_channel.set_permissions(ctx.guild.default_role, overwrite=overwrite)
 
-        return info_channel.send(f"<@&{PARTICIPANT_ROLE_ID}> Submissions are closed. Testing will begin soon. See you in the next challenge")
+        return await info_channel.send(f"<@&{PARTICIPANT_ROLE_ID}> Submissions are closed. Testing will begin soon. See you in the next challenge")
     
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):  # Participant role.
