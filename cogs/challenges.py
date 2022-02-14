@@ -37,7 +37,7 @@ class ChallengeHandler(commands.Cog):
     @challenges_group.command(
         name="announce_winners",
         aliases=("aw",),
-        brief=("Command to annouce the distribution of :pancakes:")
+        brief=("Command to announce the distribution of :pancakes:")
     )
     @commands.has_any_role(STAFF_ROLE_ID, CHALLENGE_HOST_ROLE_ID, CHALLENGE_HOST_HELPER_ROLE_ID)
     async def announce_winners(self, ctx: commands.Context):
