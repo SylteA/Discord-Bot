@@ -50,7 +50,16 @@ class ChallengeHandler(commands.Cog):
     async def announce_winners(self, ctx: commands.Context):
         info_channel = ctx.guild.get_channel(INFO_CHANNEL_ID)
 
-        return await info_channel.send(f"<@&{CHALLENGE_WINNER_ROLE_ID}> :pancakes: have been given out, go deposit them in <#{BOT_GAMES_CHANNEL_ID}>")
+
+        return await info_channel.send(
+            f"<@&{CHALLENGE_WINNER_ROLE_ID}> :pancakes: have been given out, " \
+            f"go deposit them in <#{BOT_GAMES_CHANNEL_ID}>.",
+            allowed_mentions=discord.AllowedMentions(
+                roles=[
+                    discord.Object(CHALLENGE_WINNER_ROLE_ID)
+                ]
+            )
+        )
 
     @challenges_group.command(
         name="open_submissions",
@@ -70,7 +79,12 @@ class ChallengeHandler(commands.Cog):
         return await info_channel.send(
             f"<@&{CHALLENGE_PARTICIPANT_ROLE_ID}> Submissions are open." \
             f"Upload your code file with extension in <#{SUBMIT_CHALLENGE_CHANNEL_ID}>. " \
-            f"t.tag submitting for more details"
+            f"t.tag submitting for more details",
+            allowed_mentions=discord.AllowedMentions(
+                roles=[
+                    discord.Object(CHALLENGE_PARTICIPANT_ROLE_ID)
+                ]
+            )
         )
     
 
@@ -91,7 +105,12 @@ class ChallengeHandler(commands.Cog):
 
         return await info_channel.send(
             f"<@&{CHALLENGE_PARTICIPANT_ROLE_ID}> Submissions are closed. " \
-            "Testing will begin soon. See you in the next challenge"
+            "Testing will begin soon. See you in the next challenge",
+            allowed_mentions=discord.AllowedMentions(
+                roles=[
+                    discord.Object(CHALLENGE_PARTICIPANT_ROLE_ID)
+                ]
+            )
         )
     
     @commands.Cog.listener()
