@@ -104,11 +104,11 @@ class ChallengeHandler(commands.Cog):
         submit_channel.set_permissions(ctx.guild.default_role, overwrite=overwrite)
 
         return await info_channel.send(
-            f"<@&{CHALLENGE_PARTICIPANT_ROLE_ID}> Submissions are closed. " \
+            f"<@&{CHALLENGE_SUBMITTED_ROLE_ID}> Submissions are closed. " \
             "Testing will begin soon. See you in the next challenge",
             allowed_mentions=discord.AllowedMentions(
                 roles=[
-                    discord.Object(CHALLENGE_PARTICIPANT_ROLE_ID)
+                    discord.Object(CHALLENGE_SUBMITTED_ROLE_ID)
                 ]
             )
         )
