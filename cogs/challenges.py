@@ -4,11 +4,11 @@ from config import (
     CHALLENGE_PARTICIPANT_ROLE_ID, 
     STAFF_ROLE_ID, 
     CHALLENGE_HOST_ROLE_ID, 
-    SUBMIT_CHALLENGE_CHANNEL_ID, 
+    CHALLENGE_SUBMIT_CHANNEL_ID, 
     CHALLENGE_SUBMITTED_ROLE_ID, 
     CHALLENGE_HOST_HELPER_ROLE_ID, 
     CHALLENGE_WINNER_ROLE_ID, 
-    INFO_CHANNEL_ID, 
+    CHALLENGE_INFO_CHANNEL_ID, 
     BOT_GAMES_CHANNEL_ID,
     CHALLENGE_SUBMIT_CHANNEL_ID
 )
@@ -40,7 +40,7 @@ class ChallengeHandler(commands.Cog):
             await member.remove_roles(submitted_role)
             return await ctx.send(f"Submitted role removed from {member.mention}")
     
-        return await ctx.send(f"Member doesn't have the submitted role")
+        return await ctx.send("Member doesn't have the submitted role")
 
     @challenges_group.command(
         name="announce_winners",
@@ -48,7 +48,7 @@ class ChallengeHandler(commands.Cog):
         brief=("Command to announce the distribution of :pancakes:")
     )
     async def announce_winners(self, ctx: commands.Context):
-        info_channel = ctx.guild.get_channel(INFO_CHANNEL_ID)
+        info_channel = ctx.guild.get_channel(CHALLENGE_INFO_CHANNEL_ID)
 
 
         return await info_channel.send(
@@ -67,7 +67,7 @@ class ChallengeHandler(commands.Cog):
         brief=("Command to open submissions")
     )
     async def open_submissions(self, ctx: commands.Context):
-        info_channel = ctx.guild.get_channel(INFO_CHANNEL_ID)
+        info_channel = ctx.guild.get_channel(CHALLENGE_INFO_CHANNEL_ID)
 
         submit_channel = ctx.guild.get_channel(CHALLENGE_SUBMIT_CHANNEL_ID)
         
@@ -78,8 +78,8 @@ class ChallengeHandler(commands.Cog):
 
         return await info_channel.send(
             f"<@&{CHALLENGE_PARTICIPANT_ROLE_ID}> Submissions are open." \
-            f"Upload your code file with extension in <#{SUBMIT_CHALLENGE_CHANNEL_ID}>. " \
-            f"t.tag submitting for more details",
+            f"Upload your code file with extension in <#{CHALLENGE_SUBMIT_CHANNEL_ID}>. " \
+            f"Send `t.tag submitting` in <#{CHALLENGE_SUBMIT_CHANNEL_ID}> for more details",
             allowed_mentions=discord.AllowedMentions(
                 roles=[
                     discord.Object(CHALLENGE_PARTICIPANT_ROLE_ID)
@@ -94,7 +94,7 @@ class ChallengeHandler(commands.Cog):
         brief=("Command to close submissions")
     )
     async def close_submissions(self, ctx: commands.Context):
-        info_channel = ctx.guild.get_channel(INFO_CHANNEL_ID)
+        info_channel = ctx.guild.get_channel(CHALLENGE_INFO_CHANNEL_ID)
         
         submit_channel = ctx.guild.get_channel(CHALLENGE_SUBMIT_CHANNEL_ID)
         
