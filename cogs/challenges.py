@@ -53,7 +53,8 @@ class ChallengeHandler(commands.Cog):
 
         return await info_channel.send(
             f"<@&{CHALLENGE_WINNER_ROLE_ID}> :pancakes: have been given out, " \
-            f"go deposit them in <#{BOT_GAMES_CHANNEL_ID}>.",
+            f"go deposit them in <#{BOT_GAMES_CHANNEL_ID}>. \n" \
+            f"Analysis for the challenge will be available shorly in <#{CHALLENGE_INFO_CHANNEL_ID}>",
             allowed_mentions=discord.AllowedMentions(
                 roles=[
                     discord.Object(CHALLENGE_WINNER_ROLE_ID)
