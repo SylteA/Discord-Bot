@@ -65,7 +65,7 @@ class ChallengeHandler(commands.Cog):
     @challenges_group.command(
         name="open_submissions",
         aliases=("os", "open"),
-        brief=("Command to open submissions"),
+        brief="Command to open submissions",
     )
     async def open_submissions(self, ctx: commands.Context):
         info_channel = ctx.guild.get_channel(CHALLENGE_INFO_CHANNEL_ID)
