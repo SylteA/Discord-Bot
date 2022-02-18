@@ -48,7 +48,7 @@ class ChallengeHandler(commands.Cog):
     @challenges_group.command(
         name="announce_winners",
         aliases=("aw", "announce"),
-        brief=("Command to announce the distribution of :pancakes:"),
+        brief="Command to announce the distribution of :pancakes:",
     )
     async def announce_winners(self, ctx: commands.Context):
         info_channel = ctx.guild.get_channel(CHALLENGE_INFO_CHANNEL_ID)
