@@ -89,7 +89,7 @@ class ChallengeHandler(commands.Cog):
     @challenges_group.command(
         name="close_submissions",
         aliases=("cs", "close"),
-        brief=("Command to close submissions"),
+        brief="Command to close submissions",
     )
     async def close_submissions(self, ctx: commands.Context):
         info_channel = ctx.guild.get_channel(CHALLENGE_INFO_CHANNEL_ID)
