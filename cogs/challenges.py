@@ -49,7 +49,7 @@ class ChallengeHandler(commands.Cog):
     @challenges_group.command(
         name="announce_winners",
         aliases=("aw", "announce"),
-        brief=("Command to announce the distribution of :pancakes:"),
+        brief="Command to announce the distribution of :pancakes:",
     )
     async def announce_winners(self, ctx: commands.Context):
         info_channel = ctx.guild.get_channel(CHALLENGE_INFO_CHANNEL_ID)
@@ -67,7 +67,7 @@ class ChallengeHandler(commands.Cog):
     @challenges_group.command(
         name="open_submissions",
         aliases=("os", "open"),
-        brief=("Command to open submissions"),
+        brief="Command to open submissions",
     )
     async def open_submissions(self, ctx: commands.Context):
         info_channel = ctx.guild.get_channel(CHALLENGE_INFO_CHANNEL_ID)
@@ -92,7 +92,7 @@ class ChallengeHandler(commands.Cog):
     @challenges_group.command(
         name="close_submissions",
         aliases=("cs", "close"),
-        brief=("Command to close submissions"),
+        brief="Command to close submissions",
     )
     async def close_submissions(self, ctx: commands.Context):
         info_channel = ctx.guild.get_channel(CHALLENGE_INFO_CHANNEL_ID)
