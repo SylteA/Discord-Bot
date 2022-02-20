@@ -45,6 +45,7 @@ class ChallengeHandler(commands.Cog):
 
         return await ctx.send("Member doesn't have the submitted role")
 
+    @commands.cooldown(1, 3600, commands.BucketType.user)
     @challenges_group.command(
         name="announce_winners",
         aliases=("aw", "announce"),
@@ -62,6 +63,7 @@ class ChallengeHandler(commands.Cog):
             ),
         )
 
+    @commands.cooldown(1, 3600, commands.BucketType.user)
     @challenges_group.command(
         name="open_submissions",
         aliases=("os", "open"),
@@ -86,6 +88,7 @@ class ChallengeHandler(commands.Cog):
             ),
         )
 
+    @commands.cooldown(1, 3600, commands.BucketType.user)
     @challenges_group.command(
         name="close_submissions",
         aliases=("cs", "close"),
