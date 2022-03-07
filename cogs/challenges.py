@@ -77,7 +77,7 @@ class ChallengeHandler(commands.Cog):
         # Allows people to submit
         overwrite = submit_channel.overwrites_for(ctx.guild.default_role)
         overwrite.send_messages = None
-        submit_channel.set_permissions(ctx.guild.default_role, overwrite=overwrite)
+        await submit_channel.set_permissions(ctx.guild.default_role, overwrite=overwrite)
 
         return await info_channel.send(
             f"<@&{CHALLENGE_PARTICIPANT_ROLE_ID}> Submissions are open."
@@ -102,7 +102,7 @@ class ChallengeHandler(commands.Cog):
         # Disallows people to submit
         overwrite = submit_channel.overwrites_for(ctx.guild.default_role)
         overwrite.send_messages = False
-        submit_channel.set_permissions(ctx.guild.default_role, overwrite=overwrite)
+        await submit_channel.set_permissions(ctx.guild.default_role, overwrite=overwrite)
 
         return await info_channel.send(
             f"<@&{CHALLENGE_SUBMITTED_ROLE_ID}> Submissions are closed. "
