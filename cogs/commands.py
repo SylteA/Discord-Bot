@@ -375,7 +375,7 @@ class Commands(commands.Cog):
         """Make a poll/suggestion"""
         await ctx.message.delete()
         em = discord.Embed(description=suggestion)
-        em.set_author(name=f"Poll by {ctx.author.display_name}", icon_url=ctx.author.avatar_url)
+        em.set_author(name=f"Suggestion by {ctx.author.display_name}", icon_url=ctx.author.avatar_url)
         msg = await ctx.send(embed=em)
         await msg.add_reaction('👍')
         await msg.add_reaction('👎')
