@@ -13,7 +13,6 @@ from config import (
     STAFF_ROLE_ID,
 )
 
-
 def setup(bot):
     bot.add_cog(ChallengeHandler(bot))
 
@@ -21,6 +20,7 @@ def setup(bot):
 class ChallengeHandler(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.code_length = {}
 
     @commands.has_any_role(
         STAFF_ROLE_ID, CHALLENGE_HOST_ROLE_ID, CHALLENGE_HOST_HELPER_ROLE_ID
@@ -112,6 +112,16 @@ class ChallengeHandler(commands.Cog):
             ),
         )
 
+    @challenges_group.command(
+        name="reset_char_count",
+        aliases=("reset", "rcc"),
+        brief="Command to reset the char count leaderboard. To be used by hosts and host-helpers before the challenge"
+    )
+    async def reset_char_count(self, ctx: commands.Context):
+        self.code_length = {'py': {}, 'rs': {}, 'go': [], 'java': [], 'cpp': [], 'c': [], 'cs': [], 'rb': []}
+        return await ctx.send("Successfully reset the char count table.")
+
+        
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):  # Participant role.
         if payload.emoji != discord.PartialEmoji(name="🖐️"):
@@ -194,6 +204,8 @@ class ChallengeHandler(commands.Cog):
                 embed.set_footer(
                     text=f"#ID: {message.author.id} • {len(code)} chars • Language: {filetype}"
                 )
+                self.code_length[message.author.id] = (filetype, len(code))
+                
                 await submission_channel.send(embed=embed)
 
         elif message.channel.id in [
@@ -201,3 +213,14 @@ class ChallengeHandler(commands.Cog):
             713841395965624490,
         ]:  # Automatic reaction
             await message.add_reaction("🖐️")
+        elif message == 't.char':
+            em = discord.Embed(description="Char Count", color=0x36393E)
+            self.code_length = dict(sorted(self.code_length.items(), key=lambda x: x[1]))
+                
+            if self.code_length == {}:
+                return await message.channel.send("No submissions yet")
+
+            for key, value in self.code_length.items():
+                em.add_field(f"`{value[1]}` <@{key}>", value[0], inline=True)
+                
+            await message.channel.send(embed=em)
