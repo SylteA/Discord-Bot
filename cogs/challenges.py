@@ -215,7 +215,7 @@ class ChallengeHandler(commands.Cog):
             await message.add_reaction("🖐️")
         elif message == 't.char':
             em = discord.Embed(description="Char Count", color=0x36393E)
-            self.code_length = dict(sorted(self.code_length.items(), key=lambda x: x[1][0]))
+            self.code_length = dict(sorted(self.code_length.items(), key=lambda x: x[1][1]))
                 
             if self.code_length == {}:
                 return await message.channel.send("No submissions yet")
