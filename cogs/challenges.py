@@ -118,7 +118,7 @@ class ChallengeHandler(commands.Cog):
         brief="Command to reset the char count leaderboard. To be used by hosts and host-helpers before the challenge"
     )
     async def reset_char_count(self, ctx: commands.Context):
-        self.code_length = {'py': {}, 'rs': {}, 'go': [], 'java': [], 'cpp': [], 'c': [], 'cs': [], 'rb': []}
+        self.code_length = {}
         return await ctx.send("Successfully reset the char count table.")
 
         
