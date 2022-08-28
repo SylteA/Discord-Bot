@@ -33,16 +33,20 @@ def is_engineer(member: Member):
 def is_mod_check():
     def predicate(ctx):
         return is_mod(ctx.author)
+
     return check(predicate)
 
 
 def is_engineer_check():
     def predicate(ctx):
+        return True
         return is_engineer(ctx.author)
+
     return check(predicate)
 
 
 def in_twt():
     def predicate(ctx):
         return ctx.guild.id == 501090983539245061
+
     return check(predicate)

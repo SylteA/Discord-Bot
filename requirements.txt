@@ -2,7 +2,7 @@ python-dateutil
 beautifulsoup4
 discord.py
 html5lib
-jishaku
+jishaku==2.3.2
 aiohttp
 asyncpg
 pandas
