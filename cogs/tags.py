@@ -30,14 +30,19 @@ class TagCommands(commands.Cog, name="Tags"):
 
         return True
 
+    def limit_string(self, text: str):
+        if len(text) > 1024:
+            return text[:1021] + "..."
+        return text
+
     ####################################################################################################################
     # Commands
     ####################################################################################################################
 
     @commands.group(invoke_without_command=True)
-    async def tag(self, ctx, *, name: lambda inp: inp.lower()):
+    async def tag(self, ctx, *, name: commands.clean_content):
         """Main tag group."""
-        name = await commands.clean_content().convert(ctx=ctx, argument=name)
+        name = name.lower()
         tag = await self.bot.db.get_tag(guild_id=ctx.guild.id, name=name)
 
         if tag is None:
@@ -53,9 +58,9 @@ class TagCommands(commands.Cog, name="Tags"):
         )
 
     @tag.command()
-    async def info(self, ctx, *, name: lambda inp: inp.lower()):
+    async def info(self, ctx, *, name: commands.clean_content):
         """Get information regarding the specified tag."""
-        name = await commands.clean_content().convert(ctx=ctx, argument=name)
+        name = name.lower()
         tag = await self.bot.db.get_tag(guild_id=ctx.guild.id, name=name)
 
         if tag is None:
@@ -78,10 +83,17 @@ class TagCommands(commands.Cog, name="Tags"):
 
     @tag.command()
     @is_engineer_check()
-    async def create(self, ctx, name: lambda inp: inp.lower(), *, text: str):
+    async def create(
+        self, ctx, name: commands.clean_content, *, text: commands.clean_content
+    ):
         """Create a new tag."""
-        name = await commands.clean_content().convert(ctx=ctx, argument=name)
-        text = await commands.clean_content().convert(ctx=ctx, argument=text)
+        name = name.lower()
+
+        if name > 32:
+            return await ctx.send("Tag name must be less than 32 characters.")
+
+        if text > 2000:
+            return await ctx.send("Tag text must be less than 2000 characters.")
 
         tag = await self.bot.db.get_tag(guild_id=ctx.guild.id, name=name)
         if tag is not None:
@@ -186,10 +198,14 @@ class TagCommands(commands.Cog, name="Tags"):
 
     @tag.command()
     @is_engineer_check()
-    async def edit(self, ctx, name: lambda inp: inp.lower(), *, text: str):
+    async def edit(
+        self, ctx, name: commands.clean_content, *, text: commands.clean_content
+    ):
         """Edit a tag"""
-        name = await commands.clean_content().convert(ctx=ctx, argument=name)
-        text = await commands.clean_content().convert(ctx=ctx, argument=text)
+        name = name.lower()
+
+        if text > 2000:
+            return await ctx.send("Tag text must be less than 2000 characters.")
 
         tag = await self.bot.db.get_tag(guild_id=ctx.guild.id, name=name)
 
@@ -224,7 +240,7 @@ class TagCommands(commands.Cog, name="Tags"):
                 color=discord.Color.blurple(),
                 description=f"**After**: {text}",
             )
-            .add_field(name="Before", value=tag.text, inline=False)
+            .add_field(name="Before", value=self.limit_string(tag.text), inline=False)
             .add_field(name="Name", value=name)
             .add_field(name="Creator ID", value=ctx.author.id)
             .set_author(name=ctx.author, icon_url=ctx.author.avatar_url),
@@ -237,9 +253,9 @@ class TagCommands(commands.Cog, name="Tags"):
 
     @tag.command()
     @is_engineer_check()
-    async def delete(self, ctx, *, name: lambda inp: inp.lower()):
+    async def delete(self, ctx, *, name: commands.clean_content):
         """Delete a tag."""
-        name = await commands.clean_content().convert(ctx=ctx, argument=name)
+        name = name.lower()
         tag = await self.bot.db.get_tag(guild_id=ctx.guild.id, name=name)
 
         if tag is None:
@@ -293,11 +309,14 @@ class TagCommands(commands.Cog, name="Tags"):
     @tag.command()
     @is_engineer_check()
     async def rename(
-        self, ctx, name: lambda inp: inp.lower(), *, new_name: lambda inp: inp.lower()
+        self, ctx, name: commands.clean_content, *, new_name: commands.clean_content
     ):
         """Rename a tag."""
-        name = await commands.clean_content().convert(ctx=ctx, argument=name)
-        new_name = await commands.clean_content().convert(ctx=ctx, argument=new_name)
+        name = name.lower()
+        new_name = new_name.lower()
+
+        if new_name > 32:
+            return await ctx.send("Tag name must be less than 32 characters.")
 
         tag = await self.bot.db.get_tag(guild_id=ctx.guild.id, name=name)
 
@@ -319,10 +338,11 @@ class TagCommands(commands.Cog, name="Tags"):
 
     @tag.command()
     @is_engineer_check()
-    async def append(self, ctx, name: lambda inp: inp.lower(), *, text: str):
+    async def append(
+        self, ctx, name: commands.clean_content, *, text: commands.clean_content
+    ):
         """Append some content to the end of a tag"""
-        name = await commands.clean_content().convert(ctx=ctx, argument=name)
-        text = await commands.clean_content().convert(ctx=ctx, argument=text)
+        name = name.lower()
 
         tag = await self.bot.db.get_tag(guild_id=ctx.guild.id, name=name)
 
@@ -337,7 +357,7 @@ class TagCommands(commands.Cog, name="Tags"):
 
         new_txt = tag.text + " " + text
 
-        if len(new_txt) > 2048:
+        if len(new_txt) > 2000:
             return await ctx.send(
                 "Cannot append, content length will exceed discords maximum message length."
             )
@@ -362,7 +382,7 @@ class TagCommands(commands.Cog, name="Tags"):
                 color=discord.Color.blurple(),
                 description=f"**After**: {new_txt}",
             )
-            .add_field(name="Before", value=tag.text, inline=False)
+            .add_field(name="Before", value=self.limit_string(tag.text), inline=False)
             .add_field(name="Name", value=name)
             .add_field(name="Creator ID", value=ctx.author.id)
             .set_author(name=ctx.author, icon_url=ctx.author.avatar_url),
@@ -497,7 +517,7 @@ class TagCommands(commands.Cog, name="Tags"):
         await message.edit(
             embed=discord.Embed(
                 title="Tag Update Denied",
-                description=f"**Before**: {tag.text}\n\n**After**: {text}",
+                description=f"**Before**: {before}\n\n**After**: {text}",
                 timestamp=datetime.utcnow(),
                 color=discord.Color.red(),
             )
