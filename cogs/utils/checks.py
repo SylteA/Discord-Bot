@@ -39,7 +39,6 @@ def is_mod_check():
 
 def is_engineer_check():
     def predicate(ctx):
-        return True
         return is_engineer(ctx.author)
 
     return check(predicate)
