@@ -89,10 +89,10 @@ class TagCommands(commands.Cog, name="Tags"):
         """Create a new tag."""
         name = name.lower()
 
-        if name > 32:
+        if len(name) > 32:
             return await ctx.send("Tag name must be less than 32 characters.")
 
-        if text > 2000:
+        if len(text) > 2000:
             return await ctx.send("Tag text must be less than 2000 characters.")
 
         tag = await self.bot.db.get_tag(guild_id=ctx.guild.id, name=name)
@@ -110,7 +110,7 @@ class TagCommands(commands.Cog, name="Tags"):
 
             await tag.post()
 
-            await ctx.send(
+            await self.log_channel.send(
                 embed=discord.Embed(
                     title="Tag Created",
                     description=text,
@@ -204,7 +204,7 @@ class TagCommands(commands.Cog, name="Tags"):
         """Edit a tag"""
         name = name.lower()
 
-        if text > 2000:
+        if len(text) > 2000:
             return await ctx.send("Tag text must be less than 2000 characters.")
 
         tag = await self.bot.db.get_tag(guild_id=ctx.guild.id, name=name)
@@ -315,7 +315,7 @@ class TagCommands(commands.Cog, name="Tags"):
         name = name.lower()
         new_name = new_name.lower()
 
-        if new_name > 32:
+        if len(new_name) > 32:
             return await ctx.send("Tag name must be less than 32 characters.")
 
         tag = await self.bot.db.get_tag(guild_id=ctx.guild.id, name=name)
