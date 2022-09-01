@@ -1,7 +1,6 @@
 import asyncio
 from datetime import datetime
 
-import asyncpg
 import discord
 from config import TAGS_LOG_CHANNEL_ID
 from discord.ext import commands
@@ -9,10 +8,15 @@ from discord.ext import commands
 from .utils.checks import is_admin, is_engineer_check, is_staff
 from .utils.DataBase.tag import Tag
 
+import re
+
 EMOJIS = [
     "\N{WHITE HEAVY CHECK MARK}",
     "\N{CROSS MARK}",
 ]
+TAG_CREATE_PATTERN = r"\*\*Tag's name:\*\* ((?:.|\n)+)\n\n\*\*Content:\*\* ((?:.|\n)+)"
+TAG_UPADTE_PATTERN = r"\*\*Tag's name:\*\* ((?:.|\n)+)\n\n\*\*Before:\*\* ((?:.|\n)+)\n\n\*\*After:\*\* ((?:.|\n)+)"
+TAG_RENAME_PATTERN = r"\*\*Before:\*\* ((?:.|\n)+)\n\*\*After:\*\* ((?:.|\n)+)"
 
 
 def setup(bot):
@@ -29,11 +33,6 @@ class TagCommands(commands.Cog, name="Tags"):
             return False
 
         return True
-
-    def limit_string(self, text: str):
-        if len(text) > 1024:
-            return text[:1021] + "..."
-        return text
 
     ####################################################################################################################
     # Commands
@@ -113,11 +112,10 @@ class TagCommands(commands.Cog, name="Tags"):
             await self.log_channel.send(
                 embed=discord.Embed(
                     title="Tag Created",
-                    description=text,
+                    description=f"**Tag's name:** {name}\n\n**Content:** {text}",
                     color=discord.Color.green(),
                     timestamp=datetime.utcnow(),
                 )
-                .add_field(name="Name", value=name)
                 .set_author(name=ctx.author, icon_url=ctx.author.avatar_url)
                 .set_footer(
                     text=f"Approved By: {ctx.author}", icon_url=ctx.author.avatar_url
@@ -129,13 +127,12 @@ class TagCommands(commands.Cog, name="Tags"):
         log = await self.log_channel.send(
             embed=discord.Embed(
                 title="Tag Create Request",
-                description=text,
+                description=f"**Tag's name:** {name}\n\n**Content:** {text}",
                 timestamp=datetime.utcnow(),
                 color=discord.Color.blurple(),
             )
-            .add_field(name="Name", value=name)
-            .add_field(name="Creator ID", value=ctx.author.id)
-            .set_author(name=ctx.author, icon_url=ctx.author.avatar_url),
+            .set_author(name=f"{ctx.author}", icon_url=ctx.author.avatar_url)
+            .set_footer(text=f"Author ID: {ctx.author.id}"),
         )
 
         for emoji in EMOJIS:
@@ -219,13 +216,14 @@ class TagCommands(commands.Cog, name="Tags"):
                 return await ctx.send("You don't have permission to do that.")
 
         if is_staff(ctx.author):
+            old_text = tag.text
             await tag.update(text=text)
 
             await self.log_channel.send(
                 embed=discord.Embed(
                     title="Tag Updated",
                     color=discord.Color.green(),
-                    description=f"**Before**: {tag.text}\n\n**After**: {text}",
+                    description=f"**Tag's name:** {name}\n\n**Before:** {old_text}\n\n**After:** {text}",
                 ).set_footer(
                     text=f"Updated By: {ctx.author}", icon_url=ctx.author.avatar_url
                 )
@@ -238,12 +236,10 @@ class TagCommands(commands.Cog, name="Tags"):
                 title="Tag Update Request",
                 timestamp=datetime.utcnow(),
                 color=discord.Color.blurple(),
-                description=f"**After**: {text}",
+                description=f"**Tag's name:** {name}\n\n**Before:** {tag.text}\n\n**After:** {text}",
             )
-            .add_field(name="Before", value=self.limit_string(tag.text), inline=False)
-            .add_field(name="Name", value=name)
-            .add_field(name="Creator ID", value=ctx.author.id)
-            .set_author(name=ctx.author, icon_url=ctx.author.avatar_url),
+            .set_author(name=ctx.author, icon_url=ctx.author.avatar_url)
+            .set_footer(text=f"Author ID: {ctx.author.id}"),
         )
 
         for emoji in EMOJIS:
@@ -275,11 +271,10 @@ class TagCommands(commands.Cog, name="Tags"):
         await self.log_channel.send(
             embed=discord.Embed(
                 title="Tag Deleted",
-                description=tag.text,
+                description=f"**Tag's name:** {name}\n\n**Content:** {tag.text}",
                 color=discord.Color.red(),
                 timestamp=datetime.utcnow(),
             )
-            .add_field(name="Name", value=name)
             .set_author(name=author, icon_url=author.avatar_url)
             .set_footer(
                 text=f"Deleted By: {ctx.author}", icon_url=ctx.author.avatar_url
@@ -329,12 +324,39 @@ class TagCommands(commands.Cog, name="Tags"):
             if not is_admin(ctx.author):
                 return await ctx.send("You don't have permission to do that.")
 
-        try:
-            await tag.rename(new_name=new_name)
-        except asyncpg.UniqueViolationError:
+        if await self.bot.db.get_tag(guild_id=ctx.guild.id, name=new_name):
             return await ctx.send("A tag with that name already exists.")
 
-        await ctx.send("You have successfully renamed your tag.")
+        if is_staff(ctx.author):
+            await tag.rename(new_name=new_name)
+
+            await self.log_channel.send(
+                embed=discord.Embed(
+                    title="Tag Renamed",
+                    color=discord.Color.green(),
+                    description=f"**Before**: {name}\n**After**: {new_name}",
+                ).set_footer(
+                    text=f"Updated By: {ctx.author}", icon_url=ctx.author.avatar_url
+                )
+            )
+            return await ctx.send("You have successfully renamed your tag.")
+
+        log = await self.log_channel.send(
+            embed=discord.Embed(
+                title="Tag Rename Request",
+                timestamp=datetime.utcnow(),
+                color=discord.Color.blurple(),
+                description=f"**Before:** {name}\n**After:** {new_name}",
+            )
+            .set_author(name=ctx.author, icon_url=ctx.author.avatar_url)
+            .set_footer(text=f"Author ID: {ctx.author.id}"),
+        )
+
+        for emoji in EMOJIS:
+            await log.add_reaction(emoji)
+
+        return await ctx.reply("Tag update request submitted.")
+
 
     @tag.command()
     @is_engineer_check()
@@ -355,20 +377,22 @@ class TagCommands(commands.Cog, name="Tags"):
             if not is_admin(ctx.author):
                 return await ctx.send("You don't have permission to do that.")
 
-        new_txt = tag.text + " " + text
+        new_text = tag.text + " " + text
 
-        if len(new_txt) > 2000:
+        if len(new_text) > 2000:
             return await ctx.send(
                 "Cannot append, content length will exceed discords maximum message length."
             )
 
         if is_staff(ctx.author):
-            await tag.update(text=new_txt)
+            old_text = tag.text
+            await tag.update(text=new_text)
+
             await self.log_channel.send(
                 embed=discord.Embed(
                     title="Tag Updated",
                     color=discord.Color.green(),
-                    description=f"**Before**: {tag.text}\n\n**After**: {text}",
+                    description=f"**Before**: {old_text}\n\n**After**: {new_text}",
                 ).set_footer(
                     text=f"Updated By: {ctx.author}", icon_url=ctx.author.avatar_url
                 )
@@ -380,12 +404,10 @@ class TagCommands(commands.Cog, name="Tags"):
                 title="Tag Update Request",
                 timestamp=datetime.utcnow(),
                 color=discord.Color.blurple(),
-                description=f"**After**: {new_txt}",
+                description=f"**Tag's name:** {name}\n\n**Before:** {tag.text}\n\n**After:** {new_txt}",
             )
-            .add_field(name="Before", value=self.limit_string(tag.text), inline=False)
-            .add_field(name="Name", value=name)
-            .add_field(name="Creator ID", value=ctx.author.id)
-            .set_author(name=ctx.author, icon_url=ctx.author.avatar_url),
+            .set_author(name=ctx.author, icon_url=ctx.author.avatar_url)
+            .set_footer(text=f"Author ID: {ctx.author.id}"),
         )
 
         for emoji in EMOJIS:
@@ -421,6 +443,7 @@ class TagCommands(commands.Cog, name="Tags"):
             approved = False
 
         if message.embeds[0].title == "Tag Create Request":
+            await message.clear_reactions()
             return self.bot.dispatch(
                 "tag_create_response",
                 message,
@@ -428,18 +451,69 @@ class TagCommands(commands.Cog, name="Tags"):
                 user=event.member,
             )
         elif message.embeds[0].title == "Tag Update Request":
+            await message.clear_reactions()
             return self.bot.dispatch(
                 "tag_update_response",
                 message,
                 approved,
                 user=event.member,
             )
+        elif message.embeds[0].title == "Tag Rename Request":
+            await message.clear_reactions()
+            return self.bot.dispatch(
+                "tag_rename_response",
+                message,
+                approved,
+                user=event.member,
+            )
+
+    @commands.Cog.listener()
+    async def on_tag_rename_response(self, message: discord.Message, approved, user):
+        before, after = re.search(TAG_RENAME_PATTERN, message.embeds[0].description).groups()
+        creator_id = int(message.embeds[0].footer.text.split()[-1])
+
+        if approved:
+            tag = await self.bot.db.get_tag(guild_id=message.guild.id, name=before)
+            author = await self.bot.resolve_user(creator_id)
+
+            if tag is None:
+                return await message.edit(
+                    embed=discord.Embed(
+                        title="Tag Rename Failed",
+                        description=f"Tag `{before}` has been deleted",
+                        timestamp=datetime.utcnow(),
+                        color=discord.Color.red(),
+                    )
+                    .set_author(name=author, icon_url=author.avatar_url)
+                )
+
+            await tag.rename(new_name=after)
+            return await message.edit(
+                embed=discord.Embed(
+                    title="Tag Renamed",
+                    description=f"**Before:** {before}\n**After:** {after}",
+                    timestamp=datetime.utcnow(),
+                    color=discord.Color.green(),
+                )
+                .set_author(name=author, icon_url=author.avatar_url)
+                .set_footer(text=f"Approved By: {user}", icon_url=user.avatar_url)
+            )
+
+        await message.edit(
+            embed=discord.Embed(
+                title="Tag Rename Denied",
+                description=f"**Before:** {before}\n**After:** {after}",
+                timestamp=datetime.utcnow(),
+                color=discord.Color.red(),
+            )
+            .set_author(name=user, icon_url=user.avatar_url)
+            .set_footer(text=f"Denied By: {user}", icon_url=user.avatar_url)
+        )
 
     @commands.Cog.listener()
     async def on_tag_create_response(self, message: discord.Message, approved, user):
-        text = message.embeds[0].description
-        name = message.embeds[0].fields[0].value
-        creator_id = int(message.embeds[0].fields[1].value)
+        name, text = re.search(TAG_CREATE_PATTERN, message.embeds[0].description).groups()
+        creator_id = int(message.embeds[0].footer.text.split()[-1])
 
         if approved:
             tag = Tag(
@@ -449,19 +523,27 @@ class TagCommands(commands.Cog, name="Tags"):
                 name=name,
                 text=text,
             )
-
-            await tag.post()
-
             author = await self.bot.resolve_user(creator_id)
+
+            if await self.bot.db.get_tag(guild_id=message.guild.id, name=name):
+                return await message.edit(
+                    embed=discord.Embed(
+                        title="Tag Creation Failed",
+                        description=f"Tag `{name}` already exists.",
+                        timestamp=datetime.utcnow(),
+                        color=discord.Color.red(),
+                    )
+                    .set_author(name=author, icon_url=author.avatar_url)
+                )
+            await tag.post()
 
             return await message.edit(
                 embed=discord.Embed(
                     title="Tag Created",
-                    description=text,
+                    description=f"**Tag's name:** {name}\n\n**Content:** {text}",
                     timestamp=datetime.utcnow(),
                     color=discord.Color.green(),
                 )
-                .add_field(name="Name", value=name)
                 .set_author(name=author, icon_url=author.avatar_url)
                 .set_footer(text=f"Approved By: {user}", icon_url=user.avatar_url)
             )
@@ -469,21 +551,18 @@ class TagCommands(commands.Cog, name="Tags"):
         await message.edit(
             embed=discord.Embed(
                 title="Tag Creation Denied",
-                description=text,
+                description=f"**Tag's name:** {name}\n\n**Content:** {text}",
                 timestamp=datetime.utcnow(),
                 color=discord.Color.red(),
             )
-            .add_field(name="Name", value=name)
             .set_author(name=user, icon_url=user.avatar_url)
             .set_footer(text=f"Denied By: {user}", icon_url=user.avatar_url)
         )
 
     @commands.Cog.listener()
     async def on_tag_update_response(self, message: discord.Message, approved, user):
-        text = message.embeds[0].description[11:]
-        name = message.embeds[0].fields[1].value
-        creator_id = int(message.embeds[0].fields[2].value)
-        before = message.embeds[0].fields[0].value
+        name, before, after = re.search(TAG_UPADTE_PATTERN, message.embeds[0].description).groups()
+        creator_id = int(message.embeds[0].footer.text.split()[-1])
 
         if approved:
             tag = await self.bot.db.get_tag(guild_id=message.guild.id, name=name)
@@ -493,23 +572,21 @@ class TagCommands(commands.Cog, name="Tags"):
                 return await message.edit(
                     embed=discord.Embed(
                         title="Tag Update Failed",
-                        description="Tag has been deleted",
+                        description=f"Tag `{name}` has been deleted",
                         timestamp=datetime.utcnow(),
                         color=discord.Color.red(),
                     )
-                    .add_field(name="Name", value=name)
                     .set_author(name=author, icon_url=author.avatar_url)
                 )
 
-            await tag.update(text=text)
+            await tag.update(text=after)
             return await message.edit(
                 embed=discord.Embed(
                     title="Tag Updated",
-                    description=f"**Before**: {before}\n\n**After**: {text}",
+                    description=f"**Tag's Name:** {name}\n\n**Before:** {before}\n\n**After:** {after}",
                     timestamp=datetime.utcnow(),
                     color=discord.Color.green(),
                 )
-                .add_field(name="Name", value=name)
                 .set_author(name=author, icon_url=author.avatar_url)
                 .set_footer(text=f"Approved By: {user}", icon_url=user.avatar_url)
             )
@@ -517,11 +594,10 @@ class TagCommands(commands.Cog, name="Tags"):
         await message.edit(
             embed=discord.Embed(
                 title="Tag Update Denied",
-                description=f"**Before**: {before}\n\n**After**: {text}",
+                description=f"**Tag's Name:** {name}\n\n**Before:** {before}\n\n**After:** {after}",
                 timestamp=datetime.utcnow(),
                 color=discord.Color.red(),
             )
-            .add_field(name="Name", value=name)
             .set_author(name=user, icon_url=user.avatar_url)
             .set_footer(text=f"Denied By: {user}", icon_url=user.avatar_url)
         )
