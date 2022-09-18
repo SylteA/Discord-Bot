@@ -1,12 +1,17 @@
 import asyncio
 from datetime import datetime
+from typing import TYPE_CHECKING, List, Literal
 
 import discord
-from config import TAGS_LOG_CHANNEL_ID, TAGS_REQUESTS_WEBHOOK
 from discord.ext import commands
+
+from config import TAGS_LOG_CHANNEL_ID, TAGS_REQUESTS_WEBHOOK
 
 from .utils.checks import is_admin, is_engineer_check, is_staff
 from .utils.DataBase.tag import Tag
+
+if TYPE_CHECKING:
+    from main import Tim
 
 EMOJIS = [
     "\N{WHITE HEAVY CHECK MARK}",
@@ -19,7 +24,7 @@ def setup(bot):
 
 
 class TagCommands(commands.Cog, name="Tags"):
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: "Tim"):
         self.bot = bot
         self.log_channel = self.bot.get_channel(TAGS_LOG_CHANNEL_ID)
         self.webhook = discord.Webhook.from_url(
@@ -34,29 +39,29 @@ class TagCommands(commands.Cog, name="Tags"):
         return True
 
     @staticmethod
-    def log_embed(
-        rtype: str,
+    def log_embeds(
+        rtype: Literal["Create", "Delete", "Update", "Rename"],
         tname: str,
         before: str,
         after: str,
         author_id: int,
         approve: bool = None,
         approver: discord.Member = None,
-    ):
+    ) -> List[discord.Embed]:
         if approve is None:
             color = discord.Color.blurple()
         else:
-            color = [discord.Color.red(), discord.Color.green()][approve and rtype != "Delete"]
+            color = discord.Color.green() if approve and rtype != "Delete" else discord.Color.red()
 
-        _ = {None: " Request", False: " Denied", True: "d"}
-        embeds = [discord.Embed(title=f"Tag {rtype}{_[approve]}", color=color)]
+        fel = {None: " Request", False: " Denied", True: "d"}
+        embeds = [discord.Embed(title=f"Tag {rtype}{fel[approve]}", color=color)]
 
         if rtype in ("Create", "Delete"):
             embeds[0].description = f"```Content```\n{after}"
         elif rtype == "Update":
             embeds[0].description = f"```Before```\n{before}"
             embeds.append(discord.Embed(description=f"```After```\n{after}", color=color))
-        else:
+        else:  # rtype = "Rename"
             embeds[0].add_field(name="Before", value=before).add_field(name="After", value=after)
 
         embeds[-1].timestamp = datetime.utcnow()
@@ -67,10 +72,11 @@ class TagCommands(commands.Cog, name="Tags"):
         embeds[-1].add_field(name="Author", value=f"<@{author_id}> ({author_id})", inline=rtype != "Rename")
 
         if approve is not None:
-
-            embeds[-1].set_footer(
-                text=f"{['Denied', 'Approved'][approve] if rtype!='Delete' else 'Deleted'} by: {approver}"
-            )
+            if rtype == "Delete":
+                action = "Deleted"
+            else:
+                action = "Approved" if approve else "Denied"
+            embeds[-1].set_footer(text=f"{action} by: {approver}")
 
         return embeds
 
@@ -82,7 +88,7 @@ class TagCommands(commands.Cog, name="Tags"):
             pass
 
     async def request(self, **kwargs):
-        embeds = self.log_embed(**kwargs)
+        embeds = self.log_embeds(**kwargs)
         log: discord.WebhookMessage = await self.webhook.send(embeds=embeds, wait=True)
         log = await self.log_channel.fetch_message(log.id)  # PartialWebhookState does not support http methods
 
@@ -104,7 +110,7 @@ class TagCommands(commands.Cog, name="Tags"):
             message = await ctx.send("Could not find a tag with that name.")
             return await message.delete(delay=10.0)
 
-        await ctx.send("{}".format(tag.text))
+        await ctx.send(tag.text)
         await self.bot.db.execute(
             "UPDATE tags SET uses = uses + 1 WHERE guild_id = $1 AND name = $2",
             ctx.guild.id,
@@ -123,17 +129,13 @@ class TagCommands(commands.Cog, name="Tags"):
             return await message.delete(delay=10.0)
 
         author = self.bot.get_user(tag.creator_id)
-        author = str(author) if isinstance(author, discord.User) else "(ID: {})".format(tag.creator_id)
-        text = "Tag: {name}\n\n```prolog\nCreator: {author}\n   Uses: {uses}\n```".format(
-            name=name, author=author, uses=tag.uses
-        )
+        author = str(author) if isinstance(author, discord.User) else f"(ID: {tag.creator_id})"
+        text = f"Tag: {name}\n\n```prolog\nCreator: {author}\n   Uses: {tag.uses}\n```"
         await ctx.send(text)
 
     @tag.command()
     @is_engineer_check()
-    async def create(
-        self, ctx, name: commands.clean_content, *, text: commands.clean_content
-    ):
+    async def create(self, ctx, name: commands.clean_content, *, text: commands.clean_content):
         """Create a new tag."""
         name = name.lower()
 
@@ -158,7 +160,7 @@ class TagCommands(commands.Cog, name="Tags"):
                 text=text,
             )
             await tag.post()
-            await self.webhook.send(embeds=self.log_embed(**kwargs, approve=True, approver=ctx.author))
+            await self.webhook.send(embeds=self.log_embeds(**kwargs, approve=True, approver=ctx.author))
 
             return await ctx.send("You have successfully created your tag.")
 
@@ -191,9 +193,7 @@ class TagCommands(commands.Cog, name="Tags"):
     @commands.cooldown(1, 3600 * 24, commands.BucketType.user)
     async def all(self, ctx: commands.Context):
         """List all existing tags alphabetically ordered and sends them in DMs."""
-        records = await self.bot.db.fetch(
-            """SELECT name FROM tags WHERE guild_id = $1 ORDER BY name""", ctx.guild.id
-        )
+        records = await self.bot.db.fetch("""SELECT name FROM tags WHERE guild_id = $1 ORDER BY name""", ctx.guild.id)
 
         if not records:
             return await ctx.send("This server doesn't have any tags.")
@@ -220,9 +220,7 @@ class TagCommands(commands.Cog, name="Tags"):
 
     @tag.command()
     @is_engineer_check()
-    async def edit(
-        self, ctx, name: commands.clean_content, *, text: commands.clean_content
-    ):
+    async def edit(self, ctx, name: commands.clean_content, *, text: commands.clean_content):
         """Edit a tag"""
         name = name.lower()
 
@@ -243,7 +241,7 @@ class TagCommands(commands.Cog, name="Tags"):
         kwargs = dict(rtype="Update", tname=name, before=tag.text, after=text, author_id=tag.creator_id)
         if is_staff(ctx.author):
             await tag.update(text=text)
-            await self.webhook.send(embeds=self.log_embed(**kwargs, approve=True, approver=ctx.author))
+            await self.webhook.send(embeds=self.log_embeds(**kwargs, approve=True, approver=ctx.author))
             return await ctx.send("You have successfully edited your tag.")
 
         await self.request(**kwargs)
@@ -269,14 +267,14 @@ class TagCommands(commands.Cog, name="Tags"):
         await ctx.send("You have successfully deleted your tag.")
 
         await self.webhook.send(
-            embeds=self.log_embed(
+            embeds=self.log_embeds(
                 approve=True,
                 rtype="Delete",
                 tname=name,
                 before="",
                 after=tag.text,
                 author_id=tag.creator_id,
-                approver=ctx.author
+                approver=ctx.author,
             )
         )
 
@@ -296,9 +294,7 @@ class TagCommands(commands.Cog, name="Tags"):
 
     @tag.command()
     @is_engineer_check()
-    async def rename(
-        self, ctx, name: commands.clean_content, *, new_name: commands.clean_content
-    ):
+    async def rename(self, ctx, name: commands.clean_content, *, new_name: commands.clean_content):
         """Rename a tag."""
         name = name.lower()
         new_name = new_name.lower()
@@ -324,7 +320,7 @@ class TagCommands(commands.Cog, name="Tags"):
         if is_staff(ctx.author):
             await tag.rename(new_name=new_name)
 
-            await self.webhook.send(embeds=self.log_embed(**kwargs, approve=True, approver=ctx.author))
+            await self.webhook.send(embeds=self.log_embeds(**kwargs, approve=True, approver=ctx.author))
             return await ctx.send("You have successfully renamed your tag.")
 
         await self.request(**kwargs)
@@ -332,9 +328,7 @@ class TagCommands(commands.Cog, name="Tags"):
 
     @tag.command()
     @is_engineer_check()
-    async def append(
-        self, ctx, name: commands.clean_content, *, text: commands.clean_content
-    ):
+    async def append(self, ctx, name: commands.clean_content, *, text: commands.clean_content):
         """Append some content to the end of a tag"""
         name = name.lower()
 
@@ -357,7 +351,7 @@ class TagCommands(commands.Cog, name="Tags"):
         kwargs = dict(rtype="Update", tname=name, before=tag.text, after=new_text, author_id=tag.creator_id)
         if is_staff(ctx.author):
             await tag.update(text=new_text)
-            await self.webhook.send(embeds=self.log_embed(**kwargs, approve=True, approver=ctx.author))
+            await self.webhook.send(embeds=self.log_embeds(**kwargs, approve=True, approver=ctx.author))
             return await ctx.send("You have successfully appended to your tag content.")
 
         await self.request(**kwargs)
@@ -429,7 +423,7 @@ class TagCommands(commands.Cog, name="Tags"):
 
         await self.webhook.edit_message(
             message.id,
-            embeds=self.log_embed(
+            embeds=self.log_embeds(
                 rtype="Rename",
                 tname="",
                 before=before,
@@ -439,8 +433,9 @@ class TagCommands(commands.Cog, name="Tags"):
                 approve=approved,
             ),
         )
-        await self.notify(author, f"Tag `{before}` renaming to `{after}` "
-                                  f"request has been {['deni', 'approv'][approved]}ed.")
+        await self.notify(
+            author, f"Tag `{before}` renaming to `{after}` request has been {['deni', 'approv'][approved]}ed."
+        )
 
     @commands.Cog.listener()
     async def on_tag_create_response(self, message: discord.Message, approved, user):
@@ -467,7 +462,7 @@ class TagCommands(commands.Cog, name="Tags"):
 
         await self.webhook.edit_message(
             message.id,
-            embeds=self.log_embed(
+            embeds=self.log_embeds(
                 rtype="Create",
                 tname=name,
                 before="",
@@ -500,7 +495,7 @@ class TagCommands(commands.Cog, name="Tags"):
 
         await self.webhook.edit_message(
             message.id,
-            embeds=self.log_embed(
+            embeds=self.log_embeds(
                 rtype="Update",
                 tname=name,
                 before=before,
