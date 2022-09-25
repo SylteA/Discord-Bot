@@ -1,8 +1,8 @@
 python-dateutil
 beautifulsoup4
-discord.py
+discord.py==1.7.3
 html5lib
-jishaku
+jishaku==2.3.2
 aiohttp
 asyncpg
 pandas

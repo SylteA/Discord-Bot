@@ -155,6 +155,18 @@ class Tim(commands.AutoShardedBot):
            For use in `self.on_command_error`"""
         return ', '.join([obj.name if isinstance(obj, discord.Role) else str(obj).replace('_', ' ') for obj in list_])
 
+    async def resolve_user(self, user_id: int) -> discord.User:
+        """Resolve a user from their ID."""
+
+        user = self.get_user(id=user_id)
+        if user is None:
+            try:
+                user = await self.fetch_user(id=user_id)
+            except discord.NotFound:
+                return None
+
+        return user
+
     @classmethod
     async def setup(cls, **kwargs):
         bot = cls()

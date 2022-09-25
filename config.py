@@ -8,6 +8,7 @@ YOUTUBE_API_KEY = os.environ.get(
 )  # Youtube Data API v3 - API Key: https://developers.google.com/youtube/v3/docs
 
 # NOTIFICATION_WEBHOOK = ""  # Webhook for notifications to tims youtube channel
+TAGS_REQUESTS_WEBHOOK = os.environ.get("TAGS_REQUESTS_WEBHOOK")
 
 NOTIFICATION_ROLE_ID: int = int(
     os.environ.get("NOTIFICATION_ROLE_ID")
@@ -32,3 +33,4 @@ BOT_COMMANDS_CHANNEL_ID = int(os.environ.get("BOT_COMMANDS_CHANNEL_ID"))
 BOT_GAMES_CHANNEL_ID = int(os.environ.get("BOT_GAMES_CHANNEL_ID"))
 CHALLENGE_INFO_CHANNEL_ID = int(os.environ.get("CHALLENGE_INFO_CHANNEL_ID"))
 CHALLENGE_SUBMIT_CHANNEL_ID = int(os.environ.get("CHALLENGE_SUBMIT_CHANNEL_ID"))
+TAGS_LOG_CHANNEL_ID = int(os.environ.get("TAGS_LOG_CHANNEL_ID"))
