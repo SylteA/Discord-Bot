@@ -1,5 +1,4 @@
 import asyncio
-from json import loads
 from typing import List
 
 import asyncpg
