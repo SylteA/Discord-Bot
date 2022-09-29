@@ -19,18 +19,15 @@ EMOJIS = [
 ]
 
 
-def setup(bot):
-    bot.add_cog(TagCommands(bot=bot))
+async def setup(bot):
+    await bot.add_cog(TagCommands(bot=bot))
 
 
-class TagCommands(commands.Cog, name="Tags"):
+class TagCommands(commands.Cog, name="Tags"):  # TODO: use bot instead of webhook
     def __init__(self, bot: "Tim"):
         self.bot = bot
         self.log_channel = self.bot.get_channel(TAGS_LOG_CHANNEL_ID)
-        self.webhook = discord.Webhook.from_url(
-            TAGS_REQUESTS_WEBHOOK,
-            adapter=discord.AsyncWebhookAdapter(self.bot.session),
-        )
+        self.webhook = discord.Webhook.from_url(TAGS_REQUESTS_WEBHOOK, session=self.bot.session)
 
     def cog_check(self, ctx):
         if ctx.guild is None:

@@ -1,11 +1,11 @@
-from discord.ext import commands
-import discord
-
-from .utils.checks import is_mod
-
-from urllib.parse import urlparse
 import asyncio
 import re
+from urllib.parse import urlparse
+
+import discord
+from discord.ext import commands
+
+from .utils.checks import is_staff
 
 
 class Filtering(commands.Cog):
@@ -17,7 +17,7 @@ class Filtering(commands.Cog):
         if not ctx.guild:
             return False
 
-        return is_mod(ctx.author)
+        return is_staff(ctx.author)
 
     async def assure_config(self, guild_id: int):
         if str(guild_id) not in self.configs:
@@ -54,12 +54,14 @@ class Filtering(commands.Cog):
                 if all([result.scheme, result.netloc]):
                     result = await self._blacklisted_url(result.netloc, guild_id=message.guild.id)
                     if result:
-                        if not is_mod(message.author):
-                            reply = f"The link you sent is not allowed on this server. {message.author.mention} " + \
-                                    f"If you believe this is a mistake contact a staff member."
+                        if not is_staff(message.author):
+                            reply = (
+                                f"The link you sent is not allowed on this server. {message.author.mention} "
+                                + f"If you believe this is a mistake contact a staff member."
+                            )
                             reason = config.has_reason(result)
                             if reason:
-                                reply += '\n\n' + reason
+                                reply += "\n\n" + reason
                             await message.delete()
                             return await message.channel.send(reply)
 
@@ -76,47 +78,50 @@ class Filtering(commands.Cog):
     @commands.group()
     async def filter(self, ctx):
         """Use `filter blacklist` to manage the blacklist
-           Use `filter whitelist` to mange the channel whitelist
-           Ise `filter toggle` to toggle the filter off"""
+        Use `filter whitelist` to mange the channel whitelist
+        Ise `filter toggle` to toggle the filter off"""
         if ctx.invoked_subcommand is None:
-            await ctx.send(f'Use `{ctx.prefix}filter blacklist` to manage the blacklist\n'
-                           f'Use `{ctx.prefix}filter whitelist` to manage the whitelist\n'
-                           f'Use `{ctx.prefix}filter toggle` to toggle the filter.')
+            await ctx.send(
+                f"Use `{ctx.prefix}filter blacklist` to manage the blacklist\n"
+                f"Use `{ctx.prefix}filter whitelist` to manage the whitelist\n"
+                f"Use `{ctx.prefix}filter toggle` to toggle the filter."
+            )
 
     @filter.command()
     async def toggle(self, ctx):
         """Toggle on or off the filter"""
         config = self.configs[str(ctx.guild.id)]
         if config.enabled:
-            enabled = 'enabled'
-            disable = 'disable'
+            enabled = "enabled"
+            disable = "disable"
         else:
-            enabled = 'disabled'
-            disable = 'enable'
+            enabled = "disabled"
+            disable = "enable"
 
-        await ctx.send(f'The filter is currently {enabled} do you want to {disable} it?\n\n'
-                       f'Reply with `YES` or `NO`')
+        await ctx.send(
+            f"The filter is currently {enabled} do you want to {disable} it?\n\n" f"Reply with `YES` or `NO`"
+        )
 
         try:
-            reply = await self.bot.wait_for('message',
-                                            check=lambda m: m.channel == ctx.channel and m.author == ctx.author,
-                                            timeout=30.0)
+            reply = await self.bot.wait_for(
+                "message", check=lambda m: m.channel == ctx.channel and m.author == ctx.author, timeout=30.0
+            )
         except asyncio.TimeoutError:
-            return await ctx.send(f'Timed out, doing nothing.')
-        print('Got message')
+            return await ctx.send(f"Timed out, doing nothing.")
+        print("Got message")
 
         text = reply.content
-        if text.lower() == 'yes':
+        if text.lower() == "yes":
             continue_ = True
-        elif text.lower() == 'no':
+        elif text.lower() == "no":
             continue_ = False
         else:
-            return await ctx.send('Invalid answer.')
+            return await ctx.send("Invalid answer.")
 
         if continue_:
             await config.toggle()
-            return await ctx.send(f'Toggled chat filter')
-        return await ctx.send(f'Doing nothing.')
+            return await ctx.send(f"Toggled chat filter")
+        return await ctx.send(f"Doing nothing.")
 
     @filter.group()
     async def blacklist(self, ctx):
@@ -127,40 +132,44 @@ class Filtering(commands.Cog):
 
         """
         if ctx.invoked_subcommand is None:
-            await ctx.send(f'Use `{ctx.prefix}filter blacklist add` to add URLs to the blacklist\n'
-                           f'Use `{ctx.prefix}filter blacklist remove` to remove URLs from blacklist\n'
-                           f'Use `{ctx.prefix}filter blacklist list` to show current blacklisted urls')
+            await ctx.send(
+                f"Use `{ctx.prefix}filter blacklist add` to add URLs to the blacklist\n"
+                f"Use `{ctx.prefix}filter blacklist remove` to remove URLs from blacklist\n"
+                f"Use `{ctx.prefix}filter blacklist list` to show current blacklisted urls"
+            )
 
     @blacklist.command()
     async def add(self, ctx, url: str):
         """Add a URL to the filter"""
         config = self.configs[str(ctx.guild.id)]
         if url in config.blacklist_urls:
-            return await ctx.send(f'That url is already blacklisted.')
+            return await ctx.send(f"That url is already blacklisted.")
 
         config.blacklist_urls.append(url)
         await config.update()
-        await ctx.send(f'Added {url} to the blacklist.')
-        reason = await ctx.prompt_reply(f'Any specific reason for blacklisting this url?\nReply with `no` for no reason')
+        await ctx.send(f"Added {url} to the blacklist.")
+        reason = await ctx.prompt_reply(
+            f"Any specific reason for blacklisting this url?\nReply with `no` for no reason"
+        )
         if reason is None:
-            return await ctx.send(f'Ok, set no reason')
+            return await ctx.send(f"Ok, set no reason")
         else:
-            if reason.lower() == 'no':
-                return await ctx.send(f'Ok, set no reason')
+            if reason.lower() == "no":
+                return await ctx.send(f"Ok, set no reason")
             config.reasons[url] = reason
             await config.update()
-            await ctx.send(f'Ok the reason for this blacklist is now: {reason}')
+            await ctx.send(f"Ok the reason for this blacklist is now: {reason}")
 
     @blacklist.command()
     async def remove(self, ctx, url: str):
         """Remove a URL from the filter"""
         config = self.configs[str(ctx.guild.id)]
         if url not in config.blacklist_urls:
-            return await ctx.send(f'That url is not blacklisted.')
+            return await ctx.send(f"That url is not blacklisted.")
 
         config.blacklist_urls.remove(url)
         await config.update()
-        await ctx.send(f'Removed {url} from the blacklist.')
+        await ctx.send(f"Removed {url} from the blacklist.")
         if config.has_reason(url):
             del config[url]
             await config.update()
@@ -174,10 +183,10 @@ class Filtering(commands.Cog):
             string += url
             reason = config.has_reason(url)
             if reason:
-                string += f' :reason: {reason}\n'
+                string += f" :reason: {reason}\n"
             else:
-                string += ' :: \n'
-        await ctx.send(string + '```')
+                string += " :: \n"
+        await ctx.send(string + "```")
 
     @filter.group()
     async def whitelist(self, ctx):
@@ -187,33 +196,35 @@ class Filtering(commands.Cog):
         Use `filter whitelist list` to show current whitelisted channels
         """
         if ctx.invoked_subcommand is None:
-            await ctx.send(f'Use `{ctx.prefix}filter whitelist add` to add channels to the whitelist\n'
-                           f'Use `{ctx.prefix}filter whitelist remove` to remove channels from whitelist\n'
-                           f'Use `{ctx.prefix}filter whitelist list` to show current whitelisted channels')
+            await ctx.send(
+                f"Use `{ctx.prefix}filter whitelist add` to add channels to the whitelist\n"
+                f"Use `{ctx.prefix}filter whitelist remove` to remove channels from whitelist\n"
+                f"Use `{ctx.prefix}filter whitelist list` to show current whitelisted channels"
+            )
 
-    @whitelist.command(name='add')
+    @whitelist.command(name="add")
     async def add_(self, ctx, channel: commands.TextChannelConverter):
         """Add a channel to the URL filter whitelist"""
         config = self.configs[str(ctx.guild.id)]
         if channel.id in config.whitelist_channels:
-            return await ctx.send('That channel is already in the whitelist')
+            return await ctx.send("That channel is already in the whitelist")
 
         config.whitelist_channels.append(channel.id)
         await config.update()
-        await ctx.send(f'Added {channel.name} to the whitelist')
+        await ctx.send(f"Added {channel.name} to the whitelist")
 
-    @whitelist.command(name='remove')
+    @whitelist.command(name="remove")
     async def remove_(self, ctx, channel: commands.TextChannelConverter):
         """Remove a channel from the URL filter whitelist"""
         config = self.configs[str(ctx.guild.id)]
         if channel.id not in config.whitelist_channels:
-            return await ctx.send('That channel is already not whitelisted')
+            return await ctx.send("That channel is already not whitelisted")
 
         config.whitelist_channels.remove(channel.id)
         await config.update()
-        await ctx.send(f'Removed {channel.name} from the whitelist')
+        await ctx.send(f"Removed {channel.name} from the whitelist")
 
-    @whitelist.command(name='list')
+    @whitelist.command(name="list")
     async def list_(self, ctx):
         """List the whitelisted channels from URL filtering"""
         config = self.configs[str(ctx.guild.id)]
@@ -226,10 +237,10 @@ class Filtering(commands.Cog):
             else:
                 config.whitelist_channels.remove(channel)
                 update = True
-        await ctx.send('```' + '\n'.join(channel.name for channel in channels) + '```')
+        await ctx.send("```" + "\n".join(channel.name for channel in channels) + "```")
         if update:
             await config.update()
 
 
-def setup(bot):
-    bot.add_cog(Filtering(bot))
+async def setup(bot):
+    await bot.add_cog(Filtering(bot))

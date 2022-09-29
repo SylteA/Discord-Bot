@@ -1,13 +1,14 @@
-from typing import List
-from json import loads
-import asyncpg
 import asyncio
+from json import loads
+from typing import List
 
-from .tag import Tag
-from .rep import Rep
-from .user import User
-from .message import Message
+import asyncpg
+
 from .gconfig import FilterConfig
+from .message import Message
+from .rep import Rep
+from .tag import Tag
+from .user import User
 
 
 class DataBase(object):
@@ -19,11 +20,12 @@ class DataBase(object):
         self._rate_limit = asyncio.Semaphore(value=self._pool._maxsize, loop=self._loop)
 
     @classmethod
-    async def create_pool(cls, bot, uri=None, *, min_connections=10, max_connections=10,
-                          timeout=60.0, loop=None, **kwargs):
+    async def create_pool(
+        cls, bot, uri=None, *, min_connections=1, max_connections=5, timeout=60.0, loop=None, **kwargs
+    ):
         pool = await asyncpg.create_pool(uri, min_size=min_connections, max_size=max_connections, **kwargs)
         self = cls(bot=bot, pool=pool, loop=loop, timeout=timeout)
-        print('Established DataBase pool with {} - {} connections\n'.format(min_connections, max_connections))
+        print(f"Established DataBase pool with {min_connections} - { max_connections} connections\n")
         return self
 
     async def fetch(self, query, *args):
@@ -64,11 +66,11 @@ class DataBase(object):
         return User(bot=self.bot, messages=messages, reps=reps, **record)
 
     async def get_all_users(self, get_messages: bool = False, get_reps: bool = False):
-        records = await self.fetch('SELECT * FROM users')
+        records = await self.fetch("SELECT * FROM users")
         users = {int(record["id"]): User(bot=self.bot, messages=[], reps=[], **record) for record in records}
 
         if get_messages:
-            records = await self.fetch('SELECT * FROM messages ORDER BY author_id ASC')
+            records = await self.fetch("SELECT * FROM messages ORDER BY author_id ASC")
             messages = [Message(bot=self.bot, **record) for record in records]
             for message in messages:
                 users[message.author_id].messages.append(message)
@@ -91,10 +93,10 @@ class DataBase(object):
         record = await self.fetchrow(query, message_id)
         return Message(bot=self.bot, **record)
 
-    async def get_reps(self, id: int, key: str = 'user_id'):
-        if key not in ('author_id', 'user_id'):
-            raise RuntimeWarning('get_reps `key` can only be `author_id` or `user_id`')
-        query = """SELECT * FROM reps WHERE {} = $1""".format(key)
+    async def get_reps(self, id: int, key: str = "user_id"):
+        if key not in ("author_id", "user_id"):
+            raise RuntimeWarning("get_reps `key` can only be `author_id` or `user_id`")
+        query = f"""SELECT * FROM reps WHERE {key} = $1"""
         records = await self.fetch(query, id)
         return [Rep(bot=self.bot, **record) for record in records]
 

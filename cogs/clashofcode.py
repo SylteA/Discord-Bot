@@ -1,21 +1,19 @@
-from discord.ext import commands
-import discord
-
-import aiohttp
 import asyncio
 import re
-
 import time
 
-coc_role = 729342805855567934
-coc_channel = 729352136588263456
-coc_message = 729355074085584918
+import aiohttp
+import discord
+from discord.ext import commands
+
+from config import ADMIN_ROLES_ID, COC_CHANNEL_ID, COC_MESSAGE_ID, COC_ROLE_ID
+
 REGEX = re.compile(r"https://www.codingame.com/clashofcode/clash/([0-9a-f]{39})")
 API_URL = "https://www.codingame.com/services/ClashOfCode/findClashByHandle"
 
 
-def setup(bot: commands.Bot):
-    bot.add_cog(ClashOfCode(bot=bot))
+async def setup(bot: commands.Bot):
+    await bot.add_cog(ClashOfCode(bot=bot))
 
 
 class ClashOfCode(commands.Cog):
@@ -28,7 +26,7 @@ class ClashOfCode(commands.Cog):
 
     @property
     def role(self):
-        return self.bot.guild.get_role(coc_role)
+        return self.bot.guild.get_role(COC_ROLE_ID)
 
     def em(self, mode, players):
         embed = discord.Embed(title="**Clash started**")
@@ -47,7 +45,7 @@ class ClashOfCode(commands.Cog):
                     if payload.user_id not in self.session_users:
                         self.session_users.append(payload.user_id)
 
-        if payload.message_id != coc_message:
+        if payload.message_id != COC_MESSAGE_ID:
             return
 
         if self.role in payload.member.roles:
@@ -70,7 +68,7 @@ class ClashOfCode(commands.Cog):
                     if payload.user_id in self.session_users:
                         self.session_users.remove(payload.user_id)
 
-        if payload.message_id != coc_message:
+        if payload.message_id != COC_MESSAGE_ID:
             return
 
         member = self.bot.guild.get_member(payload.user_id)
@@ -84,7 +82,7 @@ class ClashOfCode(commands.Cog):
             pass
 
     @commands.group(aliases=["coc"])
-    @commands.check(lambda ctx: ctx.channel.id == coc_channel)
+    @commands.check(lambda ctx: ctx.channel.id == COC_CHANNEL_ID)
     async def clash_of_code(self, ctx: commands.Context):
         """Clash of Code"""
         if ctx.invoked_subcommand is None:
@@ -92,25 +90,30 @@ class ClashOfCode(commands.Cog):
                 return await ctx.send_help(self.bot.get_command("coc session"))
             return await ctx.send_help(self.bot.get_command("coc invite"))
 
-    @clash_of_code.group(aliases=['s'])
-    @commands.check(lambda ctx: ctx.channel.id == coc_channel)
+    @clash_of_code.group(aliases=["s"])
+    @commands.check(lambda ctx: ctx.channel.id == COC_CHANNEL_ID)
     async def session(self, ctx: commands.Context):
-        """ Start or End a clash of code session """
+        """Start or End a clash of code session"""
         if ctx.invoked_subcommand is None:
             if self.session_message == 0:
                 return await ctx.send_help(self.bot.get_command("coc session start"))
             return await ctx.send_help(self.bot.get_command("coc session end"))
 
     @session.command(name="start", aliases=["s"])
-    @commands.check(lambda ctx: ctx.channel.id == coc_channel)
+    @commands.check(lambda ctx: ctx.channel.id == COC_CHANNEL_ID)
     async def session_start(self, ctx: commands.context):
-        """ Start a new coc session """
+        """Start a new coc session"""
         if self.session_message != 0:
-            return await ctx.send("There is an active session right now.\n"
-                                  "Join by reacting to the pinned message or using `t.coc session join`. Have fun!")
+            return await ctx.send(
+                "There is an active session right now.\n"
+                "Join by reacting to the pinned message or using `t.coc session join`. Have fun!"
+            )
 
-        pager = commands.Paginator(prefix=f"**Hey, {ctx.author.mention} is starting a coc session.\n"
-                                          f"Use `t.coc session join` or react to this message to join**", suffix="")
+        pager = commands.Paginator(
+            prefix=f"**Hey, {ctx.author.mention} is starting a coc session.\n"
+            f"Use `t.coc session join` or react to this message to join**",
+            suffix="",
+        )
 
         for member in self.role.members:
             if member != ctx.author:
@@ -149,36 +152,42 @@ class ClashOfCode(commands.Cog):
                 self.session = False
                 break
 
-    @session.command(name='join', aliases=['j'])
-    @commands.check(lambda ctx: ctx.channel.id == coc_channel)
+    @session.command(name="join", aliases=["j"])
+    @commands.check(lambda ctx: ctx.channel.id == COC_CHANNEL_ID)
     async def session_join(self, ctx: commands.Context):
         """Join the current active coc session"""
         if self.session_message == 0:
-            return await ctx.send("There is no active coc session right now"
-                                  "use `t.coc session start` to start a coc session")
+            return await ctx.send(
+                "There is no active coc session right now" "use `t.coc session start` to start a coc session"
+            )
         if ctx.author.id in self.session_users:
-            return await ctx.send("You are already in the session. Have fun playing.\n"
-                                  "If you want to leave remove your reaction or use `t.coc session leave`")
+            return await ctx.send(
+                "You are already in the session. Have fun playing.\n"
+                "If you want to leave remove your reaction or use `t.coc session leave`"
+            )
         self.session_users.append(ctx.author.id)
         return await ctx.send("You have joined the session. Have fun playing")
 
-    @session.command(name='leave', aliases=['l'])
-    @commands.check(lambda ctx: ctx.channel.id == coc_channel)
+    @session.command(name="leave", aliases=["l"])
+    @commands.check(lambda ctx: ctx.channel.id == COC_CHANNEL_ID)
     async def session_leave(self, ctx: commands.Context):
         """Leave the current active coc session"""
         if self.session_message == 0:
-            return await ctx.send("There is no active coc session right now"
-                                  "use `t.coc session start` to start a coc session")
+            return await ctx.send(
+                "There is no active coc session right now" "use `t.coc session start` to start a coc session"
+            )
         if ctx.author.id not in self.session_users:
-            return await ctx.send("You aren't in a clash of code session right now.\n"
-                                  "If you want to join react to session message or use `t.coc session join`")
+            return await ctx.send(
+                "You aren't in a clash of code session right now.\n"
+                "If you want to join react to session message or use `t.coc session join`"
+            )
         self.session_users.remove(ctx.author.id)
         return await ctx.send("You have left the session. No more pings for now")
 
     @session.command(name="end", aliases=["e"])
-    @commands.check(lambda ctx: ctx.channel.id == coc_channel)
+    @commands.check(lambda ctx: ctx.channel.id == COC_CHANNEL_ID)
     async def session_end(self, ctx: commands.context):
-        """ Ends the current coc session """
+        """Ends the current coc session"""
         if self.session_message == 0:
             return await ctx.send("There is no active clash of code session")
 
@@ -200,27 +209,28 @@ class ClashOfCode(commands.Cog):
 
     @clash_of_code.command(name="invite", aliases=["i"])
     @commands.has_any_role(
-        511334601977888798,  # Tim
-        580911082290282506,  # Admin
-        511332506780434438,  # Mod
-        541272748161499147,  # Helper
-        coc_role
+        *ADMIN_ROLES_ID,
+        COC_ROLE_ID,
     )
-    @commands.check(lambda ctx: ctx.channel.id == coc_channel)
+    @commands.check(lambda ctx: ctx.channel.id == COC_CHANNEL_ID)
     @commands.cooldown(1, 60, commands.BucketType.channel)
-    async def coc_invite(self, ctx: commands.Context, *, url: str=None):
+    async def coc_invite(self, ctx: commands.Context, *, url: str = None):
         """Mentions all the users with the `Clash Of Code` role that are in the current session."""
         await ctx.message.delete()
         if self.session_message == 0:
             ctx.command.reset_cooldown(ctx)
-            return await ctx.send("No active Clash of Code session please create one to start playing\n"
-                                  "Use `t.coc session start` to start a coc session <:smilecat:727592135171244103>")
+            return await ctx.send(
+                "No active Clash of Code session please create one to start playing\n"
+                "Use `t.coc session start` to start a coc session <:smilecat:727592135171244103>"
+            )
 
         if ctx.author.id not in self.session_users:
             ctx.command.reset_cooldown(ctx)
-            return await ctx.send("You can't create a clash unless you participate in the session\n"
-                                  "Use `t.coc session join` or react to the pinned message to join the coc session "
-                                  "<:smilecat:727592135171244103>")
+            return await ctx.send(
+                "You can't create a clash unless you participate in the session\n"
+                "Use `t.coc session join` or react to the pinned message to join the coc session "
+                "<:smilecat:727592135171244103>"
+            )
 
         if url is None:
             ctx.command.reset_cooldown(ctx)
@@ -240,12 +250,14 @@ class ClashOfCode(commands.Cog):
                 json = await resp.json()
 
         pager = commands.Paginator(
-            prefix="\n".join([
-                f"**Hey, {ctx.author.mention} is hosting a Clash Of Code game!**",
-                f"Mode{'s' if len(json['modes']) > 1 else ''}: {', '.join(json['modes'])}",
-                f"Programming languages: {', '.join(json['programmingLanguages']) if json['programmingLanguages'] else 'All'}",
-                f"Join here: {link[0]}"
-            ]),
+            prefix="\n".join(
+                [
+                    f"**Hey, {ctx.author.mention} is hosting a Clash Of Code game!**",
+                    f"Mode{'s' if len(json['modes']) > 1 else ''}: {', '.join(json['modes'])}",
+                    f"Programming languages: {', '.join(json['programmingLanguages']) if json['programmingLanguages'] else 'All'}",
+                    f"Join here: {link[0]}",
+                ]
+            ),
             suffix="",
         )
 
@@ -267,8 +279,10 @@ class ClashOfCode(commands.Cog):
                     json = await resp.json()
 
         players = len(json["players"])
-        players_text = ', '.join([p['codingamerNickname']for p in sorted(json['players'], key=lambda p: p['position'])])
-        start_message = await ctx.send(embed=self.em(json['mode'], players_text))
+        players_text = ", ".join(
+            [p["codingamerNickname"] for p in sorted(json["players"], key=lambda p: p["position"])]
+        )
+        start_message = await ctx.send(embed=self.em(json["mode"], players_text))
 
         async with aiohttp.ClientSession() as session:
             while not json["finished"]:
@@ -277,20 +291,21 @@ class ClashOfCode(commands.Cog):
                     json = await resp.json()
 
                 if len(json["players"]) != players:
-                    players_text = ', '.join([p['codingamerNickname']
-                                              for p in sorted(json['players'], key=lambda p: p['position'])])
-                    await start_message.edit(embed=self.em(json['mode'], players_text))
+                    players_text = ", ".join(
+                        [p["codingamerNickname"] for p in sorted(json["players"], key=lambda p: p["position"])]
+                    )
+                    await start_message.edit(embed=self.em(json["mode"], players_text))
 
         await ctx.em(
             title="**Clash finished**",
             description="\n".join(
-                ["Results:"] + [
+                ["Results:"]
+                + [
                     # Example "1. Takos (Code length: 123, Score 100%, Time 1:09)"
                     f"{p['rank']}. {p['codingamerNickname']} ("
                     + (f"Code length: {p['criterion']}, " if json["mode"] == "SHORTEST" else "")
                     + f"Score: {p['score']}%, Time: {p['duration'] // 60_000}:{p['duration'] // 1000 % 60:02})"
                     for p in sorted(json["players"], key=lambda p: p["rank"])
                 ]
-            )
+            ),
         )
-
