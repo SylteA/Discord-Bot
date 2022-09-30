@@ -32,7 +32,10 @@ class Roles(commands.Cog):
         if payload.message_id != role_message:
             return
 
-        if any(role in payload.member.roles for role in self.roles.values()) or self.lvl_20_role not in payload.member.roles:
+        if (
+            any(role in payload.member.roles for role in self.roles.values())
+            or self.lvl_20_role not in payload.member.roles
+        ):
             message = await self.bot.get_channel(payload.channel_id).fetch_message(role_message)
             return await message.remove_reaction(payload.emoji, payload.member)
 

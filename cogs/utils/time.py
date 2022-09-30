@@ -2,6 +2,7 @@
 
 
 import datetime
+
 from dateutil.relativedelta import relativedelta
 
 
@@ -11,25 +12,25 @@ class Plural:
 
     def __format__(self, format_spec):
         v = self.value
-        singular, sep, plural = format_spec.partition('|')
-        plural = plural or f'{singular}s'
+        singular, sep, plural = format_spec.partition("|")
+        plural = plural or f"{singular}s"
         if abs(v) != 1:
-            return f'{v} {plural}'
-        return f'{v} {singular}'
+            return f"{v} {plural}"
+        return f"{v} {singular}"
 
 
-def human_join(seq, delim=', ', final='or'):
+def human_join(seq, delim=", ", final="or"):
     size = len(seq)
     if size == 0:
-        return ''
+        return ""
 
     if size == 1:
         return seq[0]
 
     if size == 2:
-        return f'{seq[0]} {final} {seq[1]}'
+        return f"{seq[0]} {final} {seq[1]}"
 
-    return delim.join(seq[:-1]) + f' {final} {seq[-1]}'
+    return delim.join(seq[:-1]) + f" {final} {seq[-1]}"
 
 
 def human_timedelta(dt, *, source=None, accuracy=3, brief=False, suffix=True):
@@ -44,40 +45,40 @@ def human_timedelta(dt, *, source=None, accuracy=3, brief=False, suffix=True):
     # A query like "11 months" can be interpreted as "!1 months and 6 days"
     if dt > now:
         delta = relativedelta(dt, now)
-        suffix = ''
+        suffix = ""
     else:
         delta = relativedelta(now, dt)
-        suffix = ' ago' if suffix else ''
+        suffix = " ago" if suffix else ""
 
     attrs = [
-        ('year', 'y'),
-        ('month', 'mo'),
-        ('day', 'd'),
-        ('hour', 'h'),
-        ('minute', 'm'),
-        ('second', 's'),
+        ("year", "y"),
+        ("month", "mo"),
+        ("day", "d"),
+        ("hour", "h"),
+        ("minute", "m"),
+        ("second", "s"),
     ]
 
     output = []
     for attr, brief_attr in attrs:
-        elem = getattr(delta, attr + 's')
+        elem = getattr(delta, attr + "s")
         if not elem:
             continue
 
-        if attr == 'day':
+        if attr == "day":
             weeks = delta.weeks
             if weeks:
                 elem -= weeks * 7
                 if not brief:
-                    output.append(format(Plural(weeks), 'week'))
+                    output.append(format(Plural(weeks), "week"))
                 else:
-                    output.append(f'{weeks}w')
+                    output.append(f"{weeks}w")
 
         if elem <= 0:
             continue
 
         if brief:
-            output.append(f'{elem}{brief_attr}')
+            output.append(f"{elem}{brief_attr}")
         else:
             output.append(format(Plural(elem), attr))
 
@@ -85,9 +86,9 @@ def human_timedelta(dt, *, source=None, accuracy=3, brief=False, suffix=True):
         output = output[:accuracy]
 
     if len(output) == 0:
-        return 'now'
+        return "now"
     else:
         if not brief:
-            return human_join(output, final='and') + suffix
+            return human_join(output, final="and") + suffix
         else:
-            return ' '.join(output) + suffix
+            return " ".join(output) + suffix

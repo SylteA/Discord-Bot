@@ -1,16 +1,25 @@
-from discord import Member, User as Discord_User
-
 from datetime import datetime
 from typing import List, Union
+
+from discord import Member
+from discord import User as Discord_User
 
 from .message import Message
 from .rep import Rep
 
 
 class User(object):
-    def __init__(self, bot, id: int, *, messages: List[Message], reps: List[Rep],
-                 commands_used: int = 0, joined_at: datetime = datetime.utcnow(),
-                 messages_sent: int = 0):
+    def __init__(
+        self,
+        bot,
+        id: int,
+        *,
+        messages: List[Message],
+        reps: List[Rep],
+        commands_used: int = 0,
+        joined_at: datetime = datetime.utcnow(),
+        messages_sent: int = 0
+    ):
         self.bot = bot
         self.id = id
         self.messages = messages
@@ -43,9 +52,14 @@ class User(object):
         query = """UPDATE users SET commands_used = commands_used + 1 WHERE id = $1"""
         await bot.db.execute(query, user.id)
 
-    async def add_rep(self, message_id: int, author_id: int,
-                      repped_at: datetime = datetime.utcnow(), extra_info: dict = None,
-                      assure_24h: bool = True):
+    async def add_rep(
+        self,
+        message_id: int,
+        author_id: int,
+        repped_at: datetime = datetime.utcnow(),
+        extra_info: dict = None,
+        assure_24h: bool = True,
+    ):
         """
         Add a rep using `self.id` as user_id
         :param message_id:
@@ -63,6 +77,12 @@ class User(object):
             If posting is successful, returns None.
             If post is on cooldown, returns a datetime object on when the last rep was added.
         """
-        rep = Rep(bot=self.bot, rep_id=message_id, user_id=self.id, author_id=author_id,
-                  repped_at=repped_at, extra_info=extra_info)
+        rep = Rep(
+            bot=self.bot,
+            rep_id=message_id,
+            user_id=self.id,
+            author_id=author_id,
+            repped_at=repped_at,
+            extra_info=extra_info,
+        )
         return await rep.post(assure_24h=assure_24h)

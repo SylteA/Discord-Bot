@@ -1,8 +1,8 @@
-from discord.ext import commands
-import discord
-
-from typing import Union
 import asyncio
+from typing import Union
+
+import discord
+from discord.ext import commands
 
 from ..youtube import to_pages_by_lines
 
@@ -11,21 +11,30 @@ def embed_to_string(embed: discord.Embed) -> str:
     """Convert a embed to a string"""
     string = ""
     if embed.author:
-        string = f'{embed.author.name}\n'
+        string = f"{embed.author.name}\n"
     if embed.title:
-        string += f'{embed.title}\n'
+        string += f"{embed.title}\n"
     if embed.description:
-        string += f'{embed.description}\n'
+        string += f"{embed.description}\n"
     for field in embed.fields:
-        string += f'{field.title}\n{field.value}\n'
+        string += f"{field.title}\n{field.value}\n"
     if embed.footer:
-        string += f'{embed.footer}'
+        string += f"{embed.footer}"
     return string
 
 
 class SyltesContext(commands.Context):
-    async def send(self, content=None, *, tts=False, embed=None, file=None, files=None, delete_after=None, nonce=None) \
-            -> Union[discord.Message, None]:
+    async def send(
+        self,
+        content=None,
+        *,
+        tts=False,
+        embed=None,
+        file=None,
+        files=None,
+        delete_after=None,
+        nonce=None,
+    ) -> Union[discord.Message, None]:
         """Better handling of missing permissions"""
         destination = self.channel
         if self.guild:
@@ -33,7 +42,7 @@ class SyltesContext(commands.Context):
             if not permissions.send_messages:
                 try:
                     destination = self.author
-                    await destination.send(f'I was missing permissions to send messages in {self.channel.mention}.')
+                    await destination.send(f"I was missing permissions to send messages in {self.channel.mention}.")
                 except discord.Forbidden:
                     pass
             if not permissions.embed_links and embed is not None:
@@ -43,7 +52,7 @@ class SyltesContext(commands.Context):
                     await destination.send(page)
                 embed = None
             if not permissions.attach_files and (file or files):
-                await destination.send(f'Missing permission to send files in {self.channel.mention}\nCheck your DMs')
+                await destination.send(f"Missing permission to send files in {self.channel.mention}\nCheck your DMs")
                 files = files or [file]
                 for file in files:
                     await self.author.send(file=file)
@@ -74,9 +83,9 @@ class SyltesContext(commands.Context):
             return msg.author.id == author_id and msg.channel == self.channel
 
         try:
-            message = await self.bot.wait_for('message', check=check, timeout=timeout)
+            message = await self.bot.wait_for("message", check=check, timeout=timeout)
         except asyncio.TimeoutError:
-            await self.send('Timed out.')
+            await self.send("Timed out.")
             return None
 
         try:
@@ -92,11 +101,20 @@ class SyltesContext(commands.Context):
         """Shortcut to send embeds with `bot.em`"""
 
         return await self.send(embed=self.bot.em(**kwargs), delete_after=delete_after)
-    
+
     async def send_help(self, *args):
         """No more cheating on getting help from other channels :P"""
-        if self.command.name in ('help', 'scoreboard', 'rep_scoreboard', 'reps', 'member_count', 'top_user', 'users',
-                                'server_messages', 'messages'):
+        if self.command.name in (
+            "help",
+            "scoreboard",
+            "rep_scoreboard",
+            "reps",
+            "member_count",
+            "top_user",
+            "users",
+            "server_messages",
+            "messages",
+        ):
             if self.channel.id not in (511344208955703306, 536199577284509696):
                 return await self.send("**Please use #bot-commands channel**")
         return await super().send_help(*args)

@@ -10,12 +10,8 @@ YOUTUBE_API_KEY = os.environ.get(
 # NOTIFICATION_WEBHOOK = ""  # Webhook for notifications to tims youtube channel
 TAGS_REQUESTS_WEBHOOK = os.environ.get("TAGS_REQUESTS_WEBHOOK")
 
-NOTIFICATION_ROLE_ID: int = int(
-    os.environ.get("NOTIFICATION_ROLE_ID")
-)  # Role to be mentioned in announcements
-NOTIFICATION_CHANNEL_ID: int = int(
-    os.environ.get("NOTIFICATION_CHANNEL_ID")
-)  # Channel to post notifications in
+NOTIFICATION_ROLE_ID: int = int(os.environ.get("NOTIFICATION_ROLE_ID"))  # Role to be mentioned in announcements
+NOTIFICATION_CHANNEL_ID: int = int(os.environ.get("NOTIFICATION_CHANNEL_ID"))  # Channel to post notifications in
 
 AOC_SESSION_COOKIE = os.environ.get("AOC_SESSION_COOKIE")
 

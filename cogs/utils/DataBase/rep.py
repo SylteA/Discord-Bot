@@ -3,8 +3,15 @@ from json import dumps
 
 
 class Rep(object):
-    def __init__(self, bot, rep_id: int, user_id: int, author_id: int,
-                 repped_at: datetime = datetime.utcnow(), extra_info: dict = None):
+    def __init__(
+        self,
+        bot,
+        rep_id: int,
+        user_id: int,
+        author_id: int,
+        repped_at: datetime = datetime.utcnow(),
+        extra_info: dict = None,
+    ):
         self.bot = bot
         self.rep_id = rep_id  # In most cases this is the id of the message that posted this.
         self.user_id = user_id  # The user that recieved +1 rep.
@@ -25,8 +32,8 @@ class Rep(object):
             If post is on cooldown, returns a datetime object on when the last rep was added.
         """
         if assure_24h:
-            query = """SELECT * FROM reps 
-                       WHERE author_id = $1 
+            query = """SELECT * FROM reps
+                       WHERE author_id = $1
                        ORDER BY repped_at DESC
                        LIMIT 1"""
 
@@ -39,6 +46,12 @@ class Rep(object):
         query = """INSERT INTO reps ( rep_id, user_id, author_id, repped_at, extra_info )
                    VALUES (  $1, $2, $3, $4, $5 )
                    ON CONFLICT DO NOTHING"""
-        await self.bot.db.execute(query, self.rep_id, self.user_id, self.author_id,
-                                  self.repped_at, f"{self.extra_info}")
+        await self.bot.db.execute(
+            query,
+            self.rep_id,
+            self.user_id,
+            self.author_id,
+            self.repped_at,
+            f"{self.extra_info}",
+        )
         return None
