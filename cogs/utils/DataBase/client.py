@@ -24,7 +24,7 @@ class DataBase(object):
     ):
         pool = await asyncpg.create_pool(uri, min_size=min_connections, max_size=max_connections, **kwargs)
         self = cls(bot=bot, pool=pool, loop=loop, timeout=timeout)
-        print("Established DataBase pool with {} - {} connections\n".format(min_connections, max_connections))
+        print(f"Established DataBase pool with {min_connections} - {max_connections} connections\n")
         return self
 
     async def fetch(self, query, *args):
@@ -95,7 +95,7 @@ class DataBase(object):
     async def get_reps(self, id: int, key: str = "user_id"):
         if key not in ("author_id", "user_id"):
             raise RuntimeWarning("get_reps `key` can only be `author_id` or `user_id`")
-        query = """SELECT * FROM reps WHERE {} = $1""".format(key)
+        query = f"""SELECT * FROM reps WHERE {key} = $1"""
         records = await self.fetch(query, id)
         return [Rep(bot=self.bot, **record) for record in records]
 
