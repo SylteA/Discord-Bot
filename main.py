@@ -6,7 +6,22 @@ import os
 import discord
 from aiohttp import ClientSession
 from discord.ext import commands
-from discord.ext.commands.errors import *
+from discord.ext.commands.errors import (
+    BadArgument,
+    BadUnionArgument,
+    BotMissingAnyRole,
+    BotMissingPermissions,
+    BotMissingRole,
+    CheckFailure,
+    CommandOnCooldown,
+    ConversionError,
+    MissingAnyRole,
+    MissingPermissions,
+    MissingRequiredArgument,
+    MissingRole,
+    NoPrivateMessage,
+    PrivateMessageOnly,
+)
 
 from cogs.utils.context import SyltesContext
 from cogs.utils.DataBase import DataBase, Message, User
