@@ -6,4 +6,5 @@ per-file-ignores =
     __init__.py: F401
 exclude =
     .git,
-    __pycache__
+    __pycache__,
+    venv
