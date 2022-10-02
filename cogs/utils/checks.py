@@ -1,38 +1,36 @@
 from discord import Member
 from discord.ext.commands import check
 
+from config import ADMIN_ROLES_ID, ENGINEER_ROLE_ID, GUILD_ID, STAFF_ROLE_ID
+
 
 def is_admin(member: Member):
     for role in member.roles:
-        if role.id in (511334601977888798, 580911082290282506, 537990081156481025):
+        if role.id in ADMIN_ROLES_ID:
             return True
+
     return False
-
-
-def is_mod(member: Member):
-    for role in member.roles:
-        if role.id in (511332506780434438, 541272748161499147):
-            return True
-    return is_admin(member)
 
 
 def is_staff(member: Member):
     for role in member.roles:
-        if role.id == 838794595813818420:
+        if role.id == STAFF_ROLE_ID:
             return True
+
     return False
 
 
 def is_engineer(member: Member):
     for role in member.roles:
-        if role.id == 611734695587086370:
+        if role.id == ENGINEER_ROLE_ID:
             return True
-    return is_mod(member)
+
+    return is_staff(member)
 
 
-def is_mod_check():
+def is_staff_check():
     def predicate(ctx):
-        return is_mod(ctx.author)
+        return is_staff(ctx.author)
 
     return check(predicate)
 
@@ -46,6 +44,6 @@ def is_engineer_check():
 
 def in_twt():
     def predicate(ctx):
-        return ctx.guild.id == 501090983539245061
+        return ctx.guild.id == GUILD_ID
 
     return check(predicate)

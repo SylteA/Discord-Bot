@@ -10,18 +10,16 @@ import pytz
 from bs4 import BeautifulSoup
 from discord.ext import commands
 
-from config import AOC_SESSION_COOKIE
+from config import AOC_CHANNEL_ID, AOC_ROLE_ID, AOC_SESSION_COOKIE
 
 log = logging.getLogger(__name__)
 loop = asyncio.get_event_loop()
 
 API_URL = "https://adventofcode.com/2021/leaderboard/private/view/975452.json"
-AOC_CHANNEL = 782573489772953600
 INTERVAL = 120
 AOC_REQUEST_HEADER = {"user-agent": "TWT AoC Event Bot"}
 AOC_SESSION_COOKIE = {"session": AOC_SESSION_COOKIE}
 ENGINE = inflect.engine()
-AOC_ROLE = int(782842606761148417)
 
 
 def time_left_to_aoc_midnight():
@@ -51,12 +49,12 @@ async def day_countdown(bot: commands.Bot) -> None:
         # Prevent bot from being slightly too early in trying to announce today's puzzle
         await asyncio.sleep(time_left.seconds + 1)
 
-        channel = bot.get_channel(AOC_CHANNEL)
+        channel = bot.get_channel(AOC_CHANNEL_ID)
 
         if not channel:
             break
 
-        aoc_role = channel.guild.get_role(AOC_ROLE)
+        aoc_role = channel.guild.get_role(AOC_ROLE_ID)
         if not aoc_role:
             break
 
@@ -78,7 +76,7 @@ async def day_countdown(bot: commands.Bot) -> None:
             allowed_mentions=discord.AllowedMentions(
                 everyone=False,
                 users=False,
-                roles=[discord.Object(AOC_ROLE)],
+                roles=[discord.Object(AOC_ROLE_ID)],
             ),
         )
 
@@ -118,11 +116,11 @@ class AdventOfCode(commands.Cog, name="Advent of Code"):
     )
     async def aoc_subscribe(self, ctx: commands.Context) -> None:
         """Assign the role for notifications about new days being ready."""
-        if ctx.channel.id != AOC_CHANNEL:
-            await ctx.send(f"Please use the <#{AOC_CHANNEL}> channel")
+        if ctx.channel.id != AOC_CHANNEL_ID:
+            await ctx.send(f"Please use the <#{AOC_CHANNEL_ID}> channel")
             return
 
-        role = ctx.guild.get_role(AOC_ROLE)
+        role = ctx.guild.get_role(AOC_ROLE_ID)
         unsubscribe_command = f"{ctx.prefix}{ctx.command.root_parent} unsubscribe"
 
         if role not in ctx.author.roles:
@@ -140,11 +138,11 @@ class AdventOfCode(commands.Cog, name="Advent of Code"):
     @adventofcode_group.command(name="unsubscribe", aliases=("unsub",), brief="Notifications for new days")
     async def aoc_unsubscribe(self, ctx: commands.Context) -> None:
         """Remove the role for notifications about new days being ready."""
-        if ctx.channel.id != AOC_CHANNEL:
-            await ctx.send(f"Please use the <#{AOC_CHANNEL}> channel")
+        if ctx.channel.id != AOC_CHANNEL_ID:
+            await ctx.send(f"Please use the <#{AOC_CHANNEL_ID}> channel")
             return
 
-        role = ctx.guild.get_role(AOC_ROLE)
+        role = ctx.guild.get_role(AOC_ROLE_ID)
 
         if role in ctx.author.roles:
             await ctx.author.remove_roles(role)
@@ -159,8 +157,8 @@ class AdventOfCode(commands.Cog, name="Advent of Code"):
     )
     async def aoc_countdown(self, ctx: commands.Context) -> None:
         """Return time left until Aoc Finishes."""
-        if ctx.channel.id != AOC_CHANNEL:
-            await ctx.send(f"Please use the <#{AOC_CHANNEL}> channel")
+        if ctx.channel.id != AOC_CHANNEL_ID:
+            await ctx.send(f"Please use the <#{AOC_CHANNEL_ID}> channel")
             return
 
         if (
@@ -185,8 +183,8 @@ class AdventOfCode(commands.Cog, name="Advent of Code"):
     @adventofcode_group.command(name="join", aliases=("j",), brief="Learn how to join the leaderboard (via DM)")
     async def join_leaderboard(self, ctx: commands.Context) -> None:
         """DM the user the information for joining the TWT AoC private leaderboard."""
-        if ctx.channel.id != AOC_CHANNEL:
-            await ctx.send(f"Please use the <#{AOC_CHANNEL}> channel")
+        if ctx.channel.id != AOC_CHANNEL_ID:
+            await ctx.send(f"Please use the <#{AOC_CHANNEL_ID}> channel")
             return
 
         author = ctx.message.author
@@ -208,8 +206,8 @@ class AdventOfCode(commands.Cog, name="Advent of Code"):
         brief="Get a snapshot of the TWT private AoC leaderboard",
     )
     async def aoc_leaderboard(self, ctx: commands.Context):
-        if ctx.channel.id != AOC_CHANNEL:
-            return await ctx.send(f"Please use the <#{AOC_CHANNEL}> channel")
+        if ctx.channel.id != AOC_CHANNEL_ID:
+            return await ctx.send(f"Please use the <#{AOC_CHANNEL_ID}> channel")
 
         api_url = API_URL
 
@@ -253,8 +251,8 @@ class AdventOfCode(commands.Cog, name="Advent of Code"):
         brief="Get a snapshot of the global AoC leaderboard",
     )
     async def global_leaderboard(self, ctx: commands.Context, number_of_people_to_display: int = 10):
-        if ctx.channel.id != AOC_CHANNEL:
-            await ctx.send(f"Please use the <#{AOC_CHANNEL}>")
+        if ctx.channel.id != AOC_CHANNEL_ID:
+            await ctx.send(f"Please use the <#{AOC_CHANNEL_ID}>")
             return
 
         aoc_url = "https://adventofcode.com/2021/leaderboard"

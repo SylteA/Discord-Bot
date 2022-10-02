@@ -1,32 +1,89 @@
+import json
 import os
 
-TOKEN = os.environ.get("TOKEN")  # Bot token
-POSTGRES = os.environ.get("DB_URI")  # PostgreSQL connection URI
+from dotenv import load_dotenv
 
-YOUTUBE_API_KEY = os.environ.get(
-    "YOUTUBE_API_KEY"
-)  # Youtube Data API v3 - API Key: https://developers.google.com/youtube/v3/docs
+load_dotenv()
+# This is formatted as: ENV_VAR: Caller = Default
+#   Caller : a 1-argument callable that takes ENV_VAR and returns an object.
+#   Default: the default value if ENV_VAR wasn't included in the env variables.
 
-# NOTIFICATION_WEBHOOK = ""  # Webhook for notifications to tims youtube channel
-TAGS_REQUESTS_WEBHOOK = os.environ.get("TAGS_REQUESTS_WEBHOOK")
+# -------- Secrets
+TOKEN: str  # Bot token
+DB_URI: str  # PostgreSQL connection URI
 
-NOTIFICATION_ROLE_ID: int = int(os.environ.get("NOTIFICATION_ROLE_ID"))  # Role to be mentioned in announcements
-NOTIFICATION_CHANNEL_ID: int = int(os.environ.get("NOTIFICATION_CHANNEL_ID"))  # Channel to post notifications in
+# --- Webhooks
+NOTIFICATION_WEBHOOK: str = ""  # Webhook for notifications to tim's youtube channel
+TAGS_REQUESTS_WEBHOOK: str
 
-AOC_SESSION_COOKIE = os.environ.get("AOC_SESSION_COOKIE")
+# --- Others
+AOC_SESSION_COOKIE: str
+YOUTUBE_API_KEY: str = ""  # Youtube Data AP - API Key: https://developers.google.com/youtub/docs
+
+# -------- Config
+# --- DB
+DB_MAX_POLL_CONNECTIONS: int = 10
+DB_MIN_POLL_CONNECTIONS: int = 10
+
+# --- Guild
+GUILD_ID: int
+WELCOMES_CHANNEL_ID: int
+NOTIFICATION_CHANNEL_ID: int
+NOTIFICATION_ROLE_ID: int
+
+# --- AOC
+AOC_CHANNEL_ID: int
+AOC_ROLE_ID: int
+
+# --- COC
+COC_CHANNEL_ID: int
+COC_MESSAGE_ID: int
+COC_ROLE_ID: int
+
+# --- CHALLENGES
+CHALLENGE_HOST_HELPER_ROLE_ID: int
+CHALLENGE_HOST_ROLE_ID: int
+CHALLENGE_PARTICIPANT_ROLE_ID: int
+CHALLENGE_SUBMITTED_ROLE_ID: int
+CHALLENGE_WINNER_ROLE_ID: int
+CHALLENGE_INFO_CHANNEL_ID: int
+CHALLENGE_HIDDEN_CHANNEL_ID: int
+CHALLENGE_POST_CHANNEL_ID: int
+CHALLENGE_SUBMIT_CHANNEL_ID: int
+
+# --- Staff
+ADMIN_ROLES_ID: json.loads  # List[int]  # [@Tim, @Admin]
+STAFF_ROLE_ID: int
+TAGS_LOG_CHANNEL_ID: int
+
+# --- Timathon
+TIMATHON_PARTICIPANT_ROLE_ID: int
+TIMATHON_CHANNEL_ID: int
+
+# --- Level roles
+ENGINEER_ROLE_ID: int
+DEVELOPER_ROLE_ID: int
+REACTION_ROLES: json.loads  # Dict[emoji_id: str, role_id: int] (json doesn't accept integer keys)
+REACTION_ROLES_MESSAGE_ID: int
+
+# --- Bots
+BOT_COMMANDS_CHANNELS_ID: json.loads  # List[int]  # [#bot-commands, #commands, ...] (main one at index 0)
+BOT_GAMES_CHANNEL_ID: int
 
 
-# ROLE_IDs
-CHALLENGE_HOST_HELPER_ROLE_ID = int(os.environ.get("CHALLENGE_HOST_HELPER_ROLE_ID"))
-CHALLENGE_HOST_ROLE_ID = int(os.environ.get("CHALLENGE_HOST_ROLE_ID"))
-CHALLENGE_PARTICIPANT_ROLE_ID = int(os.environ.get("CHALLENGE_PARTICIPANT_ROLE_ID"))
-CHALLENGE_SUBMITTED_ROLE_ID = int(os.environ.get("CHALLENGE_SUBMITTED_ROLE_ID"))
-CHALLENGE_WINNER_ROLE_ID = int(os.environ.get("CHALLENGE_WINNER_ROLE_ID"))
-STAFF_ROLE_ID = int(os.environ.get("STAFF_ROLE_ID"))
+# The real part, note that the env var will override.
+for k, v in __annotations__.items():
+    gotten = os.environ.get(k)
+    if gotten is None:
+        try:
+            gotten = globals()[k]
+        except KeyError as e:
+            raise KeyError(f"env variable {e.args} is missing.")
+    globals()[k] = v(gotten)
 
-# CHANNEL_IDs
-BOT_COMMANDS_CHANNEL_ID = int(os.environ.get("BOT_COMMANDS_CHANNEL_ID"))
-BOT_GAMES_CHANNEL_ID = int(os.environ.get("BOT_GAMES_CHANNEL_ID"))
-CHALLENGE_INFO_CHANNEL_ID = int(os.environ.get("CHALLENGE_INFO_CHANNEL_ID"))
-CHALLENGE_SUBMIT_CHANNEL_ID = int(os.environ.get("CHALLENGE_SUBMIT_CHANNEL_ID"))
-TAGS_LOG_CHANNEL_ID = int(os.environ.get("TAGS_LOG_CHANNEL_ID"))
+# set their real type here
+ADMIN_ROLES_ID: list
+BOT_COMMANDS_CHANNELS_ID: list
+REACTION_ROLES: dict
+
+del os, json, load_dotenv, gotten, k, v

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import asyncio
 import datetime
-import os
 
 import discord
 from aiohttp import ClientSession
@@ -26,11 +25,7 @@ from discord.ext.commands.errors import (
 from cogs.utils.context import SyltesContext
 from cogs.utils.DataBase import DataBase, Message, User
 from cogs.utils.time import human_timedelta
-from config import POSTGRES, TOKEN
-
-os.environ["JISHAKU_NO_UNDERSCORE"] = "True"
-os.environ["JISHAKU_NO_DM_TRACEBACK"] = "True"
-os.environ["JISHAKU_HIDE"] = "True"
+from config import BOT_COMMANDS_CHANNELS_ID, CHALLENGE_SUBMIT_CHANNEL_ID, DB_URI, GUILD_ID, TOKEN, WELCOMES_CHANNEL_ID
 
 initial_cogs = [
     "jishaku",
@@ -65,12 +60,12 @@ class Tim(commands.AutoShardedBot):
 
     async def on_connect(self):
         """Connect DB before bot is ready to assure that no calls are made before its ready"""
-        self.db = await DataBase.create_pool(bot=self, uri=POSTGRES, loop=self.loop)
+        self.db = await DataBase.create_pool(bot=self, uri=DB_URI, loop=self.loop)
 
     async def on_ready(self):
         print(f"Successfully logged in as {self.user}\nSharded to {len(self.guilds)} guilds")
-        self.guild = self.get_guild(501090983539245061)
-        self.welcomes = self.guild.get_channel(511344843247845377)
+        self.guild = self.get_guild(GUILD_ID)
+        self.welcomes = self.guild.get_channel(WELCOMES_CHANNEL_ID)
         await self.change_presence(activity=discord.Game(name='use the prefix "tim."'))
 
         for ext in initial_cogs:
@@ -79,7 +74,7 @@ class Tim(commands.AutoShardedBot):
 
     async def on_member_join(self, member):
         await self.wait_until_ready()
-        if member.guild.id == 501090983539245061:
+        if member.guild.id == GUILD_ID:
             await self.welcomes.send(
                 f"Welcome to the Tech With Tim Community {member.mention}!\n"
                 f"Members += 1\nCurrent # of members: {self.guild.member_count}"
@@ -96,7 +91,7 @@ class Tim(commands.AutoShardedBot):
         if not message.guild:
             return
 
-        if message.channel.id == 713841306253656064:  # submit-challenge
+        if message.channel.id == CHALLENGE_SUBMIT_CHANNEL_ID:
             return
 
         await self.process_commands(message)
@@ -121,8 +116,8 @@ class Tim(commands.AutoShardedBot):
             "server_messages",
             "messages",
         ):
-            if ctx.channel.id not in (511344208955703306, 536199577284509696):
-                return await message.channel.send("**Please use the <#536199577284509696> channel**")
+            if ctx.channel.id not in BOT_COMMANDS_CHANNELS_ID:
+                return await message.channel.send(f"**Please use the <#{BOT_COMMANDS_CHANNELS_ID[0]}> channel**")
 
         try:
             await self.invoke(ctx)

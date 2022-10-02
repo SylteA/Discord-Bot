@@ -2,16 +2,20 @@ import discord
 from discord.ext import commands
 
 from config import (
-    BOT_COMMANDS_CHANNEL_ID,
+    BOT_COMMANDS_CHANNELS_ID,
     BOT_GAMES_CHANNEL_ID,
+    CHALLENGE_HIDDEN_CHANNEL_ID,
     CHALLENGE_HOST_HELPER_ROLE_ID,
     CHALLENGE_HOST_ROLE_ID,
     CHALLENGE_INFO_CHANNEL_ID,
     CHALLENGE_PARTICIPANT_ROLE_ID,
+    CHALLENGE_POST_CHANNEL_ID,
     CHALLENGE_SUBMIT_CHANNEL_ID,
     CHALLENGE_SUBMITTED_ROLE_ID,
     CHALLENGE_WINNER_ROLE_ID,
     STAFF_ROLE_ID,
+    TIMATHON_CHANNEL_ID,
+    TIMATHON_PARTICIPANT_ROLE_ID,
 )
 
 
@@ -79,7 +83,7 @@ class ChallengeHandler(commands.Cog):
         return await info_channel.send(
             f"<@&{CHALLENGE_PARTICIPANT_ROLE_ID}> Submissions are open."
             f"Upload your code file with extension in <#{CHALLENGE_SUBMIT_CHANNEL_ID}>. "
-            f"Send `t.tag submitting` in <#{BOT_COMMANDS_CHANNEL_ID}> for more details",
+            f"Send `t.tag submitting` in <#{BOT_COMMANDS_CHANNELS_ID[0]}> for more details",
             allowed_mentions=discord.AllowedMentions(roles=[discord.Object(CHALLENGE_PARTICIPANT_ROLE_ID)]),
         )
 
@@ -110,26 +114,23 @@ class ChallengeHandler(commands.Cog):
         if payload.emoji != discord.PartialEmoji(name="🖐️"):
             return
 
-        if payload.channel_id == 680851798340272141:
-            submitted = self.bot.guild.get_role(687417501931536478)
+        if payload.channel_id == CHALLENGE_POST_CHANNEL_ID:
+            submitted = self.bot.guild.get_role(CHALLENGE_SUBMITTED_ROLE_ID)
             if submitted in payload.member.roles:
                 return
 
-            participant = self.bot.guild.get_role(687417513918857232)
+            participant = self.bot.guild.get_role(CHALLENGE_PARTICIPANT_ROLE_ID)
             await self.bot.guild.get_member(payload.user_id).add_roles(participant)
 
-        elif payload.channel_id == 713841395965624490:
-            submitted = self.bot.guild.get_role(715676464573317220)
-            if submitted in payload.member.roles:
-                return
+        elif payload.channel_id == TIMATHON_CHANNEL_ID:
 
-            participant = self.bot.guild.get_role(715676023387062363)
+            participant = self.bot.guild.get_role(TIMATHON_PARTICIPANT_ROLE_ID)
             await self.bot.guild.get_member(payload.user_id).add_roles(participant)
 
     @commands.Cog.listener()
     async def on_message(self, message):  # Submitted role.
 
-        if message.channel.id in (680851820587122700, 713841306253656064):  # weekly
+        if message.channel.id == CHALLENGE_SUBMIT_CHANNEL_ID:
 
             if message.author.id == self.bot.user.id:
                 return
@@ -137,13 +138,8 @@ class ChallengeHandler(commands.Cog):
             if message.author.bot:
                 return await message.delete()
 
-            if message.channel.id == 680851820587122700:  # weekly 1
-                submitted = self.bot.guild.get_role(687417501931536478)
-                submission_channel = self.bot.guild.get_channel(729453161885990924)
-
-            else:  # weekly 2
-                submitted = self.bot.guild.get_role(715676464573317220)
-                submission_channel = self.bot.guild.get_channel(729453201081761862)
+            submitted = self.bot.guild.get_role(CHALLENGE_SUBMITTED_ROLE_ID)
+            hidden_submission_channel = self.bot.guild.get_channel(CHALLENGE_HIDDEN_CHANNEL_ID)
 
             if submitted not in message.author.roles:
                 await message.delete()
@@ -161,7 +157,7 @@ class ChallengeHandler(commands.Cog):
 
                 if len(filetype) > 4 or len(filetype) == 0:  # Most filetypes are 2-3 chars, 4 just to be safe
                     return await message.channel.send(
-                        f"{message.author.mention} attachement file extension must be between 1 and 4 characters long",
+                        f"{message.author.mention} attachment file extension must be between 1 and 4 characters long",
                         delete_after=10.0,
                     )
 
@@ -181,10 +177,10 @@ class ChallengeHandler(commands.Cog):
                 embed = discord.Embed(description=content, color=0x36393E)
                 embed.set_author(name=str(message.author), icon_url=message.author.avatar_url)
                 embed.set_footer(text=f"#ID: {message.author.id} • {len(code)} chars • Language: {filetype}")
-                await submission_channel.send(embed=embed)
+                await hidden_submission_channel.send(embed=embed)
 
         elif message.channel.id in [
-            680851798340272141,
-            713841395965624490,
+            CHALLENGE_POST_CHANNEL_ID,
+            TIMATHON_CHANNEL_ID,
         ]:  # Automatic reaction
             await message.add_reaction("🖐️")
