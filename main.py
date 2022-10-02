@@ -1,47 +1,62 @@
 #!/usr/bin/env python3
-from discord.ext.commands.errors import *
-from discord.ext import commands
-import discord
-
-from aiohttp import ClientSession
-import datetime
 import asyncio
+import datetime
 import os
 
+import discord
+from aiohttp import ClientSession
+from discord.ext import commands
+from discord.ext.commands.errors import (
+    BadArgument,
+    BadUnionArgument,
+    BotMissingAnyRole,
+    BotMissingPermissions,
+    BotMissingRole,
+    CheckFailure,
+    CommandOnCooldown,
+    ConversionError,
+    MissingAnyRole,
+    MissingPermissions,
+    MissingRequiredArgument,
+    MissingRole,
+    NoPrivateMessage,
+    PrivateMessageOnly,
+)
+
 from cogs.utils.context import SyltesContext
-from cogs.utils.time import human_timedelta
 from cogs.utils.DataBase import DataBase, Message, User
-
-from config import TOKEN, POSTGRES
-
+from cogs.utils.time import human_timedelta
+from config import POSTGRES, TOKEN
 
 os.environ["JISHAKU_NO_UNDERSCORE"] = "True"
 os.environ["JISHAKU_NO_DM_TRACEBACK"] = "True"
 os.environ["JISHAKU_HIDE"] = "True"
 
 initial_cogs = [
-    'jishaku',
-    'cogs.commands',
-    'cogs.filtering',
-    'cogs._help',
-    'cogs.tags',
-    'cogs.challenges',
-    'cogs.clashofcode',
-    'cogs.roles',
-    'cogs.poll',
-    'cogs.adventofcode'
+    "jishaku",
+    "cogs.commands",
+    "cogs.filtering",
+    "cogs._help",
+    "cogs.tags",
+    "cogs.challenges",
+    "cogs.clashofcode",
+    "cogs.roles",
+    "cogs.poll",
+    "cogs.adventofcode",
 ]
 
-print('Connecting...')
+print("Connecting...")
 
 
 class Tim(commands.AutoShardedBot):
     def __init__(self, **kwargs):
-        super().__init__(command_prefix=kwargs.pop('command_prefix', ('t.', 'T.', 'tim.')),
-                         intents=discord.Intents.all(),
-                         case_insensitive=True,
-                         allowed_mentions=discord.AllowedMentions(everyone=False, roles=False),
-                         **kwargs)
+        super().__init__(
+            command_prefix=kwargs.pop("command_prefix", ("t.", "T.", "tim.")),
+            intents=discord.Intents.all(),
+            case_insensitive=True,
+            allowed_mentions=discord.AllowedMentions(everyone=False, roles=False),
+            **kwargs,
+        )
         self.session = ClientSession(loop=self.loop)
         self.start_time = datetime.datetime.utcnow()
         self.clean_text = commands.clean_content(escape_markdown=True, fix_channel_mentions=True)
@@ -53,20 +68,22 @@ class Tim(commands.AutoShardedBot):
         self.db = await DataBase.create_pool(bot=self, uri=POSTGRES, loop=self.loop)
 
     async def on_ready(self):
-        print(f'Successfully logged in as {self.user}\nSharded to {len(self.guilds)} guilds')
+        print(f"Successfully logged in as {self.user}\nSharded to {len(self.guilds)} guilds")
         self.guild = self.get_guild(501090983539245061)
         self.welcomes = self.guild.get_channel(511344843247845377)
         await self.change_presence(activity=discord.Game(name='use the prefix "tim."'))
 
         for ext in initial_cogs:
             self.load_extension(ext)
-        print(f'Loaded all extensions after {human_timedelta(self.start_time, brief=True, suffix=False)}')
+        print(f"Loaded all extensions after {human_timedelta(self.start_time, brief=True, suffix=False)}")
 
     async def on_member_join(self, member):
         await self.wait_until_ready()
         if member.guild.id == 501090983539245061:
-            await self.welcomes.send(f"Welcome to the Tech With Tim Community {member.mention}!\n"
-                                     f"Members += 1\nCurrent # of members: {self.guild.member_count}")
+            await self.welcomes.send(
+                f"Welcome to the Tech With Tim Community {member.mention}!\n"
+                f"Members += 1\nCurrent # of members: {self.guild.member_count}"
+            )
 
     async def on_message(self, message):
         await self.wait_until_ready()
@@ -79,7 +96,7 @@ class Tim(commands.AutoShardedBot):
         if not message.guild:
             return
 
-        if message.channel.id == 713841306253656064: #submit-challenge
+        if message.channel.id == 713841306253656064:  # submit-challenge
             return
 
         await self.process_commands(message)
@@ -93,8 +110,17 @@ class Tim(commands.AutoShardedBot):
         if ctx.command is None:
             return await Message.on_message(bot=self, message=message)
 
-        if ctx.command.name in ('help', 'scoreboard', 'rep_scoreboard', 'reps', 'member_count', 'top_user', 'users',
-                                'server_messages', 'messages'):
+        if ctx.command.name in (
+            "help",
+            "scoreboard",
+            "rep_scoreboard",
+            "reps",
+            "member_count",
+            "top_user",
+            "users",
+            "server_messages",
+            "messages",
+        ):
             if ctx.channel.id not in (511344208955703306, 536199577284509696):
                 return await message.channel.send("**Please use the <#536199577284509696> channel**")
 
@@ -106,36 +132,51 @@ class Tim(commands.AutoShardedBot):
     async def on_command_error(self, ctx, exception):
         await self.wait_until_ready()
 
-        error = getattr(exception, 'original', exception)
+        error = getattr(exception, "original", exception)
 
-        if hasattr(ctx.command, 'on_error'):
+        if hasattr(ctx.command, "on_error"):
             return
 
         elif isinstance(error, CheckFailure):
             return
 
-        if isinstance(error, (BadUnionArgument, CommandOnCooldown, PrivateMessageOnly,
-                              NoPrivateMessage, MissingRequiredArgument, ConversionError)):
+        if isinstance(
+            error,
+            (
+                BadUnionArgument,
+                CommandOnCooldown,
+                PrivateMessageOnly,
+                NoPrivateMessage,
+                MissingRequiredArgument,
+                ConversionError,
+            ),
+        ):
             return await ctx.send(str(error))
 
         elif isinstance(error, BotMissingPermissions):
-            return await ctx.send('I am missing these permissions to do this command:'
-                                  f'\n{self.lts(error.missing_perms)}')
+            return await ctx.send(
+                "I am missing these permissions to do this command:" f"\n{self.lts(error.missing_perms)}"
+            )
 
         elif isinstance(error, MissingPermissions):
-            return await ctx.send('You are missing these permissions to do this command:'
-                                  f'\n{self.lts(error.missing_perms)}')
+            return await ctx.send(
+                "You are missing these permissions to do this command:" f"\n{self.lts(error.missing_perms)}"
+            )
 
         elif isinstance(error, (BotMissingAnyRole, BotMissingRole)):
-            return await ctx.send(f'I am missing these roles to do this command:'
-                                  f'\n{self.lts(error.missing_roles or [error.missing_role])}')
+            return await ctx.send(
+                f"I am missing these roles to do this command:"
+                f"\n{self.lts(error.missing_roles or [error.missing_role])}"
+            )
 
         elif isinstance(error, (MissingRole, MissingAnyRole)):
-            return await ctx.send(f'You are missing these roles to do this command:'
-                                  f'\n{self.lts(error.missing_roles or [error.missing_role])}')
+            return await ctx.send(
+                f"You are missing these roles to do this command:"
+                f"\n{self.lts(error.missing_roles or [error.missing_role])}"
+            )
 
-        elif isinstance(error, BadArgument) and ctx.command.name in ('rep', 'report'):
-            return await ctx.send(f"Can't find that member. Please try again.")
+        elif isinstance(error, BadArgument) and ctx.command.name in ("rep", "report"):
+            return await ctx.send("Can't find that member. Please try again.")
 
         else:
             raise error
@@ -152,8 +193,8 @@ class Tim(commands.AutoShardedBot):
     @staticmethod
     def lts(list_: list):
         """List to string.
-           For use in `self.on_command_error`"""
-        return ', '.join([obj.name if isinstance(obj, discord.Role) else str(obj).replace('_', ' ') for obj in list_])
+        For use in `self.on_command_error`"""
+        return ", ".join([obj.name if isinstance(obj, discord.Role) else str(obj).replace("_", " ") for obj in list_])
 
     async def resolve_user(self, user_id: int) -> discord.User:
         """Resolve a user from their ID."""

@@ -69,7 +69,11 @@ class TagCommands(commands.Cog, name="Tags"):
         if rtype != "Rename":
             embeds[-1].add_field(name="Tag's name", value=tname)
 
-        embeds[-1].add_field(name="Author", value=f"<@{author_id}> ({author_id})", inline=rtype != "Rename")
+        embeds[-1].add_field(
+            name="Author",
+            value=f"<@{author_id}> ({author_id})",
+            inline=rtype != "Rename",
+        )
 
         if approve is not None:
             if rtype == "Delete":
@@ -238,7 +242,13 @@ class TagCommands(commands.Cog, name="Tags"):
             if not is_admin(ctx.author):
                 return await ctx.send("You don't have permission to do that.")
 
-        kwargs = dict(rtype="Update", tname=name, before=tag.text, after=text, author_id=tag.creator_id)
+        kwargs = dict(
+            rtype="Update",
+            tname=name,
+            before=tag.text,
+            after=text,
+            author_id=tag.creator_id,
+        )
         if is_staff(ctx.author):
             await tag.update(text=text)
             await self.webhook.send(embeds=self.log_embeds(**kwargs, approve=True, approver=ctx.author))
@@ -316,7 +326,13 @@ class TagCommands(commands.Cog, name="Tags"):
         if await self.bot.db.get_tag(guild_id=ctx.guild.id, name=new_name):
             return await ctx.send("A tag with that name already exists.")
 
-        kwargs = dict(rtype="Rename", tname="", before=name, after=new_name, author_id=tag.creator_id)
+        kwargs = dict(
+            rtype="Rename",
+            tname="",
+            before=name,
+            after=new_name,
+            author_id=tag.creator_id,
+        )
         if is_staff(ctx.author):
             await tag.rename(new_name=new_name)
 
@@ -348,7 +364,13 @@ class TagCommands(commands.Cog, name="Tags"):
         if len(new_text) > 2000:
             return await ctx.send("Cannot append, content length will exceed discords maximum message length.")
 
-        kwargs = dict(rtype="Update", tname=name, before=tag.text, after=new_text, author_id=tag.creator_id)
+        kwargs = dict(
+            rtype="Update",
+            tname=name,
+            before=tag.text,
+            after=new_text,
+            author_id=tag.creator_id,
+        )
         if is_staff(ctx.author):
             await tag.update(text=new_text)
             await self.webhook.send(embeds=self.log_embeds(**kwargs, approve=True, approver=ctx.author))
@@ -434,7 +456,8 @@ class TagCommands(commands.Cog, name="Tags"):
             ),
         )
         await self.notify(
-            author, f"Tag `{before}` renaming to `{after}` request has been {['deni', 'approv'][approved]}ed."
+            author,
+            f"Tag `{before}` renaming to `{after}` request has been {['deni', 'approv'][approved]}ed.",
         )
 
     @commands.Cog.listener()
@@ -472,13 +495,19 @@ class TagCommands(commands.Cog, name="Tags"):
                 approve=approved,
             ),
         )
-        await self.notify(author, f"Tag `{name}` creating request has been {['deni', 'approv'][approved]}ed.")
+        await self.notify(
+            author,
+            f"Tag `{name}` creating request has been {['deni', 'approv'][approved]}ed.",
+        )
 
     @commands.Cog.listener()
     async def on_tag_update_response(self, message: discord.Message, approved, user):
         embeds = message.embeds
         name = embeds[1].fields[0].value
-        before, after = embeds[0].description.split("\n", 1)[-1], embeds[1].description.split("\n", 1)[-1]
+        before, after = (
+            embeds[0].description.split("\n", 1)[-1],
+            embeds[1].description.split("\n", 1)[-1],
+        )
         creator_id = int(embeds[1].fields[-1].value.split("(")[-1][:-1])
         author = await self.bot.resolve_user(creator_id)
 
@@ -505,4 +534,7 @@ class TagCommands(commands.Cog, name="Tags"):
                 approve=approved,
             ),
         )
-        await self.notify(author, f"Tag `{name}` updating request has been {['deni', 'approv'][approved]}ed.")
+        await self.notify(
+            author,
+            f"Tag `{name}` updating request has been {['deni', 'approv'][approved]}ed.",
+        )

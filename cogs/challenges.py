@@ -1,10 +1,11 @@
-from discord.ext import commands
 import discord
+from discord.ext import commands
+
 from config import (
     BOT_COMMANDS_CHANNEL_ID,
     BOT_GAMES_CHANNEL_ID,
-    CHALLENGE_HOST_ROLE_ID,
     CHALLENGE_HOST_HELPER_ROLE_ID,
+    CHALLENGE_HOST_ROLE_ID,
     CHALLENGE_INFO_CHANNEL_ID,
     CHALLENGE_PARTICIPANT_ROLE_ID,
     CHALLENGE_SUBMIT_CHANNEL_ID,
@@ -22,9 +23,7 @@ class ChallengeHandler(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.has_any_role(
-        STAFF_ROLE_ID, CHALLENGE_HOST_ROLE_ID, CHALLENGE_HOST_HELPER_ROLE_ID
-    )
+    @commands.has_any_role(STAFF_ROLE_ID, CHALLENGE_HOST_ROLE_ID, CHALLENGE_HOST_HELPER_ROLE_ID)
     @commands.group(name="challenges", aliases=("c",))
     async def challenges_group(self, ctx: commands.Context) -> None:
         """All of the Challenges commands"""
@@ -58,9 +57,7 @@ class ChallengeHandler(commands.Cog):
             f"<@&{CHALLENGE_WINNER_ROLE_ID}> :pancakes: have been given out, "
             f"go deposit them in <#{BOT_GAMES_CHANNEL_ID}>. \n"
             f"Analysis for the challenge will be available shortly in <#{CHALLENGE_INFO_CHANNEL_ID}>",
-            allowed_mentions=discord.AllowedMentions(
-                roles=[discord.Object(CHALLENGE_WINNER_ROLE_ID)]
-            ),
+            allowed_mentions=discord.AllowedMentions(roles=[discord.Object(CHALLENGE_WINNER_ROLE_ID)]),
         )
 
     @commands.cooldown(1, 3600, commands.BucketType.user)
@@ -83,9 +80,7 @@ class ChallengeHandler(commands.Cog):
             f"<@&{CHALLENGE_PARTICIPANT_ROLE_ID}> Submissions are open."
             f"Upload your code file with extension in <#{CHALLENGE_SUBMIT_CHANNEL_ID}>. "
             f"Send `t.tag submitting` in <#{BOT_COMMANDS_CHANNEL_ID}> for more details",
-            allowed_mentions=discord.AllowedMentions(
-                roles=[discord.Object(CHALLENGE_PARTICIPANT_ROLE_ID)]
-            ),
+            allowed_mentions=discord.AllowedMentions(roles=[discord.Object(CHALLENGE_PARTICIPANT_ROLE_ID)]),
         )
 
     @commands.cooldown(1, 3600, commands.BucketType.user)
@@ -107,9 +102,7 @@ class ChallengeHandler(commands.Cog):
         return await info_channel.send(
             f"<@&{CHALLENGE_SUBMITTED_ROLE_ID}> Submissions are closed. "
             "Testing will begin soon. See you in the next challenge",
-            allowed_mentions=discord.AllowedMentions(
-                roles=[discord.Object(CHALLENGE_SUBMITTED_ROLE_ID)]
-            ),
+            allowed_mentions=discord.AllowedMentions(roles=[discord.Object(CHALLENGE_SUBMITTED_ROLE_ID)]),
         )
 
     @commands.Cog.listener()
@@ -166,9 +159,7 @@ class ChallengeHandler(commands.Cog):
 
                 filetype = attach.filename.split(".")[-1]
 
-                if (
-                    len(filetype) > 4 or len(filetype) == 0
-                ):  # Most filetypes are 2-3 chars, 4 just to be safe
+                if len(filetype) > 4 or len(filetype) == 0:  # Most filetypes are 2-3 chars, 4 just to be safe
                     return await message.channel.send(
                         f"{message.author.mention} attachement file extension must be between 1 and 4 characters long",
                         delete_after=10.0,
@@ -188,12 +179,8 @@ class ChallengeHandler(commands.Cog):
 
                 await message.author.add_roles(submitted)
                 embed = discord.Embed(description=content, color=0x36393E)
-                embed.set_author(
-                    name=str(message.author), icon_url=message.author.avatar_url
-                )
-                embed.set_footer(
-                    text=f"#ID: {message.author.id} • {len(code)} chars • Language: {filetype}"
-                )
+                embed.set_author(name=str(message.author), icon_url=message.author.avatar_url)
+                embed.set_footer(text=f"#ID: {message.author.id} • {len(code)} chars • Language: {filetype}")
                 await submission_channel.send(embed=embed)
 
         elif message.channel.id in [
