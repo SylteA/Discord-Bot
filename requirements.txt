@@ -1,10 +1,10 @@
 aiohttp
 asyncpg
 beautifulsoup4
-discord.py
+discord.py==1.7.3
 html5lib
 inflect
-jishaku
+jishaku==2.3.2
 pandas
 psutil
 python-dateutil
