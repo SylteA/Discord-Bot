@@ -7,6 +7,6 @@ inflect
 jishaku==2.3.2
 pandas
 psutil
+pydantic[dotenv]
 python-dateutil
-python-dotenv
 tabulate

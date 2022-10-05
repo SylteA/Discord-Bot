@@ -1,12 +1,12 @@
 from discord import Member
 from discord.ext.commands import check
 
-from config import ADMIN_ROLES_ID, ENGINEER_ROLE_ID, GUILD_ID, STAFF_ROLE_ID
+from config import settings
 
 
 def is_admin(member: Member):
     for role in member.roles:
-        if role.id in ADMIN_ROLES_ID:
+        if role.id in settings.moderation.admin_roles_ids:
             return True
 
     return False
@@ -14,7 +14,7 @@ def is_admin(member: Member):
 
 def is_staff(member: Member):
     for role in member.roles:
-        if role.id == STAFF_ROLE_ID:
+        if role.id == settings.moderation.staff_role_id:
             return True
 
     return False
@@ -22,7 +22,7 @@ def is_staff(member: Member):
 
 def is_engineer(member: Member):
     for role in member.roles:
-        if role.id == ENGINEER_ROLE_ID:
+        if role.id == settings.tags.required_role_id:
             return True
 
     return is_staff(member)
@@ -44,6 +44,6 @@ def is_engineer_check():
 
 def in_twt():
     def predicate(ctx):
-        return ctx.guild.id == GUILD_ID
+        return ctx.guild.id == settings.guild.id
 
     return check(predicate)

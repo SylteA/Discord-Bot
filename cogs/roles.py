@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 
-from config import DEVELOPER_ROLE_ID, REACTION_ROLES, REACTION_ROLES_MESSAGE_ID
+from config import settings
 
 
 def setup(bot: commands.Bot):
@@ -14,7 +14,7 @@ class Roles(commands.Cog):
 
     @property
     def lvl_20_role(self):
-        return self.bot.guild.get_role(DEVELOPER_ROLE_ID)
+        return self.bot.guild.get_role(settings.reaction_roles.required_role_id)
 
     @property
     def roles(self) -> dict:
@@ -26,18 +26,20 @@ class Roles(commands.Cog):
         #     740694256053911675: self.bot.guild.get_role(740690527325782038),  # java
         #     740694321216356564: self.bot.guild.get_role(740691348977352754),  # ruby
         # }
-        return {int(emoji_id): self.bot.guild.get_role(role_id) for emoji_id, role_id in REACTION_ROLES.items()}
+        return {
+            emoji_id: self.bot.guild.get_role(role_id) for emoji_id, role_id in settings.reaction_roles.roles.items()
+        }
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
-        if payload.message_id != REACTION_ROLES_MESSAGE_ID:
+        if payload.message_id != settings.reaction_roles.message_id:
             return
 
         if (
             any(role in payload.member.roles for role in self.roles.values())
             or self.lvl_20_role not in payload.member.roles
         ):
-            message = await self.bot.get_channel(payload.channel_id).fetch_message(REACTION_ROLES_MESSAGE_ID)
+            message = await self.bot.get_channel(payload.channel_id).fetch_message(settings.reaction_roles.message_id)
             return await message.remove_reaction(payload.emoji, payload.member)
 
         await payload.member.add_roles(self.roles[payload.emoji.id])
@@ -49,7 +51,7 @@ class Roles(commands.Cog):
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload: discord.RawReactionActionEvent):
         member = self.bot.guild.get_member(payload.user_id)
-        if payload.message_id != REACTION_ROLES_MESSAGE_ID:
+        if payload.message_id != settings.reaction_roles.message_id:
             return
 
         if self.roles[payload.emoji.id] not in member.roles or self.lvl_20_role not in member.roles:

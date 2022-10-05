@@ -3,7 +3,7 @@ from typing import List
 
 import asyncpg
 
-from config import DB_MAX_POLL_CONNECTIONS, DB_MIN_POLL_CONNECTIONS
+from config import settings
 
 from .gconfig import FilterConfig
 from .message import Message
@@ -26,8 +26,8 @@ class DataBase(object):
         bot,
         uri=None,
         *,
-        min_connections=DB_MIN_POLL_CONNECTIONS,
-        max_connections=DB_MAX_POLL_CONNECTIONS,
+        min_connections=settings.db.min_poll_connections,
+        max_connections=settings.db.max_poll_connections,
         timeout=60.0,
         loop=None,
         **kwargs,

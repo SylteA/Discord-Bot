@@ -6,7 +6,7 @@ import aiohttp
 import discord
 from discord.ext import commands
 
-from config import COC_CHANNEL_ID, COC_MESSAGE_ID, COC_ROLE_ID, STAFF_ROLE_ID
+from config import settings
 
 REGEX = re.compile(r"https://www.codingame.com/clashofcode/clash/([0-9a-f]{39})")
 API_URL = "https://www.codingame.com/services/ClashOfCode/findClashByHandle"
@@ -26,7 +26,7 @@ class ClashOfCode(commands.Cog):
 
     @property
     def role(self):
-        return self.bot.guild.get_role(COC_ROLE_ID)
+        return self.bot.guild.get_role(settings.coc.role_id)
 
     def em(self, mode, players):
         embed = discord.Embed(title="**Clash started**")
@@ -45,7 +45,7 @@ class ClashOfCode(commands.Cog):
                     if payload.user_id not in self.session_users:
                         self.session_users.append(payload.user_id)
 
-        if payload.message_id != COC_MESSAGE_ID:
+        if payload.message_id != settings.coc.message_id:
             return
 
         if self.role in payload.member.roles:
@@ -68,7 +68,7 @@ class ClashOfCode(commands.Cog):
                     if payload.user_id in self.session_users:
                         self.session_users.remove(payload.user_id)
 
-        if payload.message_id != COC_MESSAGE_ID:
+        if payload.message_id != settings.coc.message_id:
             return
 
         member = self.bot.guild.get_member(payload.user_id)
@@ -82,7 +82,7 @@ class ClashOfCode(commands.Cog):
             pass
 
     @commands.group(aliases=["coc"])
-    @commands.check(lambda ctx: ctx.channel.id == COC_CHANNEL_ID)
+    @commands.check(lambda ctx: ctx.channel.id == settings.coc.channel_id)
     async def clash_of_code(self, ctx: commands.Context):
         """Clash of Code"""
         if ctx.invoked_subcommand is None:
@@ -91,7 +91,7 @@ class ClashOfCode(commands.Cog):
             return await ctx.send_help(self.bot.get_command("coc invite"))
 
     @clash_of_code.group(aliases=["s"])
-    @commands.check(lambda ctx: ctx.channel.id == COC_CHANNEL_ID)
+    @commands.check(lambda ctx: ctx.channel.id == settings.coc.channel_id)
     async def session(self, ctx: commands.Context):
         """Start or End a clash of code session"""
         if ctx.invoked_subcommand is None:
@@ -100,7 +100,7 @@ class ClashOfCode(commands.Cog):
             return await ctx.send_help(self.bot.get_command("coc session end"))
 
     @session.command(name="start", aliases=["s"])
-    @commands.check(lambda ctx: ctx.channel.id == COC_CHANNEL_ID)
+    @commands.check(lambda ctx: ctx.channel.id == settings.coc.channel_id)
     async def session_start(self, ctx: commands.context):
         """Start a new coc session"""
         if self.session_message != 0:
@@ -153,7 +153,7 @@ class ClashOfCode(commands.Cog):
                 break
 
     @session.command(name="join", aliases=["j"])
-    @commands.check(lambda ctx: ctx.channel.id == COC_CHANNEL_ID)
+    @commands.check(lambda ctx: ctx.channel.id == settings.coc.channel_id)
     async def session_join(self, ctx: commands.Context):
         """Join the current active coc session"""
         if self.session_message == 0:
@@ -169,7 +169,7 @@ class ClashOfCode(commands.Cog):
         return await ctx.send("You have joined the session. Have fun playing")
 
     @session.command(name="leave", aliases=["l"])
-    @commands.check(lambda ctx: ctx.channel.id == COC_CHANNEL_ID)
+    @commands.check(lambda ctx: ctx.channel.id == settings.coc.channel_id)
     async def session_leave(self, ctx: commands.Context):
         """Leave the current active coc session"""
         if self.session_message == 0:
@@ -185,7 +185,7 @@ class ClashOfCode(commands.Cog):
         return await ctx.send("You have left the session. No more pings for now")
 
     @session.command(name="end", aliases=["e"])
-    @commands.check(lambda ctx: ctx.channel.id == COC_CHANNEL_ID)
+    @commands.check(lambda ctx: ctx.channel.id == settings.coc.channel_id)
     async def session_end(self, ctx: commands.context):
         """Ends the current coc session"""
         if self.session_message == 0:
@@ -209,10 +209,10 @@ class ClashOfCode(commands.Cog):
 
     @clash_of_code.command(name="invite", aliases=["i"])
     @commands.has_any_role(
-        STAFF_ROLE_ID,
-        COC_ROLE_ID,
+        settings.moderation.staff_role_id,
+        settings.coc.role_id,
     )
-    @commands.check(lambda ctx: ctx.channel.id == COC_CHANNEL_ID)
+    @commands.check(lambda ctx: ctx.channel.id == settings.coc.channel_id)
     @commands.cooldown(1, 60, commands.BucketType.channel)
     async def coc_invite(self, ctx: commands.Context, *, url: str = None):
         """Mentions all the users with the `Clash Of Code` role that are in the current session."""

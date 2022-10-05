@@ -1,89 +1,107 @@
 import json
-import os
+from typing import Dict, List
 
-from dotenv import load_dotenv
-
-load_dotenv()
-# This is formatted as: ENV_VAR: Caller = Default
-#   Caller : a 1-argument callable that takes ENV_VAR and returns an object.
-#   Default: the default value if ENV_VAR wasn't included in the env variables.
-
-# -------- Secrets
-TOKEN: str  # Bot token
-DB_URI: str  # PostgreSQL connection URI
-
-# --- Webhooks
-NOTIFICATION_WEBHOOK: str = ""  # Webhook for notifications to tim's youtube channel
-TAGS_REQUESTS_WEBHOOK: str
-
-# --- Others
-AOC_SESSION_COOKIE: str
-YOUTUBE_API_KEY: str = ""  # Youtube Data AP - API Key: https://developers.google.com/youtub/docs
-
-# -------- Config
-# --- DB
-DB_MAX_POLL_CONNECTIONS: int = 10
-DB_MIN_POLL_CONNECTIONS: int = 10
-
-# --- Guild
-GUILD_ID: int
-WELCOMES_CHANNEL_ID: int
-NOTIFICATION_CHANNEL_ID: int
-NOTIFICATION_ROLE_ID: int
-
-# --- AOC
-AOC_CHANNEL_ID: int
-AOC_ROLE_ID: int
-
-# --- COC
-COC_CHANNEL_ID: int
-COC_MESSAGE_ID: int
-COC_ROLE_ID: int
-
-# --- CHALLENGES
-CHALLENGE_HOST_HELPER_ROLE_ID: int
-CHALLENGE_HOST_ROLE_ID: int
-CHALLENGE_PARTICIPANT_ROLE_ID: int
-CHALLENGE_SUBMITTED_ROLE_ID: int
-CHALLENGE_WINNER_ROLE_ID: int
-CHALLENGE_INFO_CHANNEL_ID: int
-CHALLENGE_HIDDEN_CHANNEL_ID: int
-CHALLENGE_POST_CHANNEL_ID: int
-CHALLENGE_SUBMIT_CHANNEL_ID: int
-
-# --- Staff
-ADMIN_ROLES_ID: json.loads  # List[int]  # [@Tim, @Admin]
-STAFF_ROLE_ID: int
-TAGS_LOG_CHANNEL_ID: int
-
-# --- Timathon
-TIMATHON_PARTICIPANT_ROLE_ID: int
-TIMATHON_CHANNEL_ID: int
-
-# --- Level roles
-ENGINEER_ROLE_ID: int
-DEVELOPER_ROLE_ID: int
-REACTION_ROLES: json.loads  # Dict[emoji_id: str, role_id: int] (json doesn't accept integer keys)
-REACTION_ROLES_MESSAGE_ID: int
-
-# --- Bots
-BOT_COMMANDS_CHANNELS_ID: json.loads  # List[int]  # [#bot-commands, #commands, ...] (main one at index 0)
-BOT_GAMES_CHANNEL_ID: int
+from pydantic import BaseModel, BaseSettings, PostgresDsn, validator
 
 
-# The real part, note that the env var will override.
-for k, v in __annotations__.items():
-    gotten = os.environ.get(k)
-    if gotten is None:
-        try:
-            gotten = globals()[k]
-        except KeyError as e:
-            raise KeyError(f"env variable {e.args} is missing.")
-    globals()[k] = v(gotten)
+class AoC(BaseModel):
+    channel_id: int
+    role_id: int
+    session_cookie: str
 
-# set their real type here
-ADMIN_ROLES_ID: list
-BOT_COMMANDS_CHANNELS_ID: list
-REACTION_ROLES: dict
 
-del os, json, load_dotenv, gotten, k, v
+class Bot(BaseModel):
+    commands_channels_ids: List[int]
+    games_channel_id: int  # #bot-games
+    token: str
+
+    @validator("commands_channels_ids", pre=True)
+    def val_func(cls, v):
+        return json.loads(v)
+
+
+class Challenges(BaseModel):
+    channel_id: int
+    host_helper_role_id: int
+    host_role_id: int
+    info_channel_id: int
+    participant_role_id: int
+    submissions_channel_id: int
+    submitted_role_id: int
+    submit_channel_id: int
+    winner_role_id: int
+
+
+class CoC(BaseModel):
+    channel_id: int
+    message_id: int
+    role_id: int
+
+
+class Database(BaseModel):
+    max_poll_connections: int
+    min_poll_connections: int
+    uri: PostgresDsn
+
+
+class Guild(BaseModel):
+    id: int
+    welcomes_channel_id: int
+
+
+class Moderation(BaseModel):
+    admin_roles_ids: List[int]
+    staff_role_id: int
+
+    @validator("admin_roles_ids", pre=True)
+    def val_func(cls, v):
+        return json.loads(v)
+
+
+class Notification(BaseModel):
+    api_key: str  # Youtube Data AP - API Key: https://developers.google.com/youtub/docs
+    channel_id: int
+    role_id: int
+    webhook: str
+
+
+class ReactionRoles(BaseModel):
+    required_role_id: int  # [lvl 20] Developer
+    roles: Dict[int, int]  # Dict[emoji_id, role_id]
+    message_id: int
+
+    @validator("roles", pre=True)
+    def val_func(cls, val):
+        return {int(k): v for k, v in json.loads(val).items()}
+
+
+class Tags(BaseModel):
+    log_channel_id: int
+    requests_webhook: str
+    required_role_id: int  # [lvl 30] Engineer
+
+
+class Timathon(BaseModel):
+    channel_id: int
+    participant_role_id: int
+
+
+class Settings(BaseSettings):
+    aoc: AoC
+    bot: Bot
+    challenges: Challenges
+    coc: CoC
+    db: Database
+    guild: Guild
+    moderation: Moderation
+    notification: Notification  # For tim's youtube channel (currently unused)
+    reaction_roles: ReactionRoles
+    tags: Tags
+    timathon: Timathon
+
+    class Config:
+        env_file = ".env"
+        env_nested_delimiter = "__"
+
+
+settings = Settings()

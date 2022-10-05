@@ -1,22 +1,7 @@
 import discord
 from discord.ext import commands
 
-from config import (
-    BOT_COMMANDS_CHANNELS_ID,
-    BOT_GAMES_CHANNEL_ID,
-    CHALLENGE_HIDDEN_CHANNEL_ID,
-    CHALLENGE_HOST_HELPER_ROLE_ID,
-    CHALLENGE_HOST_ROLE_ID,
-    CHALLENGE_INFO_CHANNEL_ID,
-    CHALLENGE_PARTICIPANT_ROLE_ID,
-    CHALLENGE_POST_CHANNEL_ID,
-    CHALLENGE_SUBMIT_CHANNEL_ID,
-    CHALLENGE_SUBMITTED_ROLE_ID,
-    CHALLENGE_WINNER_ROLE_ID,
-    STAFF_ROLE_ID,
-    TIMATHON_CHANNEL_ID,
-    TIMATHON_PARTICIPANT_ROLE_ID,
-)
+from config import settings
 
 
 def setup(bot):
@@ -27,7 +12,9 @@ class ChallengeHandler(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.has_any_role(STAFF_ROLE_ID, CHALLENGE_HOST_ROLE_ID, CHALLENGE_HOST_HELPER_ROLE_ID)
+    @commands.has_any_role(
+        settings.moderation.staff_role_id, settings.challenges.host_role_id, settings.challenges.host_helper_role_id
+    )
     @commands.group(name="challenges", aliases=("c",))
     async def challenges_group(self, ctx: commands.Context) -> None:
         """All of the Challenges commands"""
@@ -40,7 +27,7 @@ class ChallengeHandler(commands.Cog):
         brief="Resubmit Command to remove submitted role",
     )
     async def challenges_resubmit(self, ctx: commands.Context, member: discord.Member):
-        submitted_role = ctx.guild.get_role(CHALLENGE_SUBMITTED_ROLE_ID)
+        submitted_role = ctx.guild.get_role(settings.challenges.submitted_role_id)
 
         if submitted_role in member.roles:
             await member.remove_roles(submitted_role)
@@ -55,13 +42,13 @@ class ChallengeHandler(commands.Cog):
         brief="Command to announce the distribution of :pancakes:",
     )
     async def announce_winners(self, ctx: commands.Context):
-        info_channel = ctx.guild.get_channel(CHALLENGE_INFO_CHANNEL_ID)
+        info_channel = ctx.guild.get_channel(settings.challenges.info_channel_id)
 
         return await info_channel.send(
-            f"<@&{CHALLENGE_WINNER_ROLE_ID}> :pancakes: have been given out, "
-            f"go deposit them in <#{BOT_GAMES_CHANNEL_ID}>. \n"
-            f"Analysis for the challenge will be available shortly in <#{CHALLENGE_INFO_CHANNEL_ID}>",
-            allowed_mentions=discord.AllowedMentions(roles=[discord.Object(CHALLENGE_WINNER_ROLE_ID)]),
+            f"<@&{settings.challenges.winner_role_id}> :pancakes: have been given out, "
+            f"go deposit them in <#{settings.bot.games_channel_id}>. \n"
+            f"Analysis for the challenge will be available shortly in <#{settings.challenges.info_channel_id}>",
+            allowed_mentions=discord.AllowedMentions(roles=[discord.Object(settings.challenges.winner_role_id)]),
         )
 
     @commands.cooldown(1, 3600, commands.BucketType.user)
@@ -71,9 +58,9 @@ class ChallengeHandler(commands.Cog):
         brief="Command to open submissions",
     )
     async def open_submissions(self, ctx: commands.Context):
-        info_channel = ctx.guild.get_channel(CHALLENGE_INFO_CHANNEL_ID)
+        info_channel = ctx.guild.get_channel(settings.challenges.info_channel_id)
 
-        submit_channel = ctx.guild.get_channel(CHALLENGE_SUBMIT_CHANNEL_ID)
+        submit_channel = ctx.guild.get_channel(settings.challenges.submit_channel_id)
 
         # Allows people to submit
         overwrite = submit_channel.overwrites_for(ctx.guild.default_role)
@@ -81,10 +68,10 @@ class ChallengeHandler(commands.Cog):
         await submit_channel.set_permissions(ctx.guild.default_role, overwrite=overwrite)
 
         return await info_channel.send(
-            f"<@&{CHALLENGE_PARTICIPANT_ROLE_ID}> Submissions are open."
-            f"Upload your code file with extension in <#{CHALLENGE_SUBMIT_CHANNEL_ID}>. "
-            f"Send `t.tag submitting` in <#{BOT_COMMANDS_CHANNELS_ID[0]}> for more details",
-            allowed_mentions=discord.AllowedMentions(roles=[discord.Object(CHALLENGE_PARTICIPANT_ROLE_ID)]),
+            f"<@&{settings.challenges.participant_role_id}> Submissions are open."
+            f"Upload your code file with extension in <#{settings.challenges.submit_channel_id}>. "
+            f"Send `t.tag submitting` in <#{settings.bot.commands_channels_ids[0]}> for more details",
+            allowed_mentions=discord.AllowedMentions(roles=[discord.Object(settings.challenges.participant_role_id)]),
         )
 
     @commands.cooldown(1, 3600, commands.BucketType.user)
@@ -94,9 +81,9 @@ class ChallengeHandler(commands.Cog):
         brief="Command to close submissions",
     )
     async def close_submissions(self, ctx: commands.Context):
-        info_channel = ctx.guild.get_channel(CHALLENGE_INFO_CHANNEL_ID)
+        info_channel = ctx.guild.get_channel(settings.challenges.info_channel_id)
 
-        submit_channel = ctx.guild.get_channel(CHALLENGE_SUBMIT_CHANNEL_ID)
+        submit_channel = ctx.guild.get_channel(settings.challenges.submit_channel_id)
 
         # Disallows people to submit
         overwrite = submit_channel.overwrites_for(ctx.guild.default_role)
@@ -104,9 +91,9 @@ class ChallengeHandler(commands.Cog):
         await submit_channel.set_permissions(ctx.guild.default_role, overwrite=overwrite)
 
         return await info_channel.send(
-            f"<@&{CHALLENGE_SUBMITTED_ROLE_ID}> Submissions are closed. "
+            f"<@&{settings.challenges.submitted_role_id}> Submissions are closed. "
             "Testing will begin soon. See you in the next challenge",
-            allowed_mentions=discord.AllowedMentions(roles=[discord.Object(CHALLENGE_SUBMITTED_ROLE_ID)]),
+            allowed_mentions=discord.AllowedMentions(roles=[discord.Object(settings.challenges.submitted_role_id)]),
         )
 
     @commands.Cog.listener()
@@ -114,23 +101,23 @@ class ChallengeHandler(commands.Cog):
         if payload.emoji != discord.PartialEmoji(name="🖐️"):
             return
 
-        if payload.channel_id == CHALLENGE_POST_CHANNEL_ID:
-            submitted = self.bot.guild.get_role(CHALLENGE_SUBMITTED_ROLE_ID)
+        if payload.channel_id == settings.challenges.channel_id:
+            submitted = self.bot.guild.get_role(settings.challenges.submitted_role_id)
             if submitted in payload.member.roles:
                 return
 
-            participant = self.bot.guild.get_role(CHALLENGE_PARTICIPANT_ROLE_ID)
+            participant = self.bot.guild.get_role(settings.challenges.participant_role_id)
             await self.bot.guild.get_member(payload.user_id).add_roles(participant)
 
-        elif payload.channel_id == TIMATHON_CHANNEL_ID:
+        elif payload.channel_id == settings.timathon.channel_id:
 
-            participant = self.bot.guild.get_role(TIMATHON_PARTICIPANT_ROLE_ID)
+            participant = self.bot.guild.get_role(settings.timathon.participant_role_id)
             await self.bot.guild.get_member(payload.user_id).add_roles(participant)
 
     @commands.Cog.listener()
     async def on_message(self, message):  # Submitted role.
 
-        if message.channel.id == CHALLENGE_SUBMIT_CHANNEL_ID:
+        if message.channel.id == settings.challenges.submit_channel_id:
 
             if message.author.id == self.bot.user.id:
                 return
@@ -138,8 +125,8 @@ class ChallengeHandler(commands.Cog):
             if message.author.bot:
                 return await message.delete()
 
-            submitted = self.bot.guild.get_role(CHALLENGE_SUBMITTED_ROLE_ID)
-            hidden_submission_channel = self.bot.guild.get_channel(CHALLENGE_HIDDEN_CHANNEL_ID)
+            submitted = self.bot.guild.get_role(settings.challenges.submitted_role_id)
+            hidden_submission_channel = self.bot.guild.get_channel(settings.challenges.submissions_channel_id)
 
             if submitted not in message.author.roles:
                 await message.delete()
@@ -180,7 +167,7 @@ class ChallengeHandler(commands.Cog):
                 await hidden_submission_channel.send(embed=embed)
 
         elif message.channel.id in [
-            CHALLENGE_POST_CHANNEL_ID,
-            TIMATHON_CHANNEL_ID,
+            settings.challenges.channel_id,
+            settings.timathon.channel_id,
         ]:  # Automatic reaction
             await message.add_reaction("🖐️")

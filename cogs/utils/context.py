@@ -4,7 +4,7 @@ from typing import Union
 import discord
 from discord.ext import commands
 
-from config import BOT_COMMANDS_CHANNELS_ID
+from config import settings
 
 from ..youtube import to_pages_by_lines
 
@@ -117,6 +117,6 @@ class SyltesContext(commands.Context):
             "server_messages",
             "messages",
         ):
-            if self.channel.id not in BOT_COMMANDS_CHANNELS_ID:
+            if self.channel.id not in settings.bot.commands_channels_ids:
                 return await self.send("**Please use #bot-commands channel**")
         return await super().send_help(*args)
