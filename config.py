@@ -38,12 +38,6 @@ class CoC(BaseModel):
     role_id: int
 
 
-class Database(BaseModel):
-    max_poll_connections: int
-    min_poll_connections: int
-    uri: PostgresDsn
-
-
 class Guild(BaseModel):
     id: int
     welcomes_channel_id: int
@@ -63,6 +57,12 @@ class Notification(BaseModel):
     channel_id: int
     role_id: int
     webhook: str
+
+
+class Postgres(BaseModel):
+    max_poll_connections: int
+    min_poll_connections: int
+    uri: PostgresDsn
 
 
 class ReactionRoles(BaseModel):
@@ -91,7 +91,7 @@ class Settings(BaseSettings):
     bot: Bot
     challenges: Challenges
     coc: CoC
-    db: Database
+    postgres: Postgres
     guild: Guild
     moderation: Moderation
     notification: Notification  # For tim's youtube channel (currently unused)

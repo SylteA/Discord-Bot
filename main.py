@@ -62,7 +62,7 @@ class Tim(commands.AutoShardedBot):
 
     async def on_connect(self):
         """Connect DB before bot is ready to assure that no calls are made before its ready"""
-        self.db = await DataBase.create_pool(bot=self, uri=settings.db.uri, loop=self.loop)
+        self.db = await DataBase.create_pool(bot=self, uri=settings.postgres.uri, loop=self.loop)
 
     async def on_ready(self):
         print(f"Successfully logged in as {self.user}\nSharded to {len(self.guilds)} guilds")
