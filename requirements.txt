@@ -1,11 +1,12 @@
-python-dateutil
+aiohttp
+asyncpg
 beautifulsoup4
 discord.py==1.7.3
 html5lib
+inflect
 jishaku==2.3.2
-aiohttp
-asyncpg
 pandas
 psutil
+pydantic[dotenv]
+python-dateutil
 tabulate
-inflect

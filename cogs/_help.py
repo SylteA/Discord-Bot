@@ -142,12 +142,10 @@ class Help(commands.HelpCommand):
                 missing_permissions = error.missing_perms
             elif isinstance(error, (commands.MissingRole, commands.MissingAnyRole)):
                 missing_permissions = error.missing_roles or [error.missing_role]
-            else:
-                await self.context.bot.get_user(144112966176997376).send(
-                    f"send_command_help\n\n{self.context.author} raised this error that you didnt think of:\n"
-                    f"{type(error).__name__}\n\nChannel: {self.context.channel.mention}"
-                )
+            elif isinstance(error, commands.NotOwner):
                 missing_permissions = None
+            else:
+                raise error
 
             if missing_permissions is not None:
                 embed.add_field(

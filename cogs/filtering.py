@@ -5,7 +5,7 @@ from urllib.parse import urlparse
 import discord
 from discord.ext import commands
 
-from .utils.checks import is_mod
+from .utils.checks import is_staff
 
 
 class Filtering(commands.Cog):
@@ -17,7 +17,7 @@ class Filtering(commands.Cog):
         if not ctx.guild:
             return False
 
-        return is_mod(ctx.author)
+        return is_staff(ctx.author)
 
     async def assure_config(self, guild_id: int):
         if str(guild_id) not in self.configs:
@@ -54,7 +54,7 @@ class Filtering(commands.Cog):
                 if all([result.scheme, result.netloc]):
                     result = await self._blacklisted_url(result.netloc, guild_id=message.guild.id)
                     if result:
-                        if not is_mod(message.author):
+                        if not is_staff(message.author):
                             reply = (
                                 f"The link you sent is not allowed on this server. {message.author.mention} "
                                 "If you believe this is a mistake contact a staff member."

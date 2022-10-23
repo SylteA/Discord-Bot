@@ -3,6 +3,8 @@ from typing import List
 
 import asyncpg
 
+from config import settings
+
 from .gconfig import FilterConfig
 from .message import Message
 from .rep import Rep
@@ -20,7 +22,15 @@ class DataBase(object):
 
     @classmethod
     async def create_pool(
-        cls, bot, uri=None, *, min_connections=10, max_connections=10, timeout=60.0, loop=None, **kwargs
+        cls,
+        bot,
+        uri=None,
+        *,
+        min_connections=settings.postgres.min_poll_connections,
+        max_connections=settings.postgres.max_poll_connections,
+        timeout=60.0,
+        loop=None,
+        **kwargs,
     ):
         pool = await asyncpg.create_pool(uri, min_size=min_connections, max_size=max_connections, **kwargs)
         self = cls(bot=bot, pool=pool, loop=loop, timeout=timeout)

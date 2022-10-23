@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, List, Literal
 import discord
 from discord.ext import commands
 
-from config import TAGS_LOG_CHANNEL_ID, TAGS_REQUESTS_WEBHOOK
+from config import settings
 
 from .utils.checks import is_admin, is_engineer_check, is_staff
 from .utils.DataBase.tag import Tag
@@ -26,9 +26,9 @@ def setup(bot):
 class TagCommands(commands.Cog, name="Tags"):
     def __init__(self, bot: "Tim"):
         self.bot = bot
-        self.log_channel = self.bot.get_channel(TAGS_LOG_CHANNEL_ID)
+        self.log_channel = self.bot.get_channel(settings.tags.log_channel_id)
         self.webhook = discord.Webhook.from_url(
-            TAGS_REQUESTS_WEBHOOK,
+            settings.tags.requests_webhook,
             adapter=discord.AsyncWebhookAdapter(self.bot.session),
         )
 
@@ -385,7 +385,7 @@ class TagCommands(commands.Cog, name="Tags"):
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, event: discord.RawReactionActionEvent):
-        if event.channel_id != TAGS_LOG_CHANNEL_ID:
+        if event.channel_id != settings.tags.log_channel_id:
             return
 
         if event.member.bot:
