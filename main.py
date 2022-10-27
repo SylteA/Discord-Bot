@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-import asyncio
 import datetime
+import logging
 import os
+import traceback
 
 import discord
 from aiohttp import ClientSession
@@ -28,6 +29,9 @@ from cogs.utils.DataBase import DataBase, Message, User
 from cogs.utils.time import human_timedelta
 from config import settings
 
+discord.utils.setup_logging()
+log = logging.getLogger(__name__)
+
 os.environ.update(JISHAKU_NO_UNDERSCORE="True", JISHAKU_NO_DM_TRACEBACK="True", JISHAKU_HIDE="True")
 initial_cogs = [
     "jishaku",
@@ -42,8 +46,6 @@ initial_cogs = [
     "cogs.adventofcode",
 ]
 
-print("Connecting...")
-
 
 class Tim(commands.AutoShardedBot):
     def __init__(self, **kwargs):
@@ -52,27 +54,31 @@ class Tim(commands.AutoShardedBot):
             intents=discord.Intents.all(),
             case_insensitive=True,
             allowed_mentions=discord.AllowedMentions(everyone=False, roles=False),
+            activity=discord.Game(name='use the prefix "tim."'),
             **kwargs,
         )
-        self.session = ClientSession(loop=self.loop)
         self.start_time = datetime.datetime.utcnow()
         self.clean_text = commands.clean_content(escape_markdown=True, fix_channel_mentions=True)
 
     """  Events   """
 
-    async def on_connect(self):
+    async def setup_hook(self) -> None:
         """Connect DB before bot is ready to assure that no calls are made before its ready"""
+        self.session = ClientSession(loop=self.loop)
         self.db = await DataBase.create_pool(bot=self, uri=settings.postgres.uri, loop=self.loop)
+        for ext in initial_cogs:
+            try:
+                await self.load_extension(ext)
+            except Exception as error:
+                log.error(f"Failed to load extension {ext!r}:")
+                traceback.print_exception(type(error), error, error.__traceback__)
+
+        log.info(f"Loaded all extensions after {human_timedelta(self.start_time, brief=True, suffix=False)}")
 
     async def on_ready(self):
-        print(f"Successfully logged in as {self.user}\nSharded to {len(self.guilds)} guilds")
+        log.info(f"Successfully logged in as {self.user}. Sharded to {len(self.guilds)} guilds")
         self.guild = self.get_guild(settings.guild.id)
         self.welcomes = self.guild.get_channel(settings.guild.welcomes_channel_id)
-        await self.change_presence(activity=discord.Game(name='use the prefix "tim."'))
-
-        for ext in initial_cogs:
-            self.load_extension(ext)
-        print(f"Loaded all extensions after {human_timedelta(self.start_time, brief=True, suffix=False)}")
 
     async def on_member_join(self, member):
         await self.wait_until_ready()
@@ -88,7 +94,7 @@ class Tim(commands.AutoShardedBot):
         if message.author.bot:
             return
 
-        print(f"{message.channel}: {message.author}: {message.clean_content}")
+        log.debug(f"{message.channel}: {message.author}: {message.clean_content}")
 
         if not message.guild:
             return
@@ -184,7 +190,7 @@ class Tim(commands.AutoShardedBot):
 
     async def get_context(self, message, *, cls=SyltesContext):
         """Implementation of custom context"""
-        return await super().get_context(message=message, cls=cls or SyltesContext)
+        return await super().get_context(message, cls=cls)
 
     def em(self, **kwargs):
         return discord.Embed(**kwargs)
@@ -198,7 +204,7 @@ class Tim(commands.AutoShardedBot):
     async def resolve_user(self, user_id: int) -> discord.User:
         """Resolve a user from their ID."""
 
-        user = self.get_user(id=user_id)
+        user = self.get_user(user_id)
         if user is None:
             try:
                 user = await self.fetch_user(user_id)
@@ -207,15 +213,6 @@ class Tim(commands.AutoShardedBot):
 
         return user
 
-    @classmethod
-    async def setup(cls, **kwargs):
-        bot = cls()
-        try:
-            await bot.start(settings.bot.token, **kwargs)
-        except KeyboardInterrupt:
-            await bot.close()
-
 
 if __name__ == "__main__":
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(Tim.setup())
+    Tim().run(settings.bot.token, log_handler=None)

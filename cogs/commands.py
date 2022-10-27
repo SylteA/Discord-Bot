@@ -269,10 +269,10 @@ class Commands(commands.Cog):
 
         user = await self.bot.db.get_user(member.id)
         embed = discord.Embed(color=member.color, description=member.mention)
-        embed.set_author(name=str(member), icon_url=member.avatar_url)
+        embed.set_author(name=str(member), icon_url=member.avatar.url)
         embed.add_field(name="Count", value=str(user.messages_sent))
         embed.add_field(name="Since", value=human_timedelta(user.joined_at, accuracy=2))
-        embed.set_footer(text=str(ctx.author), icon_url=ctx.author.avatar_url)
+        embed.set_footer(text=str(ctx.author), icon_url=ctx.author.avatar.url)
         await ctx.send(embed=embed)
 
     @commands.command(aliases=["lb"])
@@ -432,7 +432,7 @@ class Commands(commands.Cog):
         em = discord.Embed(description=suggestion)
         em.set_author(
             name=f"Suggestion by {ctx.author.display_name}",
-            icon_url=ctx.author.avatar_url,
+            icon_url=ctx.author.avatar.url,
         )
         msg = await ctx.send(embed=em)
         await msg.add_reaction("👍")
@@ -547,5 +547,5 @@ class Commands(commands.Cog):
         await self.get_docs(ctx, "aiohttp", obj)
 
 
-def setup(bot):
-    bot.add_cog(Commands(bot))
+async def setup(bot):
+    await bot.add_cog(Commands(bot))

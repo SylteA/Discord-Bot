@@ -12,10 +12,6 @@ REGEX = re.compile(r"https://www.codingame.com/clashofcode/clash/([0-9a-f]{39})"
 API_URL = "https://www.codingame.com/services/ClashOfCode/findClashByHandle"
 
 
-def setup(bot: commands.Bot):
-    bot.add_cog(ClashOfCode(bot=bot))
-
-
 class ClashOfCode(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -309,3 +305,7 @@ class ClashOfCode(commands.Cog):
                 ]
             ),
         )
+
+
+async def setup(bot):
+    await bot.add_cog(ClashOfCode(bot))

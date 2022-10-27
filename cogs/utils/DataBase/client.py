@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from typing import List
 
 import asyncpg
@@ -10,6 +11,8 @@ from .message import Message
 from .rep import Rep
 from .tag import Tag
 from .user import User
+
+log = logging.getLogger(__name__)
 
 
 class DataBase(object):
@@ -34,7 +37,7 @@ class DataBase(object):
     ):
         pool = await asyncpg.create_pool(uri, min_size=min_connections, max_size=max_connections, **kwargs)
         self = cls(bot=bot, pool=pool, loop=loop, timeout=timeout)
-        print(f"Established DataBase pool with {min_connections} - {max_connections} connections\n")
+        log.info(f"Established DataBase pool with {min_connections} - {max_connections} connections\n")
         return self
 
     async def fetch(self, query, *args):

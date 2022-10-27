@@ -77,7 +77,6 @@ class ReactionRoles(BaseModel):
 
 class Tags(BaseModel):
     log_channel_id: int
-    requests_webhook: str
     required_role_id: int  # [lvl 30] Engineer
 
 

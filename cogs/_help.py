@@ -12,15 +12,15 @@ class Help(commands.HelpCommand):
     def embedify(self, title: str, description: str) -> discord.Embed:
         """Returns the default embed used for our HelpCommand"""
         embed = discord.Embed(title=title, description=description, color=0x36393E, timestamp=dt.utcnow())
-        embed.set_author(name=self.context.bot.user, icon_url=self.context.bot.user.avatar_url)
+        embed.set_author(name=self.context.bot.user, icon_url=self.context.bot.user.avatar.url)
         embed.set_footer(
-            icon_url=self.context.bot.user.avatar_url,
+            icon_url=self.context.bot.user.avatar.url,
             text=f"Called by: {self.context.author}",
         )
         return embed
 
     def command_not_found(self, string) -> str:
-        return f"Command or category `{self.clean_prefix}{string}` not found. Try again..."
+        return f"Command or category `{self.context.clean_prefix}{string}` not found. Try again..."
 
     def subcommand_not_found(self, command, string) -> str:
         ret = f"Command `{self.context.prefix}{command.qualified_name}` has no subcommands."
@@ -35,8 +35,8 @@ class Help(commands.HelpCommand):
     def get_opening_note(self) -> str:
         return (
             "A discord bot.\n"
-            f'Use **`{self.clean_prefix}help "command name"`** for more info on a command\n'
-            f'You can also use **`{self.clean_prefix}help "category name"`** for more info on a category\n'
+            f'Use **`{self.context.clean_prefix}help "command name"`** for more info on a command\n'
+            f'You can also use **`{self.context.clean_prefix}help "category name"`** for more info on a category\n'
         )
 
     @staticmethod
@@ -57,7 +57,7 @@ class Help(commands.HelpCommand):
             string += ", ".join(f"`{alias}`" for alias in command.aliases)
 
         if include_prefix:
-            string = self.clean_prefix + string
+            string = self.context.clean_prefix + string
 
         return string
 
@@ -172,5 +172,5 @@ class NewHelp(commands.Cog, name="Help Command"):
         self.bot.help_command = self._original_help_command
 
 
-def setup(bot):
-    bot.add_cog(NewHelp(bot))
+async def setup(bot):
+    await bot.add_cog(NewHelp(bot))

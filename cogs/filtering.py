@@ -108,7 +108,6 @@ class Filtering(commands.Cog):
             )
         except asyncio.TimeoutError:
             return await ctx.send("Timed out, doing nothing.")
-        print("Got message")
 
         text = reply.content
         if text.lower() == "yes":
@@ -240,5 +239,5 @@ class Filtering(commands.Cog):
             await config.update()
 
 
-def setup(bot):
-    bot.add_cog(Filtering(bot))
+async def setup(bot):
+    await bot.add_cog(Filtering(bot))
