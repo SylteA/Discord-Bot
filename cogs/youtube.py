@@ -232,5 +232,5 @@ class YouTube(commands.Cog):
             await ctx.send("You will no longer be notified of new videos.")
 
 
-def setup(bot):
-    bot.add_cog(YouTube(bot))
+async def setup(bot):
+    await bot.add_cog(YouTube(bot))

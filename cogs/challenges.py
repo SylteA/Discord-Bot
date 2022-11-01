@@ -4,10 +4,6 @@ from discord.ext import commands
 from config import settings
 
 
-def setup(bot):
-    bot.add_cog(ChallengeHandler(bot))
-
-
 class ChallengeHandler(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -162,7 +158,7 @@ class ChallengeHandler(commands.Cog):
 
                 await message.author.add_roles(submitted)
                 embed = discord.Embed(description=content, color=0x36393E)
-                embed.set_author(name=str(message.author), icon_url=message.author.avatar_url)
+                embed.set_author(name=str(message.author), icon_url=message.author.avatar.url)
                 embed.set_footer(text=f"#ID: {message.author.id} • {len(code)} chars • Language: {filetype}")
                 await hidden_submission_channel.send(embed=embed)
 
@@ -171,3 +167,7 @@ class ChallengeHandler(commands.Cog):
             settings.timathon.channel_id,
         ]:  # Automatic reaction
             await message.add_reaction("🖐️")
+
+
+async def setup(bot):
+    await bot.add_cog(ChallengeHandler(bot))

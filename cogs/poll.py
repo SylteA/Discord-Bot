@@ -1,5 +1,3 @@
-import datetime
-
 import discord
 from discord.ext import commands
 
@@ -80,7 +78,7 @@ class Polls(commands.Cog):
         embed = discord.Embed(
             description=f"**{desc}**\n\n"
             + "\n\n".join(f"{str(self.reactions[i])}  {choice}" for i, choice in enumerate(choices, 1)),
-            timestamp=datetime.datetime.utcnow(),
+            timestamp=discord.utils.utcnow(),
             color=discord.colour.Color.gold(),
         )
         embed.set_footer(text=f"Poll by {str(ctx.author)}")
@@ -149,5 +147,5 @@ class Polls(commands.Cog):
         return await ctx.send("Please provide the message ID/link for a valid poll")
 
 
-def setup(bot):
-    bot.add_cog(Polls(bot))
+async def setup(bot):
+    await bot.add_cog(Polls(bot))

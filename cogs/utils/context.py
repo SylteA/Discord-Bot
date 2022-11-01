@@ -26,40 +26,37 @@ def embed_to_string(embed: discord.Embed) -> str:
 
 
 class SyltesContext(commands.Context):
-    async def send(
-        self,
-        content=None,
-        *,
-        tts=False,
-        embed=None,
-        file=None,
-        files=None,
-        delete_after=None,
-        nonce=None,
-    ) -> Union[discord.Message, None]:
+    async def send(self, content=None, **kwargs) -> Union[discord.Message, None]:
         """Better handling of missing permissions"""
+        embed = kwargs.get("embed")
+        embeds = kwargs.get("embeds", [embed] if embed is not None else None)
+        file = kwargs.get("file")
+        files = kwargs.get("files", [file] if embed is not None else None)
         destination = self.channel
         if self.guild:
-            permissions = self.guild.me.permissions_in(self.channel)
+            permissions = self.channel.permissions_for(self.guild.me)
             if not permissions.send_messages:
                 try:
                     destination = self.author
                     await destination.send(f"I was missing permissions to send messages in {self.channel.mention}.")
                 except discord.Forbidden:
                     pass
-            if not permissions.embed_links and embed is not None:
-                string = embed_to_string(embed)
-                pages = to_pages_by_lines(string, max_size=1900)
-                for page in pages:
-                    await destination.send(page)
-                embed = None
-            if not permissions.attach_files and (file or files):
+
+            if not permissions.embed_links and embeds is not None:
+                for embed in embeds:
+                    string = embed_to_string(embed)
+                    pages = to_pages_by_lines(string, max_size=1900)
+                    for page in pages:
+                        await destination.send(page)
+                kwargs["embed"] = None
+                kwargs["embeds"] = None
+
+            if not permissions.attach_files and files is not None:
                 await destination.send(f"Missing permission to send files in {self.channel.mention}\nCheck your DMs")
-                files = files or [file]
-                for file in files:
-                    await self.author.send(file=file)
+                await self.author.send(files=files)
                 return
-            return await destination.send(content=content, tts=tts, embed=embed, file=file)
+
+        return await destination.send(content, **kwargs)
 
     @staticmethod
     async def cleanup(*messages, delay: float = 0.0) -> None:
