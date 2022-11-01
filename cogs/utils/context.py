@@ -48,6 +48,7 @@ class SyltesContext(commands.Context):
                     pages = to_pages_by_lines(string, max_size=1900)
                     for page in pages:
                         await destination.send(page)
+                kwargs["embed"] = None
                 kwargs["embeds"] = None
 
             if not permissions.attach_files and files is not None:

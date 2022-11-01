@@ -2,11 +2,10 @@
 import datetime
 import logging
 import os
-import traceback
 
 import discord
 from aiohttp import ClientSession
-from discord.ext import commands
+from discord.ext import commands, tasks
 from discord.ext.commands.errors import (
     BadArgument,
     BadUnionArgument,
@@ -47,14 +46,13 @@ initial_cogs = [
 ]
 
 
-class Tim(commands.AutoShardedBot):
+class Tim(commands.Bot):
     def __init__(self, **kwargs):
         super().__init__(
             command_prefix=kwargs.pop("command_prefix", ("t.", "T.", "tim.")),
             intents=discord.Intents.all(),
             case_insensitive=True,
             allowed_mentions=discord.AllowedMentions(everyone=False, roles=False),
-            activity=discord.Game(name='use the prefix "tim."'),
             **kwargs,
         )
         self.start_time = datetime.datetime.utcnow()
@@ -64,19 +62,20 @@ class Tim(commands.AutoShardedBot):
 
     async def setup_hook(self) -> None:
         """Connect DB before bot is ready to assure that no calls are made before its ready"""
+        self.presence.start()
         self.session = ClientSession(loop=self.loop)
         self.db = await DataBase.create_pool(bot=self, uri=settings.postgres.uri, loop=self.loop)
+
         for ext in initial_cogs:
             try:
                 await self.load_extension(ext)
             except Exception as error:
-                log.error(f"Failed to load extension {ext!r}:")
-                traceback.print_exception(type(error), error, error.__traceback__)
+                log.error(f"Failed to load extension {ext!r}:", exc_info=error)
 
         log.info(f"Loaded all extensions after {human_timedelta(self.start_time, brief=True, suffix=False)}")
 
     async def on_ready(self):
-        log.info(f"Successfully logged in as {self.user}. Sharded to {len(self.guilds)} guilds")
+        log.info(f"Successfully logged in as {self.user}. In {len(self.guilds)} guilds")
         self.guild = self.get_guild(settings.guild.id)
         self.welcomes = self.guild.get_channel(settings.guild.welcomes_channel_id)
 
@@ -212,6 +211,11 @@ class Tim(commands.AutoShardedBot):
                 return None
 
         return user
+
+    @tasks.loop(hours=24)
+    async def presence(self):
+        await self.wait_until_ready()
+        await self.change_presence(activity=discord.Game(name='use the prefix "tim."'))
 
 
 if __name__ == "__main__":
