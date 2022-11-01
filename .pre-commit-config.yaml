@@ -16,10 +16,11 @@ repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v2.5.0
     hooks:
-      - id: check-json
       - id: check-yaml
+      - id: check-toml
       - id: end-of-file-fixer
       - id: check-merge-conflict
+      - id: requirements-txt-fixer
       - id: trailing-whitespace
         args: [--markdown-linebreak-ext=md]
 

@@ -1,32 +1,107 @@
-import os
+import json
+from typing import Dict, List
 
-TOKEN = os.environ.get("TOKEN")  # Bot token
-POSTGRES = os.environ.get("DB_URI")  # PostgreSQL connection URI
-
-YOUTUBE_API_KEY = os.environ.get(
-    "YOUTUBE_API_KEY"
-)  # Youtube Data API v3 - API Key: https://developers.google.com/youtube/v3/docs
-
-# NOTIFICATION_WEBHOOK = ""  # Webhook for notifications to tims youtube channel
-TAGS_REQUESTS_WEBHOOK = os.environ.get("TAGS_REQUESTS_WEBHOOK")
-
-NOTIFICATION_ROLE_ID: int = int(os.environ.get("NOTIFICATION_ROLE_ID"))  # Role to be mentioned in announcements
-NOTIFICATION_CHANNEL_ID: int = int(os.environ.get("NOTIFICATION_CHANNEL_ID"))  # Channel to post notifications in
-
-AOC_SESSION_COOKIE = os.environ.get("AOC_SESSION_COOKIE")
+from pydantic import BaseModel, BaseSettings, PostgresDsn, validator
 
 
-# ROLE_IDs
-CHALLENGE_HOST_HELPER_ROLE_ID = int(os.environ.get("CHALLENGE_HOST_HELPER_ROLE_ID"))
-CHALLENGE_HOST_ROLE_ID = int(os.environ.get("CHALLENGE_HOST_ROLE_ID"))
-CHALLENGE_PARTICIPANT_ROLE_ID = int(os.environ.get("CHALLENGE_PARTICIPANT_ROLE_ID"))
-CHALLENGE_SUBMITTED_ROLE_ID = int(os.environ.get("CHALLENGE_SUBMITTED_ROLE_ID"))
-CHALLENGE_WINNER_ROLE_ID = int(os.environ.get("CHALLENGE_WINNER_ROLE_ID"))
-STAFF_ROLE_ID = int(os.environ.get("STAFF_ROLE_ID"))
+class AoC(BaseModel):
+    channel_id: int
+    role_id: int
+    session_cookie: str
 
-# CHANNEL_IDs
-BOT_COMMANDS_CHANNEL_ID = int(os.environ.get("BOT_COMMANDS_CHANNEL_ID"))
-BOT_GAMES_CHANNEL_ID = int(os.environ.get("BOT_GAMES_CHANNEL_ID"))
-CHALLENGE_INFO_CHANNEL_ID = int(os.environ.get("CHALLENGE_INFO_CHANNEL_ID"))
-CHALLENGE_SUBMIT_CHANNEL_ID = int(os.environ.get("CHALLENGE_SUBMIT_CHANNEL_ID"))
-TAGS_LOG_CHANNEL_ID = int(os.environ.get("TAGS_LOG_CHANNEL_ID"))
+
+class Bot(BaseModel):
+    commands_channels_ids: List[int]
+    games_channel_id: int  # #bot-games
+    token: str
+
+    @validator("commands_channels_ids", pre=True)
+    def val_func(cls, v):
+        return json.loads(v)
+
+
+class Challenges(BaseModel):
+    channel_id: int
+    host_helper_role_id: int
+    host_role_id: int
+    info_channel_id: int
+    participant_role_id: int
+    submissions_channel_id: int
+    submitted_role_id: int
+    submit_channel_id: int
+    winner_role_id: int
+
+
+class CoC(BaseModel):
+    channel_id: int
+    message_id: int
+    role_id: int
+
+
+class Guild(BaseModel):
+    id: int
+    welcomes_channel_id: int
+
+
+class Moderation(BaseModel):
+    admin_roles_ids: List[int]
+    staff_role_id: int
+
+    @validator("admin_roles_ids", pre=True)
+    def val_func(cls, v):
+        return json.loads(v)
+
+
+class Notification(BaseModel):
+    api_key: str  # Youtube Data AP - API Key: https://developers.google.com/youtub/docs
+    channel_id: int
+    role_id: int
+    webhook: str
+
+
+class Postgres(BaseModel):
+    max_poll_connections: int
+    min_poll_connections: int
+    uri: PostgresDsn
+
+
+class ReactionRoles(BaseModel):
+    required_role_id: int  # [lvl 20] Developer
+    roles: Dict[int, int]  # Dict[emoji_id, role_id]
+    message_id: int
+
+    @validator("roles", pre=True)
+    def val_func(cls, val):
+        return {int(k): v for k, v in json.loads(val).items()}
+
+
+class Tags(BaseModel):
+    log_channel_id: int
+    requests_webhook: str
+    required_role_id: int  # [lvl 30] Engineer
+
+
+class Timathon(BaseModel):
+    channel_id: int
+    participant_role_id: int
+
+
+class Settings(BaseSettings):
+    aoc: AoC
+    bot: Bot
+    challenges: Challenges
+    coc: CoC
+    postgres: Postgres
+    guild: Guild
+    moderation: Moderation
+    notification: Notification  # For tim's youtube channel (currently unused)
+    reaction_roles: ReactionRoles
+    tags: Tags
+    timathon: Timathon
+
+    class Config:
+        env_file = ".env"
+        env_nested_delimiter = "__"
+
+
+settings = Settings()

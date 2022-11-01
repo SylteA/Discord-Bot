@@ -5,7 +5,7 @@ import discord
 import pandas
 from discord.ext import commands
 
-from config import NOTIFICATION_CHANNEL_ID, NOTIFICATION_ROLE_ID, YOUTUBE_API_KEY
+from config import settings
 
 from .utils.checks import in_twt
 
@@ -29,8 +29,8 @@ class YouTube(commands.Cog):
         self.last_video = None
         self.get_videos = self.bot.loop.create_task(self._get_last_video())
         self.youtube_query = self.bot.loop.create_task(self._update_youtube_stats())  # Called every 10 minutes
-        self.webhook = self.bot.guild.get_channel(NOTIFICATION_CHANNEL_ID)
-        self.NOTIFICATION_ROLE = self.bot.guild.get_role(NOTIFICATION_ROLE_ID)
+        self.webhook = self.bot.guild.get_channel(settings.notification.webhook)
+        self.NOTIFICATION_ROLE = self.bot.guild.get_role(settings.notification.role_id)
 
     def cog_unload(self):
         self.youtube_query.cancel()
@@ -51,7 +51,7 @@ class YouTube(commands.Cog):
                 "https://www.googleapis.com/youtube/v3/channels"
                 "?part=snippet,statistics,contentDetails"
                 "&id=UC4JX40jDee_tINbkjycV4Sg"
-                f"&key={YOUTUBE_API_KEY}"
+                f"&key={settings.notification.api_key}"
             )
             data = await response.json()
 
@@ -68,7 +68,7 @@ class YouTube(commands.Cog):
                         "&maxResults=1"
                         "&channelId=UC4JX40jDee_tINbkjycV4Sg"
                         "&playlistId=UU4JX40jDee_tINbkjycV4Sg"
-                        f"&key={YOUTUBE_API_KEY}"
+                        f"&key={settings.notification.api_key}"
                     )
                     data = await response.json()
                     self.last_video = data["items"][0]
@@ -90,7 +90,7 @@ class YouTube(commands.Cog):
                 "&maxResults=1"
                 "&channelId=UC4JX40jDee_tINbkjycV4Sg"
                 "&playlistId=UU4JX40jDee_tINbkjycV4Sg"
-                f"&key={YOUTUBE_API_KEY}"
+                f"&key={settings.notification.api_key}"
             )
             data = await response.json()
             self.last_video = data["items"][0]
@@ -184,7 +184,7 @@ class YouTube(commands.Cog):
             "?part=snippet"
             "&channelId=UC4JX40jDee_tINbkjycV4Sg"
             f"&q={title}"
-            f"&key={YOUTUBE_API_KEY}"
+            f"&key={settings.notification.api_key}"
         ) as request:
             data = await request.json()
             videos = data["items"]

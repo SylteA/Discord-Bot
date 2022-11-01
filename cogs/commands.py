@@ -11,7 +11,7 @@ from discord.ext import commands
 from discord.utils import get
 from tabulate import tabulate
 
-from .utils.checks import is_mod
+from .utils.checks import is_staff
 from .utils.DataBase import User
 from .utils.time import human_timedelta
 from .youtube import to_pages_by_lines
@@ -115,7 +115,7 @@ def parse_object_inv(stream, url):
 
 
 def predicate(ctx):
-    return is_mod(ctx.author)
+    return is_staff(ctx.author)
 
 
 class Commands(commands.Cog):
@@ -126,7 +126,7 @@ class Commands(commands.Cog):
     @commands.command(hidden=True)
     @commands.check(predicate)
     async def post_question(self, ctx):
-        if is_mod(ctx.author):
+        if is_staff(ctx.author):
             await ctx.message.delete()
             await ctx.send(
                 "```Please post your question, rather than asking for help. "
