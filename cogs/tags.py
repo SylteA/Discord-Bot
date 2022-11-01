@@ -19,18 +19,13 @@ EMOJIS = [
 ]
 
 
-def setup(bot):
-    bot.add_cog(TagCommands(bot=bot))
-
-
 class TagCommands(commands.Cog, name="Tags"):
     def __init__(self, bot: "Tim"):
         self.bot = bot
-        self.log_channel = self.bot.get_channel(settings.tags.log_channel_id)
-        self.webhook = discord.Webhook.from_url(
-            settings.tags.requests_webhook,
-            adapter=discord.AsyncWebhookAdapter(self.bot.session),
-        )
+
+    @property
+    def log_channel(self):
+        return self.bot.get_channel(settings.tags.log_channel_id)
 
     def cog_check(self, ctx):
         if ctx.guild is None:
@@ -93,15 +88,10 @@ class TagCommands(commands.Cog, name="Tags"):
 
     async def request(self, **kwargs):
         embeds = self.log_embeds(**kwargs)
-        log: discord.WebhookMessage = await self.webhook.send(embeds=embeds, wait=True)
-        log = await self.log_channel.fetch_message(log.id)  # PartialWebhookState does not support http methods
+        log = await self.log_channel.send(embeds=embeds)
 
         for emoji in EMOJIS:
             await log.add_reaction(emoji)
-
-    ####################################################################################################################
-    # Commands
-    ####################################################################################################################
 
     @commands.group(invoke_without_command=True)
     async def tag(self, ctx, *, name: commands.clean_content):
@@ -120,6 +110,10 @@ class TagCommands(commands.Cog, name="Tags"):
             ctx.guild.id,
             name,
         )
+
+    ####################################################################################################################
+    # Commands
+    ####################################################################################################################
 
     @tag.command()
     async def info(self, ctx, *, name: commands.clean_content):
@@ -164,7 +158,7 @@ class TagCommands(commands.Cog, name="Tags"):
                 text=text,
             )
             await tag.post()
-            await self.webhook.send(embeds=self.log_embeds(**kwargs, approve=True, approver=ctx.author))
+            await self.log_channel.send(embeds=self.log_embeds(**kwargs, approve=True, approver=ctx.author))
 
             return await ctx.send("You have successfully created your tag.")
 
@@ -251,7 +245,7 @@ class TagCommands(commands.Cog, name="Tags"):
         )
         if is_staff(ctx.author):
             await tag.update(text=text)
-            await self.webhook.send(embeds=self.log_embeds(**kwargs, approve=True, approver=ctx.author))
+            await self.log_channel.send(embeds=self.log_embeds(**kwargs, approve=True, approver=ctx.author))
             return await ctx.send("You have successfully edited your tag.")
 
         await self.request(**kwargs)
@@ -276,7 +270,7 @@ class TagCommands(commands.Cog, name="Tags"):
         await tag.delete()
         await ctx.send("You have successfully deleted your tag.")
 
-        await self.webhook.send(
+        await self.log_channel.send(
             embeds=self.log_embeds(
                 approve=True,
                 rtype="Delete",
@@ -336,7 +330,7 @@ class TagCommands(commands.Cog, name="Tags"):
         if is_staff(ctx.author):
             await tag.rename(new_name=new_name)
 
-            await self.webhook.send(embeds=self.log_embeds(**kwargs, approve=True, approver=ctx.author))
+            await self.log_channel.send(embeds=self.log_embeds(**kwargs, approve=True, approver=ctx.author))
             return await ctx.send("You have successfully renamed your tag.")
 
         await self.request(**kwargs)
@@ -373,15 +367,11 @@ class TagCommands(commands.Cog, name="Tags"):
         )
         if is_staff(ctx.author):
             await tag.update(text=new_text)
-            await self.webhook.send(embeds=self.log_embeds(**kwargs, approve=True, approver=ctx.author))
+            await self.log_channel.send(embeds=self.log_embeds(**kwargs, approve=True, approver=ctx.author))
             return await ctx.send("You have successfully appended to your tag content.")
 
         await self.request(**kwargs)
         return await ctx.reply("Tag update request submitted.")
-
-    ####################################################################################################################
-    # Listeners
-    ####################################################################################################################
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, event: discord.RawReactionActionEvent):
@@ -426,6 +416,10 @@ class TagCommands(commands.Cog, name="Tags"):
                 user=event.member,
             )
 
+    ####################################################################################################################
+    # Listeners
+    ####################################################################################################################
+
     @commands.Cog.listener()
     async def on_tag_rename_response(self, message: discord.Message, approved, user):
         embed = message.embeds[0]
@@ -438,13 +432,12 @@ class TagCommands(commands.Cog, name="Tags"):
             if tag is None:
                 # embed.title = "Tag Rename Failed"
                 # embed.colour = discord.Color.red()
-                # return await self.webhook.edit_message(message.id, embed=embed)
+                # return message.edit(embed=embed)
                 return await message.delete()
 
             await tag.rename(new_name=after)
 
-        await self.webhook.edit_message(
-            message.id,
+        await message.edit(
             embeds=self.log_embeds(
                 rtype="Rename",
                 tname="",
@@ -478,13 +471,12 @@ class TagCommands(commands.Cog, name="Tags"):
             if await self.bot.db.get_tag(guild_id=message.guild.id, name=name):
                 # embed.title = "Tag Create Failed"
                 # embed.colour = discord.Color.red()
-                # return await self.webhook.edit_message(message.id, embed=embed)
+                # return await message.edit(embed=embed)
                 return await message.delete()
 
             await tag.post()
 
-        await self.webhook.edit_message(
-            message.id,
+        await message.edit(
             embeds=self.log_embeds(
                 rtype="Create",
                 tname=name,
@@ -517,13 +509,12 @@ class TagCommands(commands.Cog, name="Tags"):
             if tag is None:
                 # embeds[0].title = "Tag Update Failed"
                 # embeds[0].colour = embeds[1].colour = discord.Color.red()
-                # return await self.webhook.edit_message(message.id, embeds=embeds)
+                # return await message.edit(embeds=embeds)
                 return await message.delete()
 
             await tag.update(text=after)
 
-        await self.webhook.edit_message(
-            message.id,
+        await message.edit(
             embeds=self.log_embeds(
                 rtype="Update",
                 tname=name,
@@ -538,3 +529,7 @@ class TagCommands(commands.Cog, name="Tags"):
             author,
             f"Tag `{name}` updating request has been {['deni', 'approv'][approved]}ed.",
         )
+
+
+async def setup(bot):
+    await bot.add_cog(TagCommands(bot=bot))

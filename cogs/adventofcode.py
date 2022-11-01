@@ -174,7 +174,7 @@ class AdventOfCode(commands.Cog, name="Advent of Code"):
                 description=f"There are {str(days)} days {str(hours)} hours "
                 f"and {str(minutes)} minutes left until AOC gets over.",
             )
-            embed.set_footer(text=ctx.author.display_name, icon_url=ctx.author.avatar_url)
+            embed.set_footer(text=ctx.author.display_name, icon_url=ctx.author.avatar.url)
             await ctx.send(embed=embed)
 
         else:
@@ -304,5 +304,5 @@ class AdventOfCode(commands.Cog, name="Advent of Code"):
         await ctx.send(embed=embed)
 
 
-def setup(bot):
-    bot.add_cog(AdventOfCode(bot))
+async def setup(bot):
+    await bot.add_cog(AdventOfCode(bot))
