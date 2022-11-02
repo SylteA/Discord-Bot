@@ -20,7 +20,6 @@ repos:
       - id: check-toml
       - id: end-of-file-fixer
       - id: check-merge-conflict
-      - id: requirements-txt-fixer
       - id: trailing-whitespace
         args: [--markdown-linebreak-ext=md]
 

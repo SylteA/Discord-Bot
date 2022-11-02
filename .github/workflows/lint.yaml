@@ -15,9 +15,10 @@ jobs:
         with:
           python-version: 3.8
 
-      - name: Install dependencies
+      - name: Install dependencies using poetry
         run: |
-          pip install -r dev-requirements.txt
+          pip install poetry
+          poetry install
 
       # We will not run `flake8` here, as we will use a separate flake8
       # action. As pre-commit does not support user installs, we set

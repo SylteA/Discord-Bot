@@ -2,10 +2,17 @@ FROM python:3.8-slim
 
 STOPSIGNAL SIGQUIT
 
+ENV POETRY_VIRTUALENVS_CREATE=false \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONFAULTHANDLER=1
+
 WORKDIR /app
 
-COPY requirements.txt /app/
-RUN pip3 install -r requirements.txt
+# Install dependencies
+RUN pip install -U poetry
+
+COPY pyproject.toml poetry.lock /app/
+RUN poetry install --only main
 
 ADD . /app
 
