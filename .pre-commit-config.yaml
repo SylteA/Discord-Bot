@@ -13,13 +13,6 @@ repos:
         language: system
         types: [python]
 
-      - id: flake8
-        name: Flake8
-        entry: flake8
-        language: system
-        types: [python]
-        require_serial: true
-
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v2.5.0
     hooks:
@@ -29,6 +22,15 @@ repos:
       - id: check-merge-conflict
       - id: trailing-whitespace
         args: [--markdown-linebreak-ext=md]
+
+  - repo: local
+    hooks:
+      - id: flake8
+        name: Flake8
+        entry: flake8
+        language: system
+        types: [ python ]
+        require_serial: true
 
   - repo: https://github.com/python-poetry/poetry
     rev: 1.2.2
