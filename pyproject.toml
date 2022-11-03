@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "discord-bot"
-version = "0.1.0"
+version = "3.0"
 description = "Discord bot for Tech With Tim's discord server."
 authors = ["Tech With Tim Community"]
 
