@@ -24,7 +24,7 @@ jobs:
       - name: Install dependencies using poetry
         run: |
           pip install poetry
-          poetry install
+          poetry install --only dev
 
       # We will not run `flake8` here, as we will use a separate flake8
       # action. As pre-commit does not support user installs, we set
