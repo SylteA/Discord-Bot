@@ -10,4 +10,4 @@ docker-compose up
 
 postgres_db.env
 
-**NOTE dont forget to change values in you example.env(POSTGRES__URI)**
+**NOTE dont forget to change values in example.env(POSTGRES__URI)**
