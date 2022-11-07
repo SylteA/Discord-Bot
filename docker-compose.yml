@@ -1,0 +1,33 @@
+version: "3"
+
+volumes:
+  postgres:
+
+networks:
+  twt:
+    external: {}
+
+services:
+  postgres:
+    image: postgres:13.8
+    restart: unless-stopped
+    ports: ["5432:5432"]
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=TWT
+      - POSTGRES_USER=TWT
+      - POSTGRES_PASSWORD=TWT
+    networks: [twt]
+
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    env_file: .env
+    environment:
+      POSTGRES__URI: postgres://TWT:TWT@postgres/TWT
+    networks: [twt]

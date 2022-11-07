@@ -3,8 +3,14 @@ name: Lint
 on: [push, pull_request]
 
 jobs:
-  build:
+  lint:
     runs-on: ubuntu-latest
+
+    env:
+      # Hide the graphical elements from pipenv's output
+      POETRY_VIRTUALENVS_CREATE: false
+      PIPENV_HIDE_EMOJIS: 1
+      PIPENV_NOSPIN: 1
 
     steps:
       - name: Checkout repository
@@ -15,9 +21,10 @@ jobs:
         with:
           python-version: 3.8
 
-      - name: Install dependencies
+      - name: Install dependencies using poetry
         run: |
-          pip install -r dev-requirements.txt
+          pip install poetry
+          poetry install --only dev
 
       # We will not run `flake8` here, as we will use a separate flake8
       # action. As pre-commit does not support user installs, we set
@@ -34,5 +41,6 @@ jobs:
       # Format used:
       # ::error file={filename},line={line},col={col}::{message}
       - name: Run flake8
-        run: "flake8 --format='::error file=%(path)s,line=%(row)d,col=%(col)d::\
-            [flake8] %(code)s: %(text)s'"
+        run: "flake8 \
+        --format='::error file=%(path)s,line=%(row)d,col=%(col)d::\
+        [flake8] %(code)s: %(text)s'"
