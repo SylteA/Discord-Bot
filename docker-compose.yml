@@ -1,0 +1,37 @@
+version: '3'
+
+# Run as
+# docker-compose build; docker-compose up -d
+# Check with
+# docker ps
+# Then check the logs with
+# docker logs --tail 50 $container_id
+# docker-compose images
+# docker-compose logs --tail 20 repo_name
+
+services:
+
+  postgres_db:
+    image: postgres:13.8
+    env_file:
+    - postgres_db.env
+    networks:
+      - discord-bot
+    volumes:
+      - ./postgres:/docker-entrypoint-initdb.d
+
+  python_app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+    - example.env
+    depends_on:
+      - postgres_db
+    networks:
+      - discord-bot
+
+
+networks:
+  discord-bot:
+    driver: bridge
