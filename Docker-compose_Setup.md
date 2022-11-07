@@ -2,11 +2,11 @@
 
 docker-compose build
 
-**To launch up and database use command** 
+**To launch up and database use command**
 
 docker-compose up
 
-**To setup postgres details use** 
+**To setup postgres details use**
 
 postgres_db.env
 

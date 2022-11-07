@@ -1,37 +1,33 @@
-version: '3'
+version: "3"
 
-# Run as
-# docker-compose build; docker-compose up -d
-# Check with
-# docker ps
-# Then check the logs with
-# docker logs --tail 50 $container_id
-# docker-compose images
-# docker-compose logs --tail 20 repo_name
+volumes:
+  postgres:
+
+networks:
+  twt:
+    external: {}
 
 services:
-
-  postgres_db:
+  postgres:
     image: postgres:13.8
-    env_file:
-    - postgres_db.env
-    networks:
-      - discord-bot
+    restart: unless-stopped
+    ports: ["5432:5432"]
     volumes:
-      - ./postgres:/docker-entrypoint-initdb.d
+      - postgres:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=TWT
+      - POSTGRES_USER=TWT
+      - POSTGRES_PASSWORD=TWT
+    networks: [twt]
 
-  python_app:
+  bot:
     build:
       context: .
       dockerfile: Dockerfile
-    env_file:
-    - example.env
+    restart: unless-stopped
     depends_on:
-      - postgres_db
-    networks:
-      - discord-bot
-
-
-networks:
-  discord-bot:
-    driver: bridge
+      - postgres
+    env_file: .env
+    environment:
+      POSTGRES__URI: postgres://TWT:TWT@postgres/TWT
+    networks: [twt]
