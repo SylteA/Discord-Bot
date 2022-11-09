@@ -11,10 +11,10 @@ from discord.ext import commands
 from discord.utils import get
 from tabulate import tabulate
 
-from .utils.checks import is_staff
-from .utils.models import Model, User
-from .utils.time import human_timedelta
-from .youtube import to_pages_by_lines
+from cogs.utils.checks import is_staff
+from cogs.utils.models import Model, User
+from cogs.utils.time import human_timedelta
+from cogs.youtube import to_pages_by_lines
 
 
 def finder(text, collection, *, key=None, lazy=True):
@@ -74,7 +74,7 @@ def parse_object_inv(stream, url):
     if inv_version != "# Sphinx inventory version 2":
         raise RuntimeError("Invalid objects.inv file version.")
     projname = stream.readline().rstrip()[11:]  # Project name; "# Project: <name>"
-    # version = stream.readline().rstrip()[11:]  # Version name; "# Version: <version>"
+    _ = stream.readline().rstrip()[11:]  # Version name; "# Version: <version>"
 
     line = stream.readline()  # says if it's a zlib header
     if "zlib" not in line:
