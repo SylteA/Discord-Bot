@@ -12,7 +12,7 @@ from discord.utils import get
 from tabulate import tabulate
 
 from .utils.checks import is_staff
-from .utils.DataBase import User
+from .utils.models import Model, User
 from .utils.time import human_timedelta
 from .youtube import to_pages_by_lines
 
@@ -241,7 +241,7 @@ class Commands(commands.Cog):
     async def top_user(self, ctx):
         """Find out who is the top user in our server!"""
         query = """SELECT * FROM users ORDER BY messages_sent DESC LIMIT 1"""
-        top_user = await self.bot.db.fetchrow(query)
+        top_user = await User.fetchrow(query)
 
         user = self.bot.get_user(top_user["id"])
         if not isinstance(user, discord.User):
@@ -254,7 +254,7 @@ class Commands(commands.Cog):
     @commands.command()
     async def server_messages(self, ctx):
         """Get the total amount of messages sent in the TWT Server"""
-        messages = await self.bot.db.fetchrow("SELECT COUNT(*) FROM messages")
+        messages = await Model.fetchrow("SELECT COUNT(*) FROM messages")
         count = messages["count"]
         started_counting = datetime(year=2019, month=11, day=13)
         await ctx.send(
@@ -267,7 +267,7 @@ class Commands(commands.Cog):
         """How many messages have you sent?"""
         member = member or ctx.author
 
-        user = await self.bot.db.get_user(member.id)
+        user = await User.fetch_user(member.id)
         embed = discord.Embed(color=member.color, description=member.mention)
         embed.set_author(name=str(member), icon_url=member.avatar.url)
         embed.add_field(name="Count", value=str(user.messages_sent))
@@ -278,8 +278,7 @@ class Commands(commands.Cog):
     @commands.command(aliases=["lb"])
     async def scoreboard(self, ctx):
         """Scoreboard over users message count"""
-        records = await self.bot.db.fetch("SELECT * FROM users ORDER BY messages_sent DESC LIMIT 10")
-        users = [User(bot=self.bot, messages=[], reps=[], **record) for record in records]
+        users = await User.fetch("SELECT * FROM users ORDER BY messages_sent DESC LIMIT 10")
 
         table = []
         for user in users:

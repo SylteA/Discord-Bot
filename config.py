@@ -60,8 +60,8 @@ class Notification(BaseModel):
 
 
 class Postgres(BaseModel):
-    max_poll_connections: int
-    min_poll_connections: int
+    max_pool_connections: int
+    min_pool_connections: int
     uri: PostgresDsn
 
 
