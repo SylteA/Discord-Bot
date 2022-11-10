@@ -15,10 +15,11 @@ from config import settings
 from migrations.migration import Migration
 
 FN = TypeVar("FN", bound=Callable)
+ROOT_DIR = pathlib.Path(__file__).parent.resolve()
 REVISION_FILE = re.compile(r"(?P<version>\d+)_(?P<direction>(up)|(down))__(?P<name>.+).sql")
 
 
-def _async(func: FN) -> FN:
+def async_command(func: FN) -> FN:
     loop = asyncio.get_event_loop()
 
     @wraps(func)
@@ -28,18 +29,23 @@ def _async(func: FN) -> FN:
     return wrapper
 
 
-def get_revisions() -> Tuple[Dict[Tuple[int, str], Migration], int]:
-    root = pathlib.Path("migrations")
-    revisions = {}
-    for file in root.glob("*.sql"):
-        match = REVISION_FILE.match(file.name)
-        if match is not None:
-            mig = Migration.from_match(match)
-            revisions[mig.version, mig.direction] = mig
-    s, k = {}, 0
-    for k in sorted(revisions.keys()):
-        s[k] = revisions[k]
-    return s, k
+class Revisions:
+    _revisions = {}
+
+    @classmethod
+    def revisions(cls) -> Dict[Tuple[int, str], Migration]:
+        if not cls._revisions:
+            cls.load_revisions()
+        return cls._revisions
+
+    @classmethod
+    def load_revisions(cls) -> None:
+        root = ROOT_DIR / "migrations"
+        for file in root.glob("*.sql"):
+            match = REVISION_FILE.match(file.name)
+            if match is not None:
+                mig = Migration.from_match(match)
+                cls._revisions[mig.version, mig.direction] = mig
 
 
 async def create_pool():
@@ -52,7 +58,7 @@ async def create_pool():
 
 @click.group(invoke_without_command=True)
 @click.pass_context
-@_async
+@async_command
 async def main(ctx):
     if ctx.invoked_subcommand is None:
         discord.utils.setup_logging()
@@ -61,7 +67,7 @@ async def main(ctx):
 
 
 async def run_migration(file: str = "000_migrations.sql") -> None:
-    path = pathlib.Path("migrations")
+    path = ROOT_DIR / "migrations"
 
     with open(path / file) as f:
         query = f.read()
@@ -69,7 +75,7 @@ async def run_migration(file: str = "000_migrations.sql") -> None:
     await Model.execute(query)
     match = REVISION_FILE.match(file)
 
-    if match is None:
+    if match is not None:
         mig = Migration.from_match(match)
         await mig.post()
 
@@ -80,13 +86,13 @@ async def get_current_db_rev() -> Optional[Migration]:
     try:
         return await Migration.fetch_latest()
     except asyncpg.UndefinedTableError:
-        click.echo("Relation 'migrations' does not exits.\nCreating one now...")
+        click.echo("Relation 'migrations' does not exits.\nCreating one now...", err=True)
         await run_migration()
 
 
 @main.group(invoke_without_command=True)
 @click.pass_context
-@_async
+@async_command
 async def migrate(ctx):
     """Show the current migrate info"""
 
@@ -108,8 +114,8 @@ async def migrate(ctx):
         )
 
 
-async def update(n: int):
-    """n > 0: upgrading ;; n < 0: downgrading"""
+async def update(steps: int):
+    """steps > 0: upgrading ;; steps < 0: downgrading"""
 
     fake0 = Migration(version=0, direction="up", name="")
     cur = await get_current_db_rev()
@@ -117,7 +123,7 @@ async def update(n: int):
     if cur is None:
         cur = fake0
 
-    revs, (k, _) = get_revisions()
+    revs = Revisions.revisions()
 
     if cur.direction == "down":
         if cur.version == 1:
@@ -125,12 +131,12 @@ async def update(n: int):
         else:
             cur = revs[cur.version - 1, "up"]
 
-    target = cur.version + n
+    target = cur.version + steps
 
     if target < 0:
-        return click.echo("Can't migrate down that much")
-    elif target > k:
-        return click.echo("Can't migrate up that much")
+        return click.echo("Can't migrate down that far")
+    elif target > max(revs.keys())[0]:
+        return click.echo("Can't migrate up that far")
 
     while cur.version != target:
         if cur.version < target:
@@ -142,51 +148,58 @@ async def update(n: int):
 
 
 @migrate.command()
-@_async
+@async_command
 async def init():
-    """Executes the initial migration."""
+    """Executes the initial migration. Creating a `migrations` table."""
     await run_migration()
 
 
 @migrate.command()
 @click.argument("version", type=int)
-@click.argument("direction", type=str, default="up")
-@_async
+@click.argument("direction", type=str)
+@async_command
 async def run(version: int, direction: str):
     """Executes a specific migration."""
     if version < 1:
-        return click.echo("Version can't be less than 1.")
+        return click.echo("Version can't be less than 1.", err=True)
 
     if direction not in ("up", "down"):
-        return click.echo("Direction can be either 'up' or 'down'")
+        return click.echo("Direction can be either 'up' or 'down'", err=True)
 
-    revs, _ = get_revisions()
-    rev = revs.get((version, direction))
+    rev = Revisions.revisions().get((version, direction))
 
     if rev is None:
-        return click.echo("Migration with that version/direction doesn't exist.")
+        return click.echo("Migration with that version/direction doesn't exist.", err=True)
 
     await run_migration(rev.filename)
 
 
 @migrate.command()
-@click.argument("n", type=int, default=1)
-@_async
-async def up(n: int):
-    """Migrating up n times. (n >= 1 ;; n = 1 by default)"""
-    if n < 1:
-        return click.echo("Passed integer mast be >= 1")
-    await update(n)
+@click.argument("steps", type=int, required=False)
+@async_command
+async def up(steps: Optional[int]):
+    """Migrating up. Migrates up all the way if `steps` isn't passed (steps >= 1)"""
+    if steps is None:
+        steps, _ = max(Revisions.revisions().keys())
+    if steps < 1:
+        return click.echo("`steps` must be >= 1", err=True)
+    await update(steps)
 
 
 @migrate.command()
-@click.argument("n", type=int, default=1)
-@_async
-async def down(n: int):
-    """Migrating down n times. (n >= 1 ;; n = 1 by default)"""
-    if n < 1:
-        return click.echo("Passed integer mast be >= 1")
-    await update(-n)
+@click.option("--confirm", "-c", help="Skips the confirmation message", is_flag=True)
+@click.argument("steps", type=int, required=False)
+@async_command
+async def down(steps: Optional[int], confirm):
+    """Migrating down. Migrates down all the way if `steps` isn't passed (steps >= 1)"""
+    confirm = confirm or click.confirm("This may drop postgresql tables, continue?")
+    if confirm is False:
+        return
+    if steps is None:
+        steps, _ = max(Revisions.revisions().keys())
+    if steps < 1:
+        return click.echo("`steps` must be >= 1", err=True)
+    await update(-steps)
 
 
 if __name__ == "__main__":
