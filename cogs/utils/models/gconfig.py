@@ -1,5 +1,7 @@
-from json import dumps
+from json import dumps, loads
 from typing import List, Optional, Union
+
+from pydantic import validator
 
 from .model import Model
 
@@ -10,6 +12,8 @@ class FilterConfig(Model):
     whitelist_channels: List[int]
     reasons: dict
     enabled: bool = True
+
+    _validate_reasons = validator("reasons", pre=True)(lambda r: loads(r) if isinstance(r, str) else r)
 
     @classmethod
     async def fetch_config(cls, guild_id: int, create_if_no_exist=True) -> Optional["FilterConfig"]:

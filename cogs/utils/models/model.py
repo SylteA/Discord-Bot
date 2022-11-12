@@ -32,23 +32,35 @@ class Model(BaseModel):
         return await connect(uri, **kwargs)
 
     @classmethod
-    async def fetch(cls: Type[BM], query, *args, convert: bool = True) -> Union[List[BM], List[Record]]:
-        records = await cls.pool.fetch(query, *args)
+    async def fetch(
+        cls: Type[BM], query, *args, con: Union[Connection, Pool] = None, convert: bool = True
+    ) -> Union[List[BM], List[Record]]:
+        if con is None:
+            con = cls.pool
+        records = await con.fetch(query, *args)
         if cls is Model or convert is False:
             return records
         return [cls(**record) for record in records]
 
     @classmethod
-    async def fetchrow(cls: Type[BM], query, *args, convert: bool = True) -> Union[BM, Record, None]:
-        record = await cls.pool.fetchrow(query, *args)
+    async def fetchrow(
+        cls: Type[BM], query, *args, con: Union[Connection, Pool] = None, convert: bool = True
+    ) -> Union[BM, Record, None]:
+        if con is None:
+            con = cls.pool
+        record = await con.fetchrow(query, *args)
         if cls is Model or record is None or convert is False:
             return record
         return cls(**record)
 
     @classmethod
-    async def fetchval(cls, query, *args, column: int = 0):
-        return await cls.pool.fetchval(query, *args, column=column)
+    async def fetchval(cls, query, *args, con: Union[Connection, Pool] = None, column: int = 0):
+        if con is None:
+            con = cls.pool
+        return await con.fetchval(query, *args, column=column)
 
     @classmethod
-    async def execute(cls, query: str, *args) -> str:
-        return await cls.pool.execute(query, *args)
+    async def execute(cls, query: str, *args, con: Union[Connection, Pool] = None) -> str:
+        if con is None:
+            con = cls.pool
+        return await con.execute(query, *args)

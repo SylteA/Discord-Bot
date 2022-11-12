@@ -169,7 +169,7 @@ class Filtering(commands.Cog):
         await config.update()
         await ctx.send(f"Removed {url} from the blacklist.")
         if config.has_reason(url):
-            del config[url]
+            del config.reasons[url]
             await config.update()
 
     @blacklist.command()

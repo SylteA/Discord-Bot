@@ -1,8 +1,7 @@
 from datetime import datetime
 from typing import Optional, Union
 
-from discord import Member
-from discord import User as Discord_User
+import discord
 from pydantic import Field
 
 from .model import Model
@@ -19,7 +18,7 @@ class User(Model):
         Unless someone mis-uses this.
         If a conflict somehow still occurs nothing will happen. ( hopefully :shrug: )"""
         query = """SELECT count(*) FROM users WHERE id = $1"""
-        assure_exclusive = await self.fetchval(query)
+        assure_exclusive = await self.fetchval(query, self.id)
         if assure_exclusive == 0:
             query = """INSERT INTO users ( id, commands_used, joined_at, messages_sent )
                     VALUES ( $1, $2, $3, $4 )
@@ -36,12 +35,14 @@ class User(Model):
         return user
 
     @classmethod
-    async def on_command(cls, user: Union[Member, Discord_User]):
+    async def on_command(cls, user: Union[discord.Member, discord.User]):
+        await cls.fetch_user(user.id)
         query = """UPDATE users SET commands_used = commands_used + 1 WHERE id = $1"""
         await cls.execute(query, user.id)
 
     @classmethod
-    async def on_message(cls, user: Union[Member, Discord_User]):
+    async def on_message(cls, user: Union[discord.Member, discord.User]):
+        await cls.fetch_user(user.id)
         query = """UPDATE users SET messages_sent = messages_sent + 1 WHERE id = $1"""
         await cls.execute(query, user.id)
 
