@@ -4,6 +4,11 @@ from discord.ext import commands
 from config import settings
 
 
+def check(ctx):
+    roles = [r.id for r in ctx.author.roles]
+    return 713170076148433017 in roles or 767389648048619553 in roles
+
+
 class ChallengeHandler(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -16,6 +21,33 @@ class ChallengeHandler(commands.Cog):
         """All of the Challenges commands"""
         if not ctx.invoked_subcommand:
             await ctx.send_help(ctx.command)
+
+    @challenges_group.command(
+        name="remove_winners",
+        aliases=("rwr"),
+        brief="Remove Challenge Winner roles"
+    )
+    @commands.check(check)
+    async def remove_winners(ctx):
+        role = ctx.guild.get_role(692022273934360586)
+        for member in role.members:
+            await member.remove_roles(role)
+        await ctx.send("Done.")
+
+    @challenges_group.command(
+        name="assign_winners", 
+        aliases=("awr"),
+        brief="Assign Challenge Winner roles")
+    @commands.check(check)
+    async def assign_winners(ctx, message: discord.Message):
+        m = await bot.get_channel(680851838857117770).fetch_message(message.id)
+        for i in re!.findall(r"<@!?(\d+)>", m.embeds[0].description):
+            member = guild.get_member(int(i))
+            if member:
+                await member.add_roles(discord.Object(id=692022273934360586))
+            else:
+                await ctx.send(str(await bot.fetch_user(int(i))))
+        await ctx.send("Done.")
 
     @challenges_group.command(
         name="resubmit",
