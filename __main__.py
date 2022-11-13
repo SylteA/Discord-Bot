@@ -114,8 +114,11 @@ async def migrate(ctx):
         )
 
 
-async def update(steps: int):
-    """steps > 0: upgrading ;; steps < 0: downgrading"""
+async def update(n: int, is_target: bool = False):
+    """
+    :param n: amount of steps if `is_target` is False (default), otherwise it is treated as a target version
+    :param is_target: whether to treat n as the targeted version or amount of steps
+    """
 
     fake0 = Migration(version=0, direction="up", name="")
     cur = await get_current_db_rev()
@@ -131,7 +134,20 @@ async def update(steps: int):
         else:
             cur = revs[cur.version - 1, "up"]
 
-    target = cur.version + steps
+    if is_target:
+        k = n if n > 0 else -n - 1
+        if k == cur.version:
+            return click.echo("Current migration's version is already equal to targeted version", err=True)
+
+        if n > 0 and n > cur.version:
+            n = n - cur.version
+        elif n < 0 and n < cur.version:
+            n = -n - cur.version - 1
+        else:
+            w = "higher" if n > 0 else "lower"
+            return click.echo(f"Current migration's version is already {w} than targeted version", err=True)
+
+    target = cur.version + n
 
     if target < 0:
         return click.echo("Can't migrate down that far")
@@ -175,31 +191,35 @@ async def run(version: int, direction: str):
 
 
 @migrate.command()
-@click.argument("steps", type=int, required=False)
+@click.argument("n", type=int, required=False)
+@click.option("--target", "-t", help="Treats n as a targeted version.", is_flag=True)
 @async_command
-async def up(steps: Optional[int]):
-    """Migrating up. Migrates up all the way if `steps` isn't passed (steps >= 1)"""
-    if steps is None:
-        steps, _ = max(Revisions.revisions().keys())
-    if steps < 1:
-        return click.echo("`steps` must be >= 1", err=True)
-    await update(steps)
+async def up(n: Optional[int], target):
+    """Migrating up. Migrates up all the way if `n` isn't passed (n >= 1)"""
+    if n is None:
+        n, _ = max(Revisions.revisions().keys())
+        target = True
+    if n < 1:
+        return click.echo("Passed argument must be >= 1", err=True)
+    await update(n, is_target=target)
 
 
 @migrate.command()
+@click.argument("n", type=int, required=False)
 @click.option("--confirm", "-c", help="Skips the confirmation message", is_flag=True)
-@click.argument("steps", type=int, required=False)
+@click.option("--target", "-t", help="Treats n as a targeted version.", is_flag=True)
 @async_command
-async def down(steps: Optional[int], confirm):
-    """Migrating down. Migrates down all the way if `steps` isn't passed (steps >= 1)"""
+async def down(n: Optional[int], confirm, target):
+    """Migrating down. Migrates down all the way if `n` isn't passed (n >= 1)"""
     confirm = confirm or click.confirm("This may drop postgresql tables, continue?")
     if confirm is False:
         return
-    if steps is None:
-        steps, _ = max(Revisions.revisions().keys())
-    if steps < 1:
-        return click.echo("`steps` must be >= 1", err=True)
-    await update(-steps)
+    if n is None:
+        n = 1
+        target = True
+    if n < 1:
+        return click.echo("Passed argument must be >= 1", err=True)
+    await update(-n, is_target=target)
 
 
 if __name__ == "__main__":
