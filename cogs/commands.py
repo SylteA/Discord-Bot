@@ -14,7 +14,17 @@ from tabulate import tabulate
 from cogs.utils.checks import is_staff
 from cogs.utils.DataBase import User
 from cogs.utils.time import human_timedelta
-from cogs.youtube import to_pages_by_lines
+
+
+def to_pages_by_lines(content: str, max_size: int):
+    pages = [""]
+    i = 0
+    for line in content.splitlines(keepends=True):
+        if len(pages[i] + line) > max_size:
+            i += 1
+            pages.append("")
+        pages[i] += line
+    return pages
 
 
 def finder(text, collection, *, key=None, lazy=True):
