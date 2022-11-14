@@ -1,3 +1,5 @@
+import re
+
 import discord
 from discord.ext import commands
 
@@ -16,6 +18,24 @@ class ChallengeHandler(commands.Cog):
         """All of the Challenges commands"""
         if not ctx.invoked_subcommand:
             await ctx.send_help(ctx.command)
+
+    @challenges_group.command(name="remove_winners", aliases=("rwr"), brief="Remove Challenge Winner roles")
+    async def remove_winners(self, ctx):
+        role = ctx.guild.get_role(settings.challenges.winner_role_id)
+        for member in role.members:
+            await member.remove_roles(role)
+        await ctx.send("Done.")
+
+    @challenges_group.command(name="assign_winners", aliases=("awr"), brief="Assign Challenge Winner roles")
+    async def assign_winners(self, ctx, message: discord.Message):
+        m = await self.bot.get_channel(settings.challenges.discussion_channel_id).fetch_message(message.id)
+        for i in re.findall(r"<@!?(\d+)>", m.embeds[0].description):
+            member = ctx.guild.get_member(int(i))
+            if member:
+                await member.add_roles(discord.Object(settings.challenges.winner_role_id))
+            else:
+                await ctx.send(f"Winner role not assigned to {await self.bot.fetch_user(int(i))}")
+        await ctx.send("Done.")
 
     @challenges_group.command(
         name="resubmit",

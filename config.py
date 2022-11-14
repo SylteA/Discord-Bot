@@ -22,6 +22,7 @@ class Bot(BaseModel):
 
 class Challenges(BaseModel):
     channel_id: int
+    discussion_channel_id: int
     host_helper_role_id: int
     host_role_id: int
     info_channel_id: int
