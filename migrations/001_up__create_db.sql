@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS tags
     created_at TIMESTAMP WITH TIME ZONE
 );
 
-CREATE TABLE IF NOT EXISTS pools
+CREATE TABLE IF NOT EXISTS polls
 (
     guild_id    BIGINT,
     author_id   BIGINT,

@@ -4,5 +4,5 @@ CREATE TABLE IF NOT EXISTS migrations
     version   SMALLINT,
     direction TEXT,
     name      TEXT,
-    timestamp TIMESTAMP DEFAULT (now() AT TIME ZONE 'utc')
-);
+    timestamp TIMESTAMP DEFAULT NOW()
+)
