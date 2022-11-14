@@ -19,14 +19,14 @@ class ChallengeHandler(commands.Cog):
         if not ctx.invoked_subcommand:
             await ctx.send_help(ctx.command)
 
-    @challenges_group.command(name="remove_winners", aliases=("rwr"), brief="Remove Challenge Winner roles")
+    @challenges_group.command(name="remove_winners", aliases=("rwr",), brief="Remove Challenge Winner roles")
     async def remove_winners(self, ctx):
         role = ctx.guild.get_role(settings.challenges.winner_role_id)
         for member in role.members:
             await member.remove_roles(role)
         await ctx.send("Done.")
 
-    @challenges_group.command(name="assign_winners", aliases=("awr"), brief="Assign Challenge Winner roles")
+    @challenges_group.command(name="assign_winners", aliases=("awr",), brief="Assign Challenge Winner roles")
     async def assign_winners(self, ctx, message: discord.Message):
         m = await self.bot.get_channel(settings.challenges.discussion_channel_id).fetch_message(message.id)
         for i in re.findall(r"<@!?(\d+)>", m.embeds[0].description):
