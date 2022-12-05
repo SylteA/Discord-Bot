@@ -15,7 +15,10 @@ from config import settings
 log = logging.getLogger(__name__)
 loop = asyncio.get_event_loop()
 
-API_URL = "https://adventofcode.com/2021/leaderboard/private/view/975452.json"
+previous_year = 0 if datetime.now(tz=pytz.timezone("EST")).strftime("%m") == "12" else 1
+YEAR = int(datetime.now(tz=pytz.timezone("EST")).strftime("%Y")) - previous_year
+
+API_URL = f"https://adventofcode.com/{YEAR}/leaderboard/private/view/975452.json"
 INTERVAL = 120
 AOC_REQUEST_HEADER = {"user-agent": "TWT AoC Event Bot"}
 AOC_SESSION_COOKIE = {"session": settings.aoc.session_cookie}
@@ -58,7 +61,7 @@ async def day_countdown(bot: commands.Bot) -> None:
         if not aoc_role:
             break
 
-        puzzle_url = f"https://adventofcode.com/2021/day/{tomorrow.day}"
+        puzzle_url = f"https://adventofcode.com/{YEAR}/day/{tomorrow.day}"
 
         # Check if the puzzle is already available to prevent our members from spamming
         # the puzzle page before it's available by making a small HEAD request.
@@ -96,8 +99,8 @@ class AdventOfCode(commands.Cog, name="Advent of Code"):
     def __init__(self, bot):
         self.bot = bot
 
-        self._base_url = "https://adventofcode.com/2021"
-        self.global_leaderboard_url = "https://adventofcode.com/2021/leaderboard"
+        self._base_url = f"https://adventofcode.com/{YEAR}"
+        self.global_leaderboard_url = f"https://adventofcode.com/{YEAR}/leaderboard"
         self.private_leaderboard_url = f"{self._base_url}/leaderboard/private/view/975452"
 
         countdown_coro = day_countdown(self.bot)
@@ -223,7 +226,7 @@ class AdventOfCode(commands.Cog, name="Advent of Code"):
         embed = discord.Embed(
             title=f"{ctx.guild.name} Advent of Code Leaderboard",
             colour=discord.Colour(0x68C290),
-            url="https://adventofcode.com/2021/leaderboard/private/view/975452",
+            url=f"https://adventofcode.com/{YEAR}/leaderboard/private/view/975452",
         )
 
         leaderboard = {
@@ -255,7 +258,7 @@ class AdventOfCode(commands.Cog, name="Advent of Code"):
             await ctx.send(f"Please use the <#{settings.aoc.channel_id}>")
             return
 
-        aoc_url = "https://adventofcode.com/2021/leaderboard"
+        aoc_url = f"https://adventofcode.com/{YEAR}/leaderboard"
         number_of_people_to_display = min(25, number_of_people_to_display)
 
         async with aiohttp.ClientSession(headers=AOC_REQUEST_HEADER) as session:
