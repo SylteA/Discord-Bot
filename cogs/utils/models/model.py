@@ -5,8 +5,6 @@ from typing import ClassVar, List, Type, TypeVar, Union
 from asyncpg import Connection, Pool, Record, connect, create_pool
 from pydantic import BaseModel
 
-from config import settings
-
 BM = TypeVar("BM", bound="Model")
 log = logging.getLogger(__name__)
 
@@ -17,10 +15,10 @@ class Model(BaseModel):
     @classmethod
     async def create_pool(
         cls,
-        uri: str = settings.postgres.uri,
+        uri: str,
         *,
-        min_con: int = settings.postgres.min_pool_connections,
-        max_con: int = settings.postgres.max_pool_connections,
+        min_con: int = 1,
+        max_con: int = 10,
         loop: asyncio.AbstractEventLoop = None,
         **kwargs,
     ) -> None:
@@ -28,7 +26,7 @@ class Model(BaseModel):
         log.info(f"Established a pool with {min_con} - {max_con} connections\n")
 
     @classmethod
-    async def create_connection(cls, uri: str = settings.postgres.uri, **kwargs) -> Connection:
+    async def create_connection(cls, uri: str, **kwargs) -> Connection:
         return await connect(uri, **kwargs)
 
     @classmethod

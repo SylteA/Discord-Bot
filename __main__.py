@@ -51,7 +51,7 @@ class Revisions:
 async def create_pool():
     log = logging.getLogger()
     try:
-        await Model.create_pool()
+        await Model.create_pool(uri=settings.postgres.uri)
     except Exception as e:
         return log.exception("Could not set up PostgreSQL.", exc_info=e)  # None
 
