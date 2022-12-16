@@ -264,8 +264,7 @@ class Commands(commands.Cog):
     @commands.command()
     async def server_messages(self, ctx):
         """Get the total amount of messages sent in the TWT Server"""
-        messages = await Model.fetchrow("SELECT COUNT(*) FROM messages")
-        count = messages["count"]
+        count = await Model.fetchval("SELECT COUNT(*) FROM messages")
         started_counting = datetime(year=2019, month=11, day=13)
         await ctx.send(
             f"I have read `{count}` messages after "
