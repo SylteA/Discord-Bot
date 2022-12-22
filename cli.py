@@ -211,7 +211,7 @@ async def up(n: Optional[int], target):
 @async_command
 async def down(n: Optional[int], confirm, target):
     """Migrating down. Migrates down all the way if `n` isn't passed (n >= 1)"""
-    confirm = confirm or click.confirm("This may drop postgresql tables, continue?")
+    confirm = confirm or click.confirm("This may result in loss of data, continue?\n")
     if confirm is False:
         return
     if n is None:
