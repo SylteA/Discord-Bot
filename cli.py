@@ -1,5 +1,4 @@
 import asyncio
-import logging
 import pathlib
 import re
 from functools import wraps
@@ -48,21 +47,13 @@ class Revisions:
                 cls._revisions[mig.version, mig.direction] = mig
 
 
-async def create_pool():
-    log = logging.getLogger()
-    try:
-        await Model.create_pool(uri=settings.postgres.uri)
-    except Exception as e:
-        return log.exception("Could not set up PostgreSQL.", exc_info=e)  # None
-
-
 @click.group(invoke_without_command=True)
 @click.pass_context
 @async_command
 async def main(ctx):
     if ctx.invoked_subcommand is None:
         discord.utils.setup_logging()
-        await create_pool()
+        await Model.create_pool(uri=settings.postgres.uri)
         await Tim().start(settings.bot.token)
 
 
@@ -96,7 +87,7 @@ async def get_current_db_rev() -> Optional[Migration]:
 async def migrate(ctx):
     """Show the current migrate info"""
 
-    await create_pool()  # Setup db for (sub)commands to use
+    await Model.create_pool(uri=settings.postgres.uri)  # Setup db for (sub)commands to use
 
     if ctx.invoked_subcommand is not None:
         return
