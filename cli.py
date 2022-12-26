@@ -48,26 +48,22 @@ class Revisions:
                 cls._revisions[mig.version, mig.direction] = mig
 
 
-async def prepare_postgres(
-    retries: int = 5,
-    interval: float = 5.0,
-) -> bool:
+async def prepare_postgres(postgres_uri: str, retries: int = 5, interval: float = 5.0, **cp_kwargs) -> bool:
     """
     Prepare the postgres database connection.
-    :param int retries:     Included to fix issue with docker starting API before DB is finished starting.
-    :param float interval:  Interval of which to wait for next retry.
+
+    :param str postgres_uri:  The postgresql URI to connect to.
+    :param int retries:       Included to fix issue with docker starting API before DB is finished starting.
+    :param float interval:    Interval of which to wait for next retry.
     """
 
     log = logging.getLogger("DB")
-    db_uri = settings.postgres.uri
-    db_name = db_uri.split("/")[-1]
+    db_name = postgres_uri.split("/")[-1]
 
     log.info(f'Attempting to connect to DB "{db_name}"')
     for i in range(1, retries + 1):
         try:
-            await Model.create_pool(
-                uri=db_uri,
-            )
+            await Model.create_pool(uri=postgres_uri, **cp_kwargs)
             break
 
         except asyncpg.InvalidPasswordError as e:
@@ -93,7 +89,7 @@ async def prepare_postgres(
 async def main(ctx):
     if ctx.invoked_subcommand is None:
         discord.utils.setup_logging()
-        if await prepare_postgres():
+        if await prepare_postgres(settings.postgres.uri):
             await Tim().start(settings.bot.token)
 
 
@@ -127,7 +123,7 @@ async def get_current_db_rev() -> Optional[Migration]:
 async def migrate(ctx):
     """Show the current migrate info"""
 
-    if not await prepare_postgres():  # Setup db for (sub)commands to use
+    if not await prepare_postgres(settings.postgres.uri):  # Setup db for (sub)commands to use
         return click.echo("Failed to prepare Postgres.", err=True)
 
     if ctx.invoked_subcommand is not None:
