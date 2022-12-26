@@ -1,7 +1,10 @@
 import json
+import logging
 from typing import Dict, List
 
-from pydantic import BaseModel, BaseSettings, PostgresDsn, validator
+from pydantic import BaseModel, BaseSettings, PostgresDsn, ValidationError, validator
+
+log = logging.getLogger(__name__)
 
 
 class AoC(BaseModel):
@@ -61,8 +64,6 @@ class Notification(BaseModel):
 
 
 class Postgres(BaseModel):
-    max_poll_connections: int
-    min_poll_connections: int
     uri: PostgresDsn
 
 
@@ -104,4 +105,8 @@ class Settings(BaseSettings):
         env_nested_delimiter = "__"
 
 
-settings = Settings()
+try:
+    settings = Settings()
+except ValidationError as e:
+    log.error("Damn you messed up the configuration\n" + str(e))
+    exit(1)

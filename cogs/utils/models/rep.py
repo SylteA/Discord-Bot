@@ -1,23 +1,16 @@
 from datetime import datetime, timedelta
-from json import dumps
+
+from pydantic import Field
+
+from .model import Model
 
 
-class Rep(object):
-    def __init__(
-        self,
-        bot,
-        rep_id: int,
-        user_id: int,
-        author_id: int,
-        repped_at: datetime = datetime.utcnow(),
-        extra_info: dict = None,
-    ):
-        self.bot = bot
-        self.rep_id = rep_id  # In most cases this is the id of the message that posted this.
-        self.user_id = user_id  # The user that recieved +1 rep.
-        self.author_id = author_id  # The user that gave +1 rep.
-        self.repped_at = repped_at
-        self.extra_info = dumps(extra_info)
+class Rep(Model):
+    rep_id: int
+    user_id: int
+    author_id: int
+    repped_at: datetime = Field(default_factory=datetime.utcnow)
+    extra_info: str = ""
 
     async def post(self, assure_24h: bool = True):
         """We shouldn't have to check for duplicate reps either. ->
@@ -37,16 +30,15 @@ class Rep(object):
                        ORDER BY repped_at DESC
                        LIMIT 1"""
 
-            record = await self.bot.db.fetch(query, self.author_id)
-            if record:
-                rep = Rep(bot=self.bot, **record[0])
+            rep = await self.fetchrow(query, self.author_id)
+            if rep:
                 if (rep.repped_at + timedelta(days=1)) > datetime.utcnow():
                     return rep.repped_at
 
         query = """INSERT INTO reps ( rep_id, user_id, author_id, repped_at, extra_info )
                    VALUES (  $1, $2, $3, $4, $5 )
                    ON CONFLICT DO NOTHING"""
-        await self.bot.db.execute(
+        await self.execute(
             query,
             self.rep_id,
             self.user_id,

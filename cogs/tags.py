@@ -8,10 +8,10 @@ from discord.ext import commands
 from config import settings
 
 from .utils.checks import is_admin, is_engineer_check, is_staff
-from .utils.DataBase.tag import Tag
+from .utils.models import Model, Tag
 
 if TYPE_CHECKING:
-    from main import Tim
+    from bot import Tim
 
 EMOJIS = [
     "\N{WHITE HEAVY CHECK MARK}",
@@ -97,7 +97,7 @@ class TagCommands(commands.Cog, name="Tags"):
     async def tag(self, ctx, *, name: commands.clean_content):
         """Main tag group."""
         name = name.lower()
-        tag = await self.bot.db.get_tag(guild_id=ctx.guild.id, name=name)
+        tag = await Tag.fetch_tag(guild_id=ctx.guild.id, name=name)
 
         if tag is None:
             await ctx.message.delete(delay=10.0)
@@ -105,7 +105,7 @@ class TagCommands(commands.Cog, name="Tags"):
             return await message.delete(delay=10.0)
 
         await ctx.send(tag.text)
-        await self.bot.db.execute(
+        await Model.execute(
             "UPDATE tags SET uses = uses + 1 WHERE guild_id = $1 AND name = $2",
             ctx.guild.id,
             name,
@@ -119,7 +119,7 @@ class TagCommands(commands.Cog, name="Tags"):
     async def info(self, ctx, *, name: commands.clean_content):
         """Get information regarding the specified tag."""
         name = name.lower()
-        tag = await self.bot.db.get_tag(guild_id=ctx.guild.id, name=name)
+        tag = await Tag.fetch_tag(guild_id=ctx.guild.id, name=name)
 
         if tag is None:
             await ctx.message.delete(delay=10.0)
@@ -143,7 +143,7 @@ class TagCommands(commands.Cog, name="Tags"):
         if len(text) > 2000:
             return await ctx.send("Tag text must be less than 2000 characters.")
 
-        tag = await self.bot.db.get_tag(guild_id=ctx.guild.id, name=name)
+        tag = await Tag.fetch_tag(guild_id=ctx.guild.id, name=name)
         if tag is not None:
             return await ctx.send("A tag with that name already exists.")
 
@@ -171,7 +171,7 @@ class TagCommands(commands.Cog, name="Tags"):
         """List your existing tags."""
         member = member or ctx.author
         query = """SELECT name FROM tags WHERE guild_id = $1 AND creator_id = $2 ORDER BY name"""
-        records = await self.bot.db.fetch(query, ctx.guild.id, member.id)
+        records = await Model.fetch(query, ctx.guild.id, member.id)
         if not records:
             return await ctx.send("No tags found.")
 
@@ -191,7 +191,7 @@ class TagCommands(commands.Cog, name="Tags"):
     @commands.cooldown(1, 3600 * 24, commands.BucketType.user)
     async def all(self, ctx: commands.Context):
         """List all existing tags alphabetically ordered and sends them in DMs."""
-        records = await self.bot.db.fetch("""SELECT name FROM tags WHERE guild_id = $1 ORDER BY name""", ctx.guild.id)
+        records = await Model.fetch("""SELECT name FROM tags WHERE guild_id = $1 ORDER BY name""", ctx.guild.id)
 
         if not records:
             return await ctx.send("This server doesn't have any tags.")
@@ -225,7 +225,7 @@ class TagCommands(commands.Cog, name="Tags"):
         if len(text) > 2000:
             return await ctx.send("Tag text must be less than 2000 characters.")
 
-        tag = await self.bot.db.get_tag(guild_id=ctx.guild.id, name=name)
+        tag = await Tag.fetch_tag(guild_id=ctx.guild.id, name=name)
 
         if tag is None:
             await ctx.message.delete(delay=10.0)
@@ -256,7 +256,7 @@ class TagCommands(commands.Cog, name="Tags"):
     async def delete(self, ctx, *, name: commands.clean_content):
         """Delete a tag."""
         name = name.lower()
-        tag = await self.bot.db.get_tag(guild_id=ctx.guild.id, name=name)
+        tag = await Tag.fetch_tag(guild_id=ctx.guild.id, name=name)
 
         if tag is None:
             await ctx.message.delete(delay=10.0)
@@ -287,7 +287,7 @@ class TagCommands(commands.Cog, name="Tags"):
     async def search(self, ctx, *, term: str):
         """Search for a tag given a search term. PostgreSQL syntax must be used for the search."""
         query = """SELECT name FROM tags WHERE guild_id = $1 AND name LIKE $2 LIMIT 10"""
-        records = await self.bot.db.fetch(query, ctx.guild.id, term)
+        records = await Model.fetch(query, ctx.guild.id, term)
 
         if not records:
             return await ctx.send("No tags found that has the term in it's name", delete_after=10)
@@ -306,7 +306,7 @@ class TagCommands(commands.Cog, name="Tags"):
         if len(new_name) > 32:
             return await ctx.send("Tag name must be less than 32 characters.")
 
-        tag = await self.bot.db.get_tag(guild_id=ctx.guild.id, name=name)
+        tag = await Tag.fetch_tag(guild_id=ctx.guild.id, name=name)
 
         if tag is None:
             await ctx.message.delete(delay=10.0)
@@ -317,7 +317,7 @@ class TagCommands(commands.Cog, name="Tags"):
             if not is_admin(ctx.author):
                 return await ctx.send("You don't have permission to do that.")
 
-        if await self.bot.db.get_tag(guild_id=ctx.guild.id, name=new_name):
+        if await Tag.fetch_tag(guild_id=ctx.guild.id, name=new_name):
             return await ctx.send("A tag with that name already exists.")
 
         kwargs = dict(
@@ -342,7 +342,7 @@ class TagCommands(commands.Cog, name="Tags"):
         """Append some content to the end of a tag"""
         name = name.lower()
 
-        tag = await self.bot.db.get_tag(guild_id=ctx.guild.id, name=name)
+        tag = await Tag.fetch_tag(guild_id=ctx.guild.id, name=name)
 
         if tag is None:
             await ctx.message.delete(delay=10.0)
@@ -427,7 +427,7 @@ class TagCommands(commands.Cog, name="Tags"):
         creator_id = int(embed.fields[-1].value.split("(")[-1][:-1])
         author = await self.bot.resolve_user(creator_id)
         if approved:
-            tag = await self.bot.db.get_tag(guild_id=message.guild.id, name=before)
+            tag = await Tag.fetch_tag(guild_id=message.guild.id, name=before)
 
             if tag is None:
                 # embed.title = "Tag Rename Failed"
@@ -468,7 +468,7 @@ class TagCommands(commands.Cog, name="Tags"):
                 name=name,
                 text=text,
             )
-            if await self.bot.db.get_tag(guild_id=message.guild.id, name=name):
+            if await Tag.fetch_tag(guild_id=message.guild.id, name=name):
                 # embed.title = "Tag Create Failed"
                 # embed.colour = discord.Color.red()
                 # return await message.edit(embed=embed)
@@ -504,7 +504,7 @@ class TagCommands(commands.Cog, name="Tags"):
         author = await self.bot.resolve_user(creator_id)
 
         if approved:
-            tag = await self.bot.db.get_tag(guild_id=message.guild.id, name=name)
+            tag = await Tag.fetch_tag(guild_id=message.guild.id, name=name)
 
             if tag is None:
                 # embeds[0].title = "Tag Update Failed"
