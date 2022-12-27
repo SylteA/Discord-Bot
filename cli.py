@@ -89,7 +89,11 @@ async def prepare_postgres(postgres_uri: str, retries: int = 5, interval: float 
 async def main(ctx):
     if ctx.invoked_subcommand is None:
         discord.utils.setup_logging()
-        if await prepare_postgres(settings.postgres.uri):
+        if await prepare_postgres(
+            settings.postgres.uri,
+            max_con=settings.postgres.max_pool_connections,
+            min_con=settings.postgres.min_pool_connections,
+        ):
             await Tim().start(settings.bot.token)
 
 
