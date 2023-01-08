@@ -29,7 +29,7 @@ class Message(Model):
             self.channel_id,
             self.author_id,
             self.content,
-            self.created_at,
+            self.created_at.replace(tzinfo=None),
         )
 
     @classmethod
