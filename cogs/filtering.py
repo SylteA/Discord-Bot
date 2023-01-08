@@ -6,6 +6,7 @@ import discord
 from discord.ext import commands
 
 from .utils.checks import is_staff
+from .utils.models import FilterConfig
 
 
 class Filtering(commands.Cog):
@@ -21,7 +22,7 @@ class Filtering(commands.Cog):
 
     async def assure_config(self, guild_id: int):
         if str(guild_id) not in self.configs:
-            config = await self.bot.db.get_config(guild_id)
+            config = await FilterConfig.fetch_config(guild_id)
             self.configs[str(guild_id)] = config
 
     @commands.Cog.listener()
@@ -168,7 +169,7 @@ class Filtering(commands.Cog):
         await config.update()
         await ctx.send(f"Removed {url} from the blacklist.")
         if config.has_reason(url):
-            del config[url]
+            del config.reasons[url]
             await config.update()
 
     @blacklist.command()

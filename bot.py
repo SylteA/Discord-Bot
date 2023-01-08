@@ -24,11 +24,10 @@ from discord.ext.commands.errors import (
 )
 
 from cogs.utils.context import SyltesContext
-from cogs.utils.DataBase import DataBase, Message, User
+from cogs.utils.models import Message, User
 from cogs.utils.time import human_timedelta
 from config import settings
 
-discord.utils.setup_logging()
 log = logging.getLogger(__name__)
 
 os.environ.update(JISHAKU_NO_UNDERSCORE="True", JISHAKU_NO_DM_TRACEBACK="True", JISHAKU_HIDE="True")
@@ -64,7 +63,6 @@ class Tim(commands.Bot):
         """Connect DB before bot is ready to assure that no calls are made before its ready"""
         self.presence.start()
         self.session = ClientSession(loop=self.loop)
-        self.db = await DataBase.create_pool(bot=self, uri=settings.postgres.uri, loop=self.loop)
 
         for ext in initial_cogs:
             try:
@@ -110,7 +108,7 @@ class Tim(commands.Bot):
         ctx = await self.get_context(message=message)
 
         if ctx.command is None:
-            return await Message.on_message(bot=self, message=message)
+            return await Message.on_message(message=message)
 
         if ctx.command.name in (
             "help",
@@ -131,7 +129,7 @@ class Tim(commands.Bot):
         try:
             await self.invoke(ctx)
         finally:
-            await User.on_command(bot=self, user=message.author)
+            await User.on_command(user=message.author)
 
     async def on_command_error(self, ctx, exception):
         await self.wait_until_ready()
@@ -216,7 +214,3 @@ class Tim(commands.Bot):
     async def presence(self):
         await self.wait_until_ready()
         await self.change_presence(activity=discord.Game(name='use the prefix "tim."'))
-
-
-if __name__ == "__main__":
-    Tim().run(settings.bot.token, log_handler=None)

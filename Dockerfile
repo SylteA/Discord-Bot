@@ -16,4 +16,4 @@ RUN poetry install --only main
 
 ADD . /app
 
-CMD python3 main.py
+CMD python3 cli.py
