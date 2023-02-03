@@ -290,8 +290,15 @@ class Commands(commands.Cog):
         users = await User.fetch("SELECT * FROM users ORDER BY messages_sent DESC LIMIT 10")
 
         table = []
-        for user in users:
-            table.append((str(user), user.messages_sent))
+        for row in users:
+            user = self.bot.get_user(row.id)
+            if user is None:
+                try:
+                    user = await self.bot.fetch_user(row.id)
+                except discord.HTTPException:
+                    user = row.id
+
+            table.append((str(user), row.messages_sent))
 
         table = tabulate(
             table,
