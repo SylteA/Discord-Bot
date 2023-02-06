@@ -5,10 +5,9 @@ from typing import TYPE_CHECKING, List, Literal
 import discord
 from discord.ext import commands
 
-from config import settings
-
-from .utils.checks import is_admin, is_engineer_check, is_staff
-from .utils.models import Model, Tag
+from bot.config import settings
+from bot.models import Model, Tag
+from utils.checks import is_admin, is_engineer_check, is_staff
 
 if TYPE_CHECKING:
     from bot import Tim

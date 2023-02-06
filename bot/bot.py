@@ -5,6 +5,7 @@ import os
 
 import discord
 from aiohttp import ClientSession
+from config import settings
 from discord.ext import commands, tasks
 from discord.ext.commands.errors import (
     BadArgument,
@@ -23,10 +24,9 @@ from discord.ext.commands.errors import (
     PrivateMessageOnly,
 )
 
-from cogs.utils.context import SyltesContext
-from cogs.utils.models import Message, User
-from cogs.utils.time import human_timedelta
-from config import settings
+from bot.models import Message, User
+from utils.context import SyltesContext
+from utils.time import human_timedelta
 
 log = logging.getLogger(__name__)
 

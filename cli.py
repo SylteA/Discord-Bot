@@ -10,9 +10,9 @@ import click
 import discord
 
 from bot import Tim
-from cogs.utils.models import Model
-from config import settings
-from migrations.migration import Migration
+from bot.config import settings
+from bot.models import Model
+from bot.models.migrations.migration import Migration
 
 FN = TypeVar("FN", bound=Callable)
 ROOT_DIR = pathlib.Path(__file__).parent.resolve()

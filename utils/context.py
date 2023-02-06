@@ -4,8 +4,6 @@ from typing import Union
 import discord
 from discord.ext import commands
 
-from config import settings
-
 
 def to_pages_by_lines(content: str, max_size: int):
     pages = [""]
@@ -107,22 +105,4 @@ class SyltesContext(commands.Context):
 
     async def em(self, delete_after=None, **kwargs):
         """Shortcut to send embeds with `bot.em`"""
-
         return await self.send(embed=self.bot.em(**kwargs), delete_after=delete_after)
-
-    async def send_help(self, *args):
-        """No more cheating on getting help from other channels :P"""
-        if self.command.name in (
-            "help",
-            "scoreboard",
-            "rep_scoreboard",
-            "reps",
-            "member_count",
-            "top_user",
-            "users",
-            "server_messages",
-            "messages",
-        ):
-            if self.channel.id not in settings.bot.commands_channels_ids:
-                return await self.send("**Please use #bot-commands channel**")
-        return await super().send_help(*args)
