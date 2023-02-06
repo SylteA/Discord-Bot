@@ -5,7 +5,6 @@ import os
 
 import discord
 from aiohttp import ClientSession
-from config import settings
 from discord.ext import commands, tasks
 from discord.ext.commands.errors import (
     BadArgument,
@@ -28,20 +27,22 @@ from bot.models import Message, User
 from utils.context import SyltesContext
 from utils.time import human_timedelta
 
+from .config import settings
+
 log = logging.getLogger(__name__)
 
 os.environ.update(JISHAKU_NO_UNDERSCORE="True", JISHAKU_NO_DM_TRACEBACK="True", JISHAKU_HIDE="True")
 initial_cogs = [
     "jishaku",
-    "cogs.commands",
-    "cogs.filtering",
-    "cogs._help",
-    "cogs.tags",
-    "cogs.challenges",
-    "cogs.clashofcode",
-    "cogs.roles",
-    "cogs.poll",
-    "cogs.adventofcode",
+    "bot.cogs.commands",
+    "bot.cogs.filtering",
+    "bot.cogs._help",
+    "bot.cogs.tags",
+    "bot.cogs.challenges",
+    "bot.cogs.clashofcode",
+    "bot.cogs.roles",
+    "bot.cogs.poll",
+    "bot.cogs.adventofcode",
 ]
 
 

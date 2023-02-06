@@ -9,7 +9,7 @@ import asyncpg
 import click
 import discord
 
-from bot import Tim
+from bot.bot import Tim
 from bot.config import settings
 from bot.models import Model
 from bot.models.migrations.migration import Migration
