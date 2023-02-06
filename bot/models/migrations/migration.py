@@ -3,7 +3,7 @@ from typing import Literal, Optional
 
 from pydantic import Field
 
-from cogs.utils.models import Model
+from bot.models import Model
 
 
 class Migration(Model):

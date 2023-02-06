@@ -11,9 +11,9 @@ from discord.ext import commands
 from discord.utils import get
 from tabulate import tabulate
 
-from cogs.utils.checks import is_staff
-from cogs.utils.models import Model, User
-from cogs.utils.time import human_timedelta
+from bot.models import Model, User
+from utils.checks import is_staff
+from utils.time import human_timedelta
 
 
 def to_pages_by_lines(content: str, max_size: int):

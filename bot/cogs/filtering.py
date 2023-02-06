@@ -5,8 +5,8 @@ from urllib.parse import urlparse
 import discord
 from discord.ext import commands
 
-from .utils.checks import is_staff
-from .utils.models import FilterConfig
+from bot.models import FilterConfig
+from utils.checks import is_staff
 
 
 class Filtering(commands.Cog):
