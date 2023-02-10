@@ -278,10 +278,10 @@ class Commands(commands.Cog):
 
         user = await User.fetch_user(member.id)
         embed = discord.Embed(color=member.color, description=member.mention)
-        embed.set_author(name=str(member), icon_url=member.avatar.url)
+        embed.set_author(name=str(member), icon_url=member.display_avatar.url)
         embed.add_field(name="Count", value=str(user.messages_sent))
         embed.add_field(name="Since", value=human_timedelta(user.joined_at, accuracy=2))
-        embed.set_footer(text=str(ctx.author), icon_url=ctx.author.avatar.url)
+        embed.set_footer(text=str(ctx.author), icon_url=ctx.author.display_avatar.url)
         await ctx.send(embed=embed)
 
     @commands.command(aliases=["lb"])
@@ -447,7 +447,7 @@ class Commands(commands.Cog):
         em = discord.Embed(description=suggestion)
         em.set_author(
             name=f"Suggestion by {ctx.author.display_name}",
-            icon_url=ctx.author.avatar.url,
+            icon_url=ctx.author.display_avatar.url,
         )
         msg = await ctx.send(embed=em)
         await msg.add_reaction("👍")

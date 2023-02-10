@@ -132,7 +132,6 @@ class ChallengeHandler(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):  # Submitted role.
-
         if message.channel.id == settings.challenges.submit_channel_id:
 
             if message.author.id == self.bot.user.id:
@@ -178,7 +177,7 @@ class ChallengeHandler(commands.Cog):
 
                 await message.author.add_roles(submitted)
                 embed = discord.Embed(description=content, color=0x36393E)
-                embed.set_author(name=str(message.author), icon_url=message.author.avatar.url)
+                embed.set_author(name=str(message.author), icon_url=message.author.display_avatar.url)
                 embed.set_footer(text=f"#ID: {message.author.id} • {len(code)} chars • Language: {filetype}")
                 await hidden_submission_channel.send(embed=embed)
 
