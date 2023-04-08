@@ -1,7 +1,7 @@
 from discord import Member
 from discord.ext.commands import check
 
-from config import settings
+from bot.config import settings
 
 
 def is_admin(member: Member):

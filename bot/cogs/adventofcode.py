@@ -10,7 +10,7 @@ import pytz
 from bs4 import BeautifulSoup
 from discord.ext import commands
 
-from config import settings
+from bot.config import settings
 
 log = logging.getLogger(__name__)
 loop = asyncio.get_event_loop()

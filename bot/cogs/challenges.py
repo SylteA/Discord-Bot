@@ -3,7 +3,7 @@ import re
 import discord
 from discord.ext import commands
 
-from config import settings
+from bot.config import settings
 
 
 class ChallengeHandler(commands.Cog):

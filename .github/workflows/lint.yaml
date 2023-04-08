@@ -1,6 +1,10 @@
 name: Lint
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - master
+  pull_request:
 
 jobs:
   lint:
@@ -14,7 +18,32 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
+
+      - name: Cache Poetry cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cache/pypoetry
+          key: "poetry-cache-${{ runner.os }}-\
+          ${{ env.PYTHON_VERSION }}-${{ env.POETRY_VERSION }}"
+
+      - name: Cache Pre-commit cache
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pre-commit
+          key: "pre-commit-cache-${{ runner.os }}-${{ env.PYTHON_VERSION }}-\
+          ${{ env.PRECOMMIT_VERSION }}-\
+          ${{ hashFiles('**/.pre-commit-config.yaml') }}"
+
+      # virtualenv cache should depends on OS, Python version and `poetry.lock` (and optionally workflow files).
+      - name: Cache Packages
+        uses: actions/cache@v2
+        with:
+          path: ~/.local
+          key: "poetry-${{ runner.os }}-${{ env.PYTHON_VERSION }}-\
+          ${{ hashFiles('**/poetry.lock') }}-\
+          ${{ hashFiles('.github/workflows/*.yaml') }}"
 
       - name: Set up Python
         uses: actions/setup-python@v2

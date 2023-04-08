@@ -6,7 +6,7 @@ import aiohttp
 import discord
 from discord.ext import commands
 
-from config import settings
+from bot.config import settings
 
 REGEX = re.compile(r"https://www.codingame.com/clashofcode/clash/([0-9a-f]{39})")
 API_URL = "https://www.codingame.com/services/ClashOfCode/findClashByHandle"
