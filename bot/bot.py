@@ -103,9 +103,6 @@ class Tim(commands.Bot):
         await self.process_commands(message)
 
     async def process_commands(self, message):
-        if message.author.bot:
-            return
-
         ctx = await self.get_context(message=message)
 
         if ctx.command is None:
