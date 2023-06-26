@@ -3,6 +3,7 @@ import logging
 import os
 
 import discord
+from discord import app_commands
 from discord.ext import commands, tasks
 
 from bot.config import settings
@@ -31,6 +32,8 @@ class DiscordBot(commands.Bot):
         self.loop.create_task(self.when_online())
         self.presence.start()
 
+        self.tree.on_error = self.on_app_command_error
+
     async def when_online(self):
         log.info("Waiting until bot is ready to load extensions and app commands.")
         await self.wait_until_ready()
@@ -52,8 +55,6 @@ class DiscordBot(commands.Bot):
         await self.tree.sync(guild=self.guild)
 
         log.info("Commands synced.")
-
-    async def on_ready(self):
         log.info(f"Successfully logged in as {self.user}. In {len(self.guilds)} guilds")
 
     async def on_message(self, message):
@@ -69,12 +70,25 @@ class DiscordBot(commands.Bot):
     async def process_commands(self, message: discord.Message, /):
         ctx = await self.get_context(message)
 
-        if ctx.command is not None:
-            log.info(f"{ctx.author} invoking command: {ctx.clean_prefix}{ctx.command.qualified_name}")
-            await self.invoke(ctx)
+        if ctx.command is None:
+            return
 
-        if ctx.interaction is not None:
-            log.info(ctx.interaction)
+        log.info(f"{ctx.author} invoking command: {ctx.clean_prefix}{ctx.command.qualified_name}")
+        await self.invoke(ctx)
+
+    async def on_app_command_error(self, interaction: "InteractionType", error: app_commands.AppCommandError):
+        """Handle errors in app commands."""
+        if interaction.command is None:
+            return log.error("Ignoring exception in command tree.", exc_info=error)
+
+        if interaction.command._has_any_error_handlers():
+            return
+
+        if isinstance(error, app_commands.CheckFailure):
+            log.info(f"{interaction.user} failed to use the command {interaction.command.qualified_name}")
+            return
+
+        log.error("Ignoring unhandled exception", exc_info=error)
 
     @tasks.loop(hours=24)
     async def presence(self):
