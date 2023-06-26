@@ -133,7 +133,6 @@ async def main(ctx):
         "bot.cogs.filtering",
         "bot.cogs._help",
         "bot.cogs.tags",
-        # "bot.cogs.challenges",
         "bot.cogs.clashofcode",
         "bot.cogs.roles",
         "bot.cogs.poll",
