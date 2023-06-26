@@ -9,7 +9,7 @@ from bot.config import settings
 log = logging.getLogger(__name__)
 
 
-class ChallengeEvents(commands.GroupCog, group_name="challenges"):
+class ChallengeEvents(commands.Cog):
     """Events for weekly challenges in discord."""
 
     def __init__(self, bot: core.DiscordBot):
