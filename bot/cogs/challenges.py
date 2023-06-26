@@ -15,7 +15,7 @@ class ChallengeHandler(commands.Cog):
     )
     @commands.group(name="challenges", aliases=("c",))
     async def challenges_group(self, ctx: commands.Context) -> None:
-        """All of the Challenges commands"""
+        """All the Challenges commands"""
         if not ctx.invoked_subcommand:
             await ctx.send_help(ctx.command)
 
@@ -126,14 +126,12 @@ class ChallengeHandler(commands.Cog):
             await self.bot.guild.get_member(payload.user_id).add_roles(participant)
 
         elif payload.channel_id == settings.timathon.channel_id:
-
             participant = self.bot.guild.get_role(settings.timathon.participant_role_id)
             await self.bot.guild.get_member(payload.user_id).add_roles(participant)
 
     @commands.Cog.listener()
     async def on_message(self, message):  # Submitted role.
         if message.channel.id == settings.challenges.submit_channel_id:
-
             if message.author.id == self.bot.user.id:
                 return
 

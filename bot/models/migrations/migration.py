@@ -1,3 +1,4 @@
+import re
 from datetime import datetime
 from typing import Literal, Optional
 
@@ -18,7 +19,7 @@ class Migration(Model):
         return f"{self.version:03}_{self.direction}__{self.name}.sql"
 
     @classmethod
-    def from_match(cls, match) -> "Migration":
+    def from_match(cls, match: re.Match) -> "Migration":
         return cls(version=int(match.group("version")), direction=match.group("direction"), name=match.group("name"))
 
     @classmethod

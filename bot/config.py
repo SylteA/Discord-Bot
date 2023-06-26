@@ -97,7 +97,7 @@ class Settings(BaseSettings):
     postgres: Postgres
     guild: Guild
     moderation: Moderation
-    notification: Notification  # For tim's youtube channel (currently unused)
+    notification: Notification  # For tim's YouTube channel (currently unused)
     reaction_roles: ReactionRoles
     tags: Tags
     timathon: Timathon

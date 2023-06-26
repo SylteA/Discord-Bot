@@ -16,6 +16,8 @@ jobs:
       PIPENV_HIDE_EMOJIS: 1
       PIPENV_NOSPIN: 1
 
+      PYTHON_VERSION: 3.10
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -36,7 +38,7 @@ jobs:
           ${{ env.PRECOMMIT_VERSION }}-\
           ${{ hashFiles('**/.pre-commit-config.yaml') }}"
 
-      # virtualenv cache should depends on OS, Python version and `poetry.lock` (and optionally workflow files).
+      # virtualenv cache should depend on OS, Python version and `poetry.lock` (and optionally workflow files).
       - name: Cache Packages
         uses: actions/cache@v2
         with:
@@ -48,7 +50,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.8
+          python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install dependencies using poetry
         run: |

@@ -45,38 +45,3 @@ class User(Model):
         await cls.fetch_user(user.id)
         query = """UPDATE users SET messages_sent = messages_sent + 1 WHERE id = $1"""
         await cls.execute(query, user.id)
-
-    # async def add_rep(
-    #     self,
-    #     message_id: int,
-    #     author_id: int,
-    #     repped_at: datetime = datetime.utcnow(),
-    #     extra_info: dict = None,
-    #     assure_24h: bool = True,
-    # ):
-    #     """
-    #     Add a rep using `self.id` as user_id
-    #     :param message_id:
-    #         passed to rep_id
-    #     :param author_id:
-    #         The user that repped `self`
-    #     :param repped_at:
-    #         datetime object for when the rep was added
-    #     :param extra_info:
-    #         dict
-    #     :param assure_24h:
-    #                     if True, this will only post the rep if the latest
-    #         rep for this user_id is more than 24 hours ago.
-    #     :return:
-    #         If posting is successful, returns None.
-    #         If post is on cooldown, returns a datetime object on when the last rep was added.
-    #     """
-    #     rep = Rep(
-    #         bot=self.bot,
-    #         rep_id=message_id,
-    #         user_id=self.id,
-    #         author_id=author_id,
-    #         repped_at=repped_at,
-    #         extra_info=extra_info,
-    #     )
-    #     return await rep.post(assure_24h=assure_24h)
