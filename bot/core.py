@@ -23,6 +23,17 @@ class DiscordBot(commands.Bot):
         self.start_time = datetime.datetime.utcnow()
         self.initial_extensions = extensions
 
+    async def resolve_user(self, user_id: int) -> discord.User | None:
+        """Resolve a user from their ID."""
+        user = self.get_user(user_id)
+        if user is None:
+            try:
+                user = await self.fetch_user(user_id)
+            except discord.NotFound:
+                return None
+
+        return user
+
     @property
     def guild(self) -> discord.Guild | None:
         return self.get_guild(settings.guild.id)
