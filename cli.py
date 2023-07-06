@@ -127,7 +127,7 @@ async def main(ctx):
 
         log.info(output)
 
-    prefixes = ("r.",)
+    prefixes = ("t.",)
     extensions = (
         "jishaku",
         "bot.extensions.challenges",

@@ -148,7 +148,7 @@ class ChallengeCommands(commands.GroupCog, group_name="challenges"):
         """Send an announcement in the info channel mentioning the winners."""
 
         text = (
-            f"{self.winner_role.mention} :pancakes: have been given out, go deposit them in {self.games_channel}."
+            f"{self.winner_role.mention} 🥞 have been given out, go deposit them in {self.games_channel.mention}."
             f"\nAnalysis for the challenge will be available shortly in {self.info_channel.mention}."
         )
         await self.info_channel.send(text, allowed_mentions=discord.AllowedMentions(roles=[self.winner_role]))
@@ -167,7 +167,8 @@ class ChallengeCommands(commands.GroupCog, group_name="challenges"):
         await self.submit_channel.set_permissions(role, overwrite=overwrites)
 
         text = (
-            f"{self.participant_role.mention} Submissions are open! " f"Use the {self.submit} to submit your solution!."
+            f"{self.participant_role.mention} Submissions are open! "
+            f"Use the /{self.submit.qualified_name} command to submit your solution!."
         )
 
         await self.info_channel.send(text, allowed_mentions=discord.AllowedMentions(roles=[self.participant_role]))
