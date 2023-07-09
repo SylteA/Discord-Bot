@@ -1,6 +1,3 @@
-# from github/Rapptz
-
-
 import datetime
 
 from dateutil.relativedelta import relativedelta
@@ -42,7 +39,7 @@ def human_timedelta(dt, *, source=None, accuracy=3, brief=False, suffix=True):
     # divmod approach with seconds because the seconds approach is not entirely
     # accurate once you go over 1 week in terms of accuracy since you have to
     # hardcode a month as 30 or 31 days.
-    # A query like "11 months" can be interpreted as "!1 months and 6 days"
+    # A query like "11 months" can be interpreted as "!1 month and 6 days"
     if dt > now:
         delta = relativedelta(dt, now)
         suffix = ""

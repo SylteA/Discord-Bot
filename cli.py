@@ -9,14 +9,20 @@ import asyncpg
 import click
 import discord
 
-from bot.bot import Tim
 from bot.config import settings
+from bot.core import DiscordBot
 from bot.models import Model
 from bot.models.migrations.migration import Migration
 
 FN = TypeVar("FN", bound=Callable)
+
 ROOT_DIR = pathlib.Path(__file__).parent.resolve()
+MIGRATIONS_PATH = ROOT_DIR / "bot" / "models" / "migrations"
+
 REVISION_FILE = re.compile(r"(?P<version>\d+)_(?P<direction>(up)|(down))__(?P<name>.+).sql")
+
+
+log = logging.getLogger(__name__)
 
 
 def async_command(func: FN) -> FN:
@@ -40,8 +46,7 @@ class Revisions:
 
     @classmethod
     def load_revisions(cls) -> None:
-        root = ROOT_DIR / "migrations"
-        for file in root.glob("*.sql"):
+        for file in MIGRATIONS_PATH.glob("*.sql"):
             match = REVISION_FILE.match(file.name)
             if match is not None:
                 mig = Migration.from_match(match)
@@ -57,29 +62,33 @@ async def prepare_postgres(postgres_uri: str, retries: int = 5, interval: float 
     :param float interval:    Interval of which to wait for next retry.
     """
 
-    log = logging.getLogger("DB")
+    db_log = logging.getLogger("DB")
     db_name = postgres_uri.split("/")[-1]
 
-    log.info(f'Attempting to connect to DB "{db_name}"')
+    if Model.pool is not None:
+        db_log.info("No need to create pool, it already exists!")
+        return True
+
+    db_log.info(f'Attempting to connect to DB "{db_name}"')
     for i in range(1, retries + 1):
         try:
             await Model.create_pool(uri=postgres_uri, **cp_kwargs)
             break
 
         except asyncpg.InvalidPasswordError as e:
-            log.error(str(e))
+            db_log.error(str(e))
             return False
 
         except (ConnectionRefusedError,):
-            log.warning(f"Failed attempt #{i}/{retries}, trying again in {interval}s")
+            db_log.warning(f"Failed attempt #{i}/{retries}, trying again in {interval}s")
 
             if i == retries:
-                log.error("Failed final connection attempt, exiting.")
+                db_log.error("Failed final connection attempt, exiting.")
                 return False
 
             await asyncio.sleep(interval)
 
-    log.info(f'Connected to database "{db_name}"')
+    db_log.info(f'Connected to database "{db_name}"')
     return True
 
 
@@ -87,30 +96,66 @@ async def prepare_postgres(postgres_uri: str, retries: int = 5, interval: float 
 @click.pass_context
 @async_command
 async def main(ctx):
-    if ctx.invoked_subcommand is None:
-        discord.utils.setup_logging()
-        if await prepare_postgres(
-            settings.postgres.uri,
-            max_con=settings.postgres.max_pool_connections,
-            min_con=settings.postgres.min_pool_connections,
-        ):
-            await Tim().start(settings.bot.token)
+    discord.utils.setup_logging()
+
+    if ctx.invoked_subcommand is not None:
+        return
+
+    if not await prepare_postgres(
+        settings.postgres.uri,
+        max_con=settings.postgres.max_pool_connections,
+        min_con=settings.postgres.min_pool_connections,
+    ):
+        exit(1)
+
+    cur = await get_current_db_rev()
+
+    if cur is None:
+        latest, _ = max(Revisions.revisions().keys())
+        log.info("No migrations have been ran, running all migrations!")
+        await update(latest, True)
+    else:
+        latest, _ = max(Revisions.revisions().keys())
+
+        output = f"Running on migration {cur.version}"
+
+        if cur.version < latest:
+            log.warning("There are new database migrations available.")
+            output += ", latest: " + str(latest)
+
+        log.info(output)
+
+    prefixes = ("t.",)
+    extensions = (
+        "jishaku",
+        "bot.extensions.challenges",
+        "bot.cogs.commands",
+        "bot.cogs.filtering",
+        "bot.cogs._help",
+        "bot.cogs.tags",
+        "bot.cogs.clashofcode",
+        "bot.cogs.roles",
+        "bot.cogs.poll",
+    )
+
+    intents = discord.Intents.all()
+
+    async with DiscordBot(prefixes=prefixes, extensions=extensions, intents=intents) as bot:
+        await bot.start(settings.bot.token)
 
 
-async def run_migration(file: str = "000_migrations.sql") -> None:
-    path = ROOT_DIR / "migrations"
-
-    with open(path / file) as f:
+async def run_migration(file: str = "000_migrations.sql") -> Migration:
+    with open(MIGRATIONS_PATH / file) as f:
         query = f.read()
 
-    await Model.execute(query)
     match = REVISION_FILE.match(file)
+    mig = Migration.from_match(match)
 
-    if match is not None:
-        mig = Migration.from_match(match)
-        await mig.post()
-
+    await Model.execute(query)
     click.echo(f"{file} was executed.")
+
+    await mig.post()
+    return mig
 
 
 async def get_current_db_rev() -> Optional[Migration]:
