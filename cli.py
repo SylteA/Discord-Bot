@@ -8,11 +8,13 @@ from typing import Callable, Dict, Optional, Tuple, TypeVar
 import asyncpg
 import click
 import discord
+from aiohttp import ClientSession
 
 from bot.config import settings
 from bot.core import DiscordBot
 from bot.models import Model
 from bot.models.migrations.migration import Migration
+from bot.services import http
 
 FN = TypeVar("FN", bound=Callable)
 
@@ -129,6 +131,7 @@ async def main(ctx):
     extensions = (
         "jishaku",
         "bot.extensions.challenges",
+        "bot.extensions.readthedocs",
         "bot.cogs.commands",
         "bot.cogs.filtering",
         "bot.cogs._help",
@@ -140,8 +143,11 @@ async def main(ctx):
 
     intents = discord.Intents.all()
 
-    async with DiscordBot(prefixes=prefixes, extensions=extensions, intents=intents) as bot:
-        await bot.start(settings.bot.token)
+    async with ClientSession() as session:
+        http.session = session
+
+        async with DiscordBot(prefixes=prefixes, extensions=extensions, intents=intents) as bot:
+            await bot.start(settings.bot.token)
 
 
 async def run_migration(file: str = "000_migrations.sql") -> Migration:
