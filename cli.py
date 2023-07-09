@@ -150,7 +150,7 @@ async def main(ctx):
             await bot.start(settings.bot.token)
 
 
-async def run_migration(file: str = "000_migrations.sql") -> Migration:
+async def run_migration(file: str = "000_up__migrations.sql") -> Migration:
     with open(MIGRATIONS_PATH / file) as f:
         query = f.read()
 
