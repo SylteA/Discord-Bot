@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 
 
 class Model(BaseModel):
-    pool: ClassVar[Pool]
+    pool: ClassVar[Pool] = None
 
     @classmethod
     async def create_pool(
