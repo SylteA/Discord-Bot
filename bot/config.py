@@ -89,6 +89,14 @@ class Timathon(BaseModel):
     participant_role_id: int
 
 
+class Hastebin(BaseModel):
+    base_url: str
+
+
+class ErrorHandling(BaseModel):
+    webhook_url: str
+
+
 class Settings(BaseSettings):
     aoc: AoC
     bot: Bot
@@ -101,6 +109,8 @@ class Settings(BaseSettings):
     reaction_roles: ReactionRoles
     tags: Tags
     timathon: Timathon
+    hastebin: Hastebin
+    errors: ErrorHandling
 
     class Config:
         env_file = ".env"
