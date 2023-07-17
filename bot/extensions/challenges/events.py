@@ -21,6 +21,10 @@ class ChallengeEvents(commands.Cog):
     def submitted_role(self) -> discord.Role | None:
         return self.bot.guild.get_role(settings.challenges.submitted_role_id)
 
+    @property
+    def participant_role(self) -> discord.Role | None:
+        return self.bot.guild.get_role(settings.challenges.participant_role_id)
+
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         """Automatically react to new challenges."""
@@ -42,5 +46,5 @@ class ChallengeEvents(commands.Cog):
             return
 
         await self.bot.http.add_role(
-            guild_id=self.bot.guild.id, user_id=payload.user_id, role_id=self.submitted_role.id
+            guild_id=self.bot.guild.id, user_id=payload.user_id, role_id=self.participant_role.id
         )
