@@ -213,6 +213,8 @@ class ChallengeCommands(commands.GroupCog, group_name="challenges"):
                 "File extension must be between 1 and 4 characters.", ephemeral=True
             )
 
+        await interaction.response.defer(ephemeral=True, thinking=True)
+
         code = (await attachment.read()).decode("u8")
         log.info(len(code) == attachment.size)
 
@@ -222,7 +224,7 @@ class ChallengeCommands(commands.GroupCog, group_name="challenges"):
             max_user_length = 4096 - len(filetype) - 7
             msg = f"Your submission can't be __more than {max_user_length} characters__."
 
-            return await interaction.response.send_message(msg, ephemeral=True)
+            return await interaction.followup.send(msg, ephemeral=True)
 
         await interaction.user.add_roles(self.submitted_role)
 
@@ -233,4 +235,4 @@ class ChallengeCommands(commands.GroupCog, group_name="challenges"):
 
         embed.set_author(name="Your submission", icon_url=interaction.user.display_avatar.url)
         embed.set_footer(text=f"{len(code)} chars • Language: {filetype}")
-        return await interaction.response.send_message(embed=embed, ephemeral=True)
+        return await interaction.followup.send(embed=embed, ephemeral=True)
