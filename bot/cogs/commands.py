@@ -1,15 +1,11 @@
 import inspect
-from datetime import datetime
 
 import discord
 from bs4 import BeautifulSoup
 from discord.ext import commands
 from discord.utils import get
-from tabulate import tabulate
 
-from bot.models import Model, User
 from utils.checks import is_staff
-from utils.time import human_timedelta
 
 
 def to_pages_by_lines(content: str, max_size: int):
@@ -31,16 +27,6 @@ class Commands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self._docs_cache = None
-
-    @commands.command(hidden=True)
-    @commands.check(predicate)
-    async def post_question(self, ctx):
-        if is_staff(ctx.author):
-            await ctx.message.delete()
-            await ctx.send(
-                "```Please post your question, rather than asking for help. "
-                "It's much easier and less time consuming.```"
-            )
 
     def get_github_link(self, base_url: str, branch: str, command: str):
         obj = self.bot.get_command(command.replace(".", " "))
@@ -82,132 +68,6 @@ class Commands(commands.Cog):
         for page in pages:
             page = page.replace("`", "`\u200b")
             await ctx.send(f"```py\n{page}```")
-
-    @commands.command(name="website", aliases=["web"])
-    async def web_(self, ctx):
-        """Get the link to Tims website!"""
-        embed = discord.Embed(
-            title="Tim's Website",
-            description="[Visit the website!](https://techwithtim.net/)",
-        )
-        await ctx.message.delete()
-        await ctx.send(embed=embed)
-
-    @commands.command()
-    async def git(self, ctx):
-        """Git download link"""
-        embed = discord.Embed(
-            title="Git Download Link",
-            description="[Download GIT Here!](https://git-scm.com/downloads)",
-        )
-        await ctx.message.delete()
-        await ctx.send(embed=embed)
-
-    @commands.command()
-    async def twitter(self, ctx):
-        """View Tims Twitter"""
-        embed = discord.Embed(
-            title="Tech With Tim Twitter!",
-            description="[View Tim's Twitter!](https://twitter.com/TechWithTimm)",
-        )
-        await ctx.message.delete()
-        await ctx.send(embed=embed)
-
-    @commands.command(name="instagram", aliases=["insta"])
-    async def insta_(self, ctx):
-        """View Tims Instagram"""
-        embed = discord.Embed(
-            title="Tech With Tim Instagram!",
-            description="[View Tim's Instagram!](https://instagram.com/tech_with_tim)",
-        )
-        await ctx.message.delete()
-        await ctx.send(embed=embed)
-
-    def members(self):
-        members = set(self.bot.get_all_members())
-        d = {"online": 0, "idle": 0, "dnd": 0, "offline": 0}
-        for member in members:
-            d[str(member.status)] += 1
-        return d
-
-    @commands.command()
-    async def users(self, ctx):
-        """Information about users"""
-        members = self.members()
-        await ctx.send(
-            f'```Online: {members["online"]}\n'
-            f'Idle: {members["idle"]}\n'
-            f'DND: {members["dnd"]}\n'
-            f'Offline: {members["offline"]}```'
-        )
-
-    @commands.command()
-    async def member_count(self, ctx):
-        """How many members did you say there were?"""
-        await ctx.send(f"```Members: {ctx.guild.member_count}```")
-
-    @commands.command()
-    async def top_user(self, ctx):
-        """Find out who is the top user in our server!"""
-        query = """SELECT * FROM users ORDER BY messages_sent DESC LIMIT 1"""
-        top_user = await User.fetchrow(query)
-
-        user = self.bot.get_user(top_user["id"])
-        if not isinstance(user, discord.User):
-            return await ctx.send(
-                f"Could not find the top user, but his ID is {user.id}"
-                f'\n And he has `{top_user["messages_sent"]}`` messages'
-            )
-        await ctx.send(f'Top User: {user} \nMessages: `{top_user["messages_sent"]}`')
-
-    @commands.command()
-    async def server_messages(self, ctx):
-        """Get the total amount of messages sent in the TWT Server"""
-        count = await Model.fetchval("SELECT COUNT(*) FROM messages")
-        started_counting = datetime(year=2019, month=11, day=13)
-        await ctx.send(
-            f"I have read `{count}` messages after "
-            f"{human_timedelta(started_counting, suffix=False, brief=True, accuracy=2)}"
-        )
-
-    @commands.command(name="messages", aliases=["my_messages"])
-    async def messages_(self, ctx, member: commands.MemberConverter = None):
-        """How many messages have you sent?"""
-        member = member or ctx.author
-
-        user = await User.fetch_user(member.id)
-        embed = discord.Embed(color=member.color, description=member.mention)
-        embed.set_author(name=str(member), icon_url=member.display_avatar.url)
-        embed.add_field(name="Count", value=str(user.messages_sent))
-        embed.add_field(name="Since", value=human_timedelta(user.joined_at, accuracy=2))
-        embed.set_footer(text=str(ctx.author), icon_url=ctx.author.display_avatar.url)
-        await ctx.send(embed=embed)
-
-    @commands.command(aliases=["lb"])
-    async def scoreboard(self, ctx):
-        """Scoreboard over users message count"""
-        users = await User.fetch("SELECT * FROM users ORDER BY messages_sent DESC LIMIT 10")
-
-        table = []
-        for row in users:
-            user = self.bot.get_user(row.id)
-            if user is None:
-                try:
-                    user = await self.bot.fetch_user(row.id)
-                except discord.HTTPException:
-                    user = row.id
-
-            table.append((str(user), row.messages_sent))
-
-        table = tabulate(
-            table,
-            headers=(
-                "User",
-                "Messages",
-            ),
-            tablefmt="fancy_grid",
-        )
-        await ctx.send(f">>> ```prolog\n{table}\n```")
 
     @commands.command("pipsearch", aliases=["pip", "pypi"])
     @commands.cooldown(2, 5, commands.BucketType.user)
