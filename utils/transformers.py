@@ -1,10 +1,26 @@
 import typing as t
 
+import discord
 from discord import app_commands
 
 from bot import core
 from bot.extensions.readthedocs.utils import finder
 from utils.errors import IgnorableException
+
+
+class MessageTransformer(app_commands.Transformer):
+    async def transform(self, interaction: core.InteractionType, value: str, /):
+        try:
+            parts: list[str] = value.split("/")
+
+            message_id = int(parts[-1])
+            channel_id = int(parts[-2])
+
+            channel = interaction.guild.get_channel(channel_id)
+            return await channel.fetch_message(message_id)
+        except (ValueError, IndexError, AttributeError, discord.HTTPException):
+            await interaction.response.send_message("Sorry, I couldn't find that message...")
+            raise IgnorableException
 
 
 class CommandTransformer(app_commands.Transformer):
