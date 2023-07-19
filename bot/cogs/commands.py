@@ -1,5 +1,4 @@
 import discord
-from bs4 import BeautifulSoup
 from discord.ext import commands
 from discord.utils import get
 
@@ -14,77 +13,6 @@ class Commands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self._docs_cache = None
-
-    @commands.command("pipsearch", aliases=["pip", "pypi"])
-    @commands.cooldown(2, 5, commands.BucketType.user)
-    async def pipsearch(
-        self,
-        ctx,
-        term,
-        order: lambda string: string.lower() = "relevance",
-        amount: lambda x: min(int(x), 10) = 10,
-    ):
-        """Search pypi.org for packages.
-        Specify term, order (relevance, trending, updated)and amount (10 is default)
-        you want to show."""
-        order = await commands.clean_content().convert(ctx=ctx, argument=order)
-        if order not in ("relevance", "trending", "updated"):
-            return await ctx.send(f"{order} is not a valid order type.")
-
-        async with ctx.typing():
-            order_url = {"relevance": "", "trending": "-zscore", "updated": "-created"}
-            search = "https://pypi.org/search?q=" + term.replace(" ", "+") + "&o=" + order_url[order]
-
-            async with self.bot.session.get(
-                search.replace(":search:", term).replace(":order:", order_url[order])
-            ) as resp:
-                text = await resp.read()
-
-            bs = BeautifulSoup(text.decode("utf-8"), "html5lib")
-            packages = bs.find_all("a", class_="package-snippet")
-            results = int(
-                (
-                    bs.find(
-                        "div",
-                        class_="split-layout split-layout--table " "split-layout--wrap-on-tablet",
-                    )
-                    .find("div")
-                    .find("p")
-                    .find("strong")
-                    .text
-                )
-                .replace(",", "")
-                .replace("+", "")
-            )
-            if results > 0:
-                em = discord.Embed(
-                    title=f"Searched {term}",
-                    description=f"[Showing {amount}/{results} results.]({search})"
-                    if results > amount
-                    else f"[Showing {results} results.]({search})",
-                )
-                i = 0
-                em.colour = discord.Colour.green()
-                for package in packages[:amount]:
-                    href = "https://pypi.org" + package.get("href")
-                    title = package.find("h3")
-                    name = title.find("span", class_="package-snippet__name").text
-                    version = title.find("span", class_="package-snippet__version").text
-                    desc = package.find("p").text
-                    desc = "Unkown Description" if desc == "" else desc
-                    em.add_field(
-                        name=f"{name} - {version}",
-                        value=f"[`{desc}`]({href})",
-                        inline=i,
-                    )
-                    i = not i
-            else:
-                em = discord.Embed(
-                    title=f"Searched for {term}",
-                    description=f"No [results]({search}) found.",
-                )
-                em.colour = discord.Colour.red()
-            await ctx.send(embed=em)
 
     @commands.command(name="suggest")
     async def suggestion(self, ctx, *, suggestion: str):
