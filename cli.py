@@ -132,6 +132,7 @@ async def main(ctx):
         "jishaku",
         "bot.extensions.challenges",
         "bot.extensions.readthedocs",
+        "bot.extensions.github",
         "bot.cogs.commands",
         "bot.cogs.filtering",
         "bot.cogs._help",

@@ -1,22 +1,9 @@
-import inspect
-
 import discord
 from bs4 import BeautifulSoup
 from discord.ext import commands
 from discord.utils import get
 
 from utils.checks import is_staff
-
-
-def to_pages_by_lines(content: str, max_size: int):
-    pages = [""]
-    i = 0
-    for line in content.splitlines(keepends=True):
-        if len(pages[i] + line) > max_size:
-            i += 1
-            pages.append("")
-        pages[i] += line
-    return pages
 
 
 def predicate(ctx):
@@ -27,47 +14,6 @@ class Commands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self._docs_cache = None
-
-    def get_github_link(self, base_url: str, branch: str, command: str):
-        obj = self.bot.get_command(command.replace(".", " "))
-
-        source = obj.callback.__code__
-        module = obj.callback.__module__
-
-        lines, firstlineno = inspect.getsourcelines(source)
-        location = module.replace(".", "/")
-        url = f"{base_url}/blob/{branch}/{location}.py#L" f"{firstlineno}-L{firstlineno + len(lines) - 1}"
-        return url
-
-    @commands.command()
-    async def source(self, ctx, *, command: str = None):
-        """Get source code for the bot or any command."""
-        base_url = "https://github.com/SylteA/Discord-Bot"
-
-        if command is None:
-            return await ctx.send(base_url)
-        cmd = self.bot.get_command(command)
-        if cmd is None:
-            return await ctx.send(f"That command does not exist:\n{base_url}")
-        elif cmd == self.bot.help_command:
-            return await ctx.send(
-                base_url + "/blob/master/cogs/_help.py"
-            )  # sends the custom help command rather than a malformed link
-
-        try:
-            source = inspect.getsource(cmd.callback)
-        except AttributeError:
-            return await ctx.send(f"That command does not exist:\n{base_url}")
-
-        url = self.get_github_link(base_url=base_url, branch="master", command=command)
-
-        pages = to_pages_by_lines(source, max_size=1900)
-
-        await ctx.send(f"Command {cmd.qualified_name}: {url}")
-
-        for page in pages:
-            page = page.replace("`", "`\u200b")
-            await ctx.send(f"```py\n{page}```")
 
     @commands.command("pipsearch", aliases=["pip", "pypi"])
     @commands.cooldown(2, 5, commands.BucketType.user)
