@@ -1,12 +1,14 @@
 import datetime
 import logging
 import os
+import traceback
 
 import discord
 from discord import app_commands
 from discord.ext import commands, tasks
 
 from bot.config import settings
+from bot.services import http, paste
 from utils.errors import IgnorableException
 from utils.time import human_timedelta
 
@@ -23,6 +25,8 @@ class DiscordBot(commands.Bot):
         )
         self.start_time = datetime.datetime.utcnow()
         self.initial_extensions = extensions
+
+        self.error_webhook: discord.Webhook | None = None
 
     async def resolve_user(self, user_id: int) -> discord.User | None:
         """Resolve a user from their ID."""
@@ -45,6 +49,8 @@ class DiscordBot(commands.Bot):
         self.presence.start()
 
         self.tree.on_error = self.on_app_command_error
+
+        self.error_webhook = discord.Webhook.from_url(url=settings.errors.webhook_url, session=http.session)
 
     async def when_online(self):
         log.info("Waiting until bot is ready to load extensions and app commands.")
@@ -89,6 +95,7 @@ class DiscordBot(commands.Bot):
         await self.invoke(ctx)
 
     async def on_app_command_error(self, interaction: "InteractionType", error: app_commands.AppCommandError):
+        """Handle errors in app commands."""
         if isinstance(error, IgnorableException):
             return
 
@@ -96,14 +103,32 @@ class DiscordBot(commands.Bot):
             log.error("Ignoring exception in command tree.", exc_info=error)
             return
 
-        if interaction.command._has_any_error_handlers():
-            return
-
         if isinstance(error, app_commands.CheckFailure):
             log.info(f"{interaction.user} failed to use the command {interaction.command.qualified_name}")
             return
 
+        await self.publish_error(interaction=interaction, error=error)
         log.error("Ignoring unhandled exception", exc_info=error)
+
+    async def publish_error(self, interaction: "InteractionType", error: app_commands.AppCommandError) -> None:
+        """Publishes the error to our error webhook."""
+        content = "\n".join(traceback.format_exception(type(error), error, error.__traceback__))
+        header = f"Ignored exception in command **{interaction.command.qualified_name}**"
+
+        def wrap(code: str) -> str:
+            code = code.replace("`", "\u200b`")
+            return f"```py\n{code}\n```"
+
+        if len(content) > 1024:  # Keeping it short for readability.
+            document = await paste.create(content)
+            content = wrap(content[:1024]) + f"\n\n [Full traceback]({document.url})"
+        else:
+            content = wrap(content)
+
+        embed = discord.Embed(
+            title=header, description=content, color=discord.Color.red(), timestamp=discord.utils.utcnow()
+        )
+        await self.error_webhook.send(embed=embed)
 
     @tasks.loop(hours=24)
     async def presence(self):
