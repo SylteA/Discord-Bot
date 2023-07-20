@@ -134,7 +134,6 @@ async def main(ctx):
         "bot.extensions.readthedocs",
         "bot.extensions.suggestions",
         "bot.extensions.github",
-        "bot.cogs.filtering",
         "bot.cogs._help",
         "bot.cogs.tags",
         "bot.cogs.clashofcode",
