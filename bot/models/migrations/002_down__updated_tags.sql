@@ -1,0 +1,13 @@
+DROP EXTENSION IF EXISTS pg_trgm;
+
+ALTER TABLE tags DROP CONSTRAINT tags_pkey;
+ALTER TABLE tags DROP COLUMN id;
+ALTER TABLE tags ADD CONSTRAINT tags_pkey PRIMARY KEY (name);
+
+DROP INDEX IF EXISTS idx_author_guild;
+ALTER TABLE tags RENAME COLUMN author_id TO creator_id;
+ALTER TABLE tags RENAME COLUMN content TO text;
+DROP INDEX IF EXISTS idx_name_guild;
+ALTER TABLE tags DROP CONSTRAINT unique_name_guild;
+
+ALTER TABLE tags ALTER COLUMN created_at DROP DEFAULT;
