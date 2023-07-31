@@ -13,7 +13,11 @@ THUMBS_DOWN = "👎"
 
 class SuggestionModal(ui.Modal, title="Suggestion"):
     suggestion = ui.TextInput(
-        label="Suggestion", required=True, style=discord.TextStyle.paragraph, min_length=1, max_length=2000
+        label="Suggestion",
+        required=True,
+        style=discord.TextStyle.paragraph,
+        min_length=1,
+        max_length=2000,
     )
 
     async def on_submit(self, interaction: core.InteractionType):
@@ -45,21 +49,24 @@ class Suggestions(commands.GroupCog, group_name="suggestion"):
 
     @app_commands.command()
     async def result(
-        self, interaction: core.InteractionType, message: app_commands.Transform[discord.Message, MessageTransformer]
+        self,
+        interaction: core.InteractionType,
+        message: app_commands.Transform[discord.Message, MessageTransformer],
     ):
         """View the results of a suggestion"""
+        not_a_suggestion = "That message doesn't look like a suggestion..."
+
         if message.author != interaction.client.user:
-            return await interaction.response.send_message(
-                "That message doesn't belong to me, it's probably not a suggestion...", ephemeral=True
-            )
+            return await interaction.response.send_message(not_a_suggestion, ephemeral=True)
+
+        if not message.embeds:
+            return await interaction.response.send_message(not_a_suggestion, ephemeral=True)
 
         suggestion = message.embeds[0].description
         author = message.embeds[0].author
 
         if not author.name.startswith(self.SUGGESTION_AUTHOR_PREFIX):
-            return await interaction.response.send_message(
-                "That message doesn't look like a suggestion...", ephemeral=True
-            )
+            return await interaction.response.send_message(not_a_suggestion, ephemeral=True)
 
         upvotes = discord.utils.get(message.reactions, emoji=THUMBS_UP)
         downvotes = discord.utils.get(message.reactions, emoji=THUMBS_DOWN)
