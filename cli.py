@@ -104,26 +104,27 @@ async def main(ctx):
         return
 
     if not await prepare_postgres(
-        settings.postgres.uri,
-        max_con=settings.postgres.max_pool_connections,
-        min_con=settings.postgres.min_pool_connections,
+            settings.postgres.uri,
+            max_con=settings.postgres.max_pool_connections,
+            min_con=settings.postgres.min_pool_connections,
     ):
         exit(1)
 
     cur = await get_current_db_rev()
+    latest, _ = max(Revisions.revisions().keys())
 
     if cur is None:
-        latest, _ = max(Revisions.revisions().keys())
         log.info("No migrations have been ran, running all migrations!")
         await update(latest, True)
     else:
-        latest, _ = max(Revisions.revisions().keys())
-
         output = f"Running on migration {cur.version}"
 
         if cur.version < latest:
             log.warning("There are new database migrations available.")
             output += ", latest: " + str(latest)
+            if settings.environment == "PROD":
+                log.info("Migrating to latest since we're on prod!")
+                await update(latest, True)
 
         log.info(output)
 

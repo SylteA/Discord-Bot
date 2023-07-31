@@ -112,6 +112,8 @@ class Settings(BaseSettings):
     hastebin: Hastebin
     errors: ErrorHandling
 
+    environment: str = "DEV"
+
     class Config:
         env_file = ".env"
         env_nested_delimiter = "__"
