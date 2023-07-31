@@ -23,7 +23,6 @@ MIGRATIONS_PATH = ROOT_DIR / "bot" / "models" / "migrations"
 
 REVISION_FILE = re.compile(r"(?P<version>\d+)_(?P<direction>(up)|(down))__(?P<name>.+).sql")
 
-
 log = logging.getLogger(__name__)
 
 
@@ -104,9 +103,9 @@ async def main(ctx):
         return
 
     if not await prepare_postgres(
-            settings.postgres.uri,
-            max_con=settings.postgres.max_pool_connections,
-            min_con=settings.postgres.min_pool_connections,
+        settings.postgres.uri,
+        max_con=settings.postgres.max_pool_connections,
+        min_con=settings.postgres.min_pool_connections,
     ):
         exit(1)
 
@@ -122,9 +121,11 @@ async def main(ctx):
         if cur.version < latest:
             log.warning("There are new database migrations available.")
             output += ", latest: " + str(latest)
+
             if settings.environment == "PROD":
                 log.info("Migrating to latest since we're on prod!")
                 await update(latest, True)
+                log.info("Migration(s) complete.")
 
         log.info(output)
 
