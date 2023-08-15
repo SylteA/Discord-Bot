@@ -49,7 +49,6 @@ class LogTagCreationView(ui.View):
 
     @ui.button(label="DELETE", style=discord.ButtonStyle.danger, custom_id=DELETE_CUSTOM_ID)
     async def delete_tag(self, interaction: core.InteractionType, _: ui.Button) -> None:
-        view = LogTagCreationView.from_message(interaction.message)
         embed = interaction.message.embeds[0]
 
         tag_id = int(discord.utils.get(embed.fields, name="id").value)
@@ -58,8 +57,7 @@ class LogTagCreationView(ui.View):
         tag = await Tag.fetch_by_id(guild_id=interaction.guild.id, tag_id=tag_id)
 
         if tag is None:
-            view.remove_item(view.delete_tag)
-            return await interaction.response.edit_message(view=self)
+            return await interaction.response.edit_message(view=None)
 
         if tag.content != embed.description:
             return await self.wait_for_confirmation(interaction, tag=tag, reason="Tag content has changed")
@@ -69,10 +67,8 @@ class LogTagCreationView(ui.View):
 
         await tag.delete()
 
-        view.remove_item(view.delete_tag)
-
         embed.set_footer(text=f"Deleted by: {interaction.user.name}")
         embed.colour = discord.Color.brand_red()
         embed.timestamp = datetime.utcnow()
 
-        return await interaction.response.edit_message(embed=embed, view=view)
+        return await interaction.response.edit_message(embed=embed, view=None)
