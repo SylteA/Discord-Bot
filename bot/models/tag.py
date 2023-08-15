@@ -65,10 +65,7 @@ class Tag(Model):
             UPDATE tags
                SET name = $2, content = $3
              WHERE id = $1
+         RETURNING *
         """
 
-        await self.execute(query, self.id, name, content)
-
-        self.name = name
-        self.content = content
-        return self
+        return await self.fetchrow(query, self.id, name, content)
