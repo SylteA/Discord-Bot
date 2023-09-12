@@ -49,7 +49,7 @@ class LogTagCreationView(ui.View):
 
     @ui.button(label="DELETE", style=discord.ButtonStyle.danger, custom_id=DELETE_CUSTOM_ID)
     async def delete_tag(self, interaction: core.InteractionType, _: ui.Button) -> None:
-        embed = interaction.message.embeds[0]
+        embed = interaction.message.embeds[-1]
 
         tag_id = int(discord.utils.get(embed.fields, name="id").value)
         name = discord.utils.get(embed.fields, name="name").value

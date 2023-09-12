@@ -38,19 +38,27 @@ class TagEvents(commands.Cog):
     @commands.Cog.listener()
     async def on_tag_edit(self, author: discord.User, before: Tag, after: Tag) -> discord.Message:
         """Logs updated tags."""
-        embed = discord.Embed(
+        embed_before = discord.Embed(
+            title=f"Tag updated: {before.name}",
+            color=discord.Color.brand_green(),
+            description=before.content,
+        )
+        embed_before.set_author(name=author.name.title(), icon_url=author.display_avatar.url)
+        embed_before.add_field(name="id", value=str(before.id))
+        embed_before.add_field(name="name", value=before.name)
+        embed_before.add_field(name="author id", value=str(before.author_id))
+
+        embed_after = discord.Embed(
             title=f"Tag updated: {after.name}",
             color=discord.Color.brand_green(),
             description=after.content,
         )
-        embed.set_author(name=author.name.title(), icon_url=author.display_avatar.url)
-        embed.add_field(name="id", value=str(after.id))
-        embed.add_field(name="author_id", value=str(after.author_id))
-        embed.add_field(name="content updated?", value=["no", "yes"][before.content == after.content])
-        embed.add_field(name="old name", value=before.name)
-        embed.add_field(name="new name", value=after.name)
+        embed_after.set_author(name=author.name.title(), icon_url=author.display_avatar.url)
+        embed_after.add_field(name="id", value=str(after.id))
+        embed_after.add_field(name="name", value=after.name)
+        embed_after.add_field(name="author id", value=str(after.author_id))
 
-        return await self.tag_logs_channel.send(embed=embed, view=self._log_tag_creation_view)
+        return await self.tag_logs_channel.send(embeds=[embed_before, embed_after], view=self._log_tag_creation_view)
 
     @commands.Cog.listener()
     async def on_tag_delete(self, user: discord.User, tag: Tag) -> discord.Message:
