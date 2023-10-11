@@ -112,33 +112,31 @@ REQUIRED_XP = [
     1792175,
     1845195,
 ]
-IGNORED_CHANNEL = {}
 
 
 class Levelling(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.ignored_channel = {}
 
-    @commands.Cog.listener()
-    async def on_ready(self):
+    async def cog_load(self):
         for guild in self.bot.guilds:
-            channel_id = await IgnoredChannel.get(guild_id=guild.id)
-            if guild.id not in IGNORED_CHANNEL:
-                IGNORED_CHANNEL[guild.id] = [channel_id]
-            else:
-                IGNORED_CHANNEL[guild.id].append(channel_id)
-        print(IGNORED_CHANNEL)
+            data = await IgnoredChannel.get(guild_id=guild.id)
+            for i in data:
+                if guild.id not in self.ignored_channel:
+                    self.ignored_channel[guild.id] = [i.channel_id]
+                else:
+                    self.ignored_channel[guild.id].append(i.channel_id)
 
     @commands.Cog.listener()
     async def on_message(self, message):
-        if message.author.bot:
+        # Return if message was sent by Bot or sent in DMs
+        if message.author.bot or message.guild is None:
             return
 
         # Check if message is sent in ignored channel
-        ignored_channel = await IgnoredChannel.get(message.guild.id)
-        for i in range(len(ignored_channel)):
-            if message.channel.id == ignored_channel[i].channel_id:
-                return
+        if message.channel.id in self.ignored_channel[message.guild.id]:
+            return
 
         # Generate random XP to be added
         xp = random.randint(5, 25)
@@ -148,10 +146,7 @@ class Levelling(commands.Cog):
 
     @app_commands.command()
     async def rank(self, interaction: core.InteractionType, member: discord.Member = None):
-        """Check the rank of another member or yourself
-        example:
-        - /rank @Noobmaster
-        - /rank"""
+        """Check the rank of another member or yourself"""
         if member is None:
             member = interaction.user
 
@@ -165,7 +160,7 @@ class Levelling(commands.Cog):
                         FROM ordered_users WHERE ordered_users.user_id = $1;"""
         data = await Levels.fetchrow(query, member.id, member.guild.id)
         if data is None:
-            return await interaction.response.send_message(f"{member} is not ranked yet!")
+            return await interaction.response.send_message("You are not ranked yet!", ephemeral=True)
         for level, j in enumerate(REQUIRED_XP):
             if data.total_xp <= j:
                 embed = discord.Embed(
@@ -179,9 +174,7 @@ class Levelling(commands.Cog):
     @app_commands.command()
     @app_commands.checks.has_permissions(administrator=True)
     async def ignore_channel(self, interaction: core.InteractionType, channel: discord.TextChannel):
-        """Add the channel to the ignored channel list to not gain XP
-        Example:
-            /ignore_channel #channel"""
+        """Add the channel to the ignored channel list to not gain XP"""
         await IgnoredChannel.insert(channel.guild.id, channel.id)
         await interaction.response.send_message(f"{channel} has been ignored from gaining XP.")
 
@@ -189,18 +182,14 @@ class Levelling(commands.Cog):
     @app_commands.checks.has_permissions(administrator=True)
     @has_permissions(administrator=True)
     async def unignore_channel(self, interaction: core.InteractionType, channel: discord.TextChannel):
-        """Remove channel from ignored channel list
-        Example:
-            /unignore_channel #channel"""
+        """Remove channel from ignored channel list"""
         await IgnoredChannel.delete(channel.guild.id, channel.id)
         await interaction.response.send_message(f"{channel} has been removed from ignored channel list")
 
     @app_commands.command()
     @app_commands.checks.has_permissions(administrator=True)
     async def give_xp(self, interaction: core.InteractionType, xp: int, member: discord.Member):
-        """Give XP to specific user
-        Example:
-            /give_xp 1000 user"""
+        """Give XP to specific user"""
         data = await Levels.update(member.guild.id, member.id, xp)
         await self._check_level_up(data, member)
         await interaction.response.send_message(f"{xp} XP has been added to user {member}")
@@ -208,9 +197,7 @@ class Levelling(commands.Cog):
     @app_commands.command()
     @app_commands.checks.has_permissions(administrator=True)
     async def remove_xp(self, interaction: core.InteractionType, xp: int, member: discord.Member):
-        """Remove XP from user
-        Example:
-            /remove_xp 100 user"""
+        """Remove XP from user"""
         data = await Levels.remove_xp(member.guild.id, member.id, xp)
         await self._check_level_up(data, member)
         await interaction.response.send_message(f"{xp} XP has been removed from user {member}")
