@@ -5,6 +5,7 @@ from discord.ext import commands
 
 from bot import core
 from bot.config import settings
+from bot.models import LevellingRole, PersistentRole
 
 log = logging.getLogger(__name__)
 
@@ -48,3 +49,17 @@ class ChallengeEvents(commands.Cog):
         await self.bot.http.add_role(
             guild_id=self.bot.guild.id, user_id=payload.user_id, role_id=self.participant_role.id
         )
+
+    @commands.Cog.listener()
+    async def on_level_up(self, new_level, member: discord.Member):
+        """Add roles when user levels up"""
+        data = await LevellingRole.get(guild_id=member.guild.id)
+        for i in range(len(data)):
+            # Adding roles when user levels up
+            if new_level >= data[i].level and member.guild.get_role(data[i].role_id) not in member.roles:
+                await member.add_roles(member.guild.get_role(data[i].role_id))
+                await PersistentRole.insert(guild_id=member.guild.id, user_id=member.id, role_id=data[i].role_id)
+            # Removing roles when users level down using remove_xp command
+            elif new_level <= data[i].level and member.guild.get_role(data[i].role_id) in member.roles:
+                await member.remove_roles(member.guild.get_role(data[i].role_id))
+                await PersistentRole.remove(guild_id=member.guild.id, user_id=member.id)
