@@ -121,7 +121,7 @@ class Levelling(commands.Cog):
 
     async def cog_load(self):
         for guild in self.bot.guilds:
-            data = await IgnoredChannel.get(guild_id=guild.id)
+            data = await IgnoredChannel.list_by_guild(guild_id=guild.id)
             for i in data:
                 if guild.id not in self.ignored_channel:
                     self.ignored_channel[guild.id] = [i.channel_id]
@@ -175,7 +175,7 @@ class Levelling(commands.Cog):
     @app_commands.checks.has_permissions(administrator=True)
     async def ignore_channel(self, interaction: core.InteractionType, channel: discord.TextChannel):
         """Add the channel to the ignored channel list to not gain XP"""
-        await IgnoredChannel.insert(channel.guild.id, channel.id)
+        await IgnoredChannel.insert_by_guild(channel.guild.id, channel.id)
         await interaction.response.send_message(f"{channel} has been ignored from gaining XP.")
 
     @app_commands.command()
@@ -183,7 +183,7 @@ class Levelling(commands.Cog):
     @has_permissions(administrator=True)
     async def unignore_channel(self, interaction: core.InteractionType, channel: discord.TextChannel):
         """Remove channel from ignored channel list"""
-        await IgnoredChannel.delete(channel.guild.id, channel.id)
+        await IgnoredChannel.delete_by_guild(channel.guild.id, channel.id)
         await interaction.response.send_message(f"{channel} has been removed from ignored channel list")
 
     @app_commands.command()

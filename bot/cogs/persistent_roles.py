@@ -10,7 +10,7 @@ class PersistentRoles(commands.Cog):
     @commands.Cog.listener()
     async def on_member_join(self, member):
         # Get the data
-        data = await PersistentRole.get(member.guild.id, member.id)
+        data = await PersistentRole.list_by_guild(member.guild.id, member.id)
         # Return if data for specified user and guild does not exist
         if data is None:
             return
