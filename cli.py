@@ -140,7 +140,7 @@ async def main(ctx):
         "bot.cogs.roles",
         "bot.cogs.poll",
         "bot.extensions.levelling",
-        "bot.cogs.persistent_roles",
+        "bot.extensions.persistent_roles",
     )
 
     intents = discord.Intents.all()
