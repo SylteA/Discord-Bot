@@ -128,6 +128,18 @@ class Levelling(commands.Cog):
         await LevellingRole.delete_by_guild(role.guild.id, role.id)
         return await interaction.response.send_message("Levelling reward role removed")
 
+    @app_commands.command()
+    async def levelling_rewards_list(self, interaction: core.InteractionType):
+        data = await LevellingRole.list_by_guild(interaction.guild.id)
+        res = "| {:<10} | {:<10} | {:<5} |".format("Guild ID", "Role ID", "Level")
+        res += "\n|" + "-" * 12 + "|" + "-" * 12 + "|" + "-" * 7 + "|"
+
+        # Print data
+        for record in data:
+            res += "\n| {:<10} | {:<10} | {:<5} |".format(record["guild_id"], record["role_id"], record["level"])
+
+        await interaction.response.send_message(f"{res}")
+
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Levelling(bot=bot))
