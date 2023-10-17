@@ -16,6 +16,7 @@ class Levelling(commands.Cog):
         self.bot = bot
         self.ignored_channel = {}
         self.required_xp = [0]
+        self.xp_boost = 1
 
     async def cog_load(self):
         for guild in self.bot.guilds:
@@ -45,7 +46,7 @@ class Levelling(commands.Cog):
             pass
 
         # Generate random XP to be added
-        xp = random.randint(5, 25)
+        xp = random.randint(5, 25) * self.xp_boost
         # Add the XP and update the DB
         data = await Levels.insert_by_guild(guild_id=message.guild.id, user_id=message.author.id, total_xp=xp)
         self.bot.dispatch("xp_updated", data=data, member=message.author, required_xp=self.required_xp)
@@ -139,6 +140,16 @@ class Levelling(commands.Cog):
             res += "\n| {:<10} | {:<10} | {:<5} |".format(record["guild_id"], record["role_id"], record["level"])
 
         await interaction.response.send_message(f"{res}")
+
+    @app_commands.command()
+    @app_commands.checks.has_permissions(administrator=True)
+    async def xp_multiplier(self, interaction: core.InteractionType, multiplier: int):
+        """Increase XP gain per message"""
+        if multiplier <= 0 or multiplier > 5:
+            return await interaction.response.send_message("Invalid multiplier value.(Max. 5)")
+
+        self.xp_boost = multiplier
+        return await interaction.response.send_message(f"XP multiplied by {multiplier}x.")
 
 
 async def setup(bot: commands.Bot):
