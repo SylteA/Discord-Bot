@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS custom_roles
 
 CREATE TABLE IF NOT EXISTS levelling_roles
 (
-    id          SERIAL PRIMARY KEY DEFAULT create_snowflake(),
+    id          BIGINT PRIMARY KEY DEFAULT create_snowflake(),
     required_xp INTEGER NOT NULL,
     guild_id    BIGINT NOT NULL,
     role_id     BIGINT NOT NULL REFERENCES custom_roles(role_id),
@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS levelling_roles
 
 CREATE TABLE IF NOT EXISTS persisted_roles
 (
-    id                 SERIAL PRIMARY KEY DEFAULT create_snowflake(),
+    id                 BIGINT PRIMARY KEY DEFAULT create_snowflake(),
     guild_id           BIGINT NOT NULL,
     user_id            BIGINT NOT NULL,
     role_id            BIGINT NOT NULL REFERENCES custom_roles(role_id),
@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS persisted_roles
 
 CREATE TABLE IF NOT EXISTS levelling_ignored_channels
 (
-    id          SERIAL PRIMARY KEY DEFAULT create_snowflake(),
+    id          BIGINT PRIMARY KEY DEFAULT create_snowflake(),
     guild_id    BIGINT NOT NULL,
     channel_id  BIGINT NOT NULL,
     CONSTRAINT levelling_ignored_channels_guild_id_and_channel_id_key UNIQUE (guild_id, channel_id)

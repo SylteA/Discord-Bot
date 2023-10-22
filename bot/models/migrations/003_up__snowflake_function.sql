@@ -25,7 +25,7 @@ CREATE OR REPLACE FUNCTION snowflake_to_timestamp(flake BIGINT)
     LANGUAGE 'plpgsql'
 AS $BODY$
 DECLARE
-    our_epoch BIGINT := 1621470600;
+    our_epoch BIGINT := 1609459200;
 BEGIN
     RETURN to_timestamp(((flake >> 22) + our_epoch) / 1000);
 END;

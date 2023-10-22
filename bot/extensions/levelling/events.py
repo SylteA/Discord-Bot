@@ -1,43 +1,60 @@
-from bisect import bisect
-
-import discord
 from discord.ext import commands
 
 from bot import core
-from bot.models import LevellingRole, PersistentRole
+from bot.models import LevellingRole, LevellingUser
 
 
-class LevelEvents(commands.Cog):
+class LevellingEvents(commands.Cog):
     """Events for Levelling in discord."""
 
     def __init__(self, bot: core.DiscordBot):
         self.bot = bot
 
     @commands.Cog.listener()
-    async def on_level_up(self, new_level, member: discord.Member):
-        """Add roles when user levels up"""
-        data = await LevellingRole.list_by_guild(guild_id=member.guild.id)
-        for i in range(len(data)):
-            # Adding roles when user levels up
-            if new_level >= data[i].level and member.guild.get_role(data[i].role_id) not in member.roles:
-                await member.add_roles(member.guild.get_role(data[i].role_id))
-                await PersistentRole.insert_by_guild(
-                    guild_id=member.guild.id, user_id=member.id, role_id=data[i].role_id
-                )
-            # Removing roles when users level down using remove_xp command
-            elif new_level <= data[i].level and member.guild.get_role(data[i].role_id) in member.roles:
-                await member.remove_roles(member.guild.get_role(data[i].role_id))
-                await PersistentRole.delete_by_guild(guild_id=member.guild.id, user_id=member.id)
+    async def on_xp_update(self, before: LevellingUser, after: LevellingUser):
+        if after.total_xp == before.total_xp:
+            return
 
-    @commands.Cog.listener()
-    async def on_xp_updated(self, data, member: discord.Member, required_xp):
-        """Function to check if user's level has changed and trigger the event to assign the roles"""
-        # Calculating old and new level
-        try:
-            old_level = bisect(required_xp, data.old_total_xp) - 1
-            new_level = bisect(required_xp, data.total_xp) - 1
+        elif after.total_xp > before.total_xp:
+            query = """
+                SELECT COALESCE(array_agg(role_id), '{}')
+                  FROM levelling_roles lr
+                 WHERE lr.guild_id = $1
+                   AND lr.required_xp <= $2
+                   AND lr.role_id NOT IN (
+                    SELECT pr.role_id
+                      FROM persisted_roles pr
+                     WHERE pr.guild_id = lr.guild_id
+                       AND pr.user_id = $3
+                   )
+            """
+            # Fetch role ids that the user qualifies for, but have not been persisted.
+            role_ids = await LevellingRole.fetchval(query, after.guild_id, after.total_xp, after.user_id)
 
-            if old_level != new_level:
-                self.bot.dispatch("level_up", new_level=new_level, member=member)
-        except AttributeError:
-            pass
+            if not role_ids:
+                return
+
+            self.bot.dispatch("persist_roles", guild_id=after.guild_id, user_id=after.user_id, role_ids=role_ids)
+
+        else:
+            query = """
+                SELECT COALESCE(array_agg(role_id), '{}')
+                  FROM levelling_roles lr
+                 WHERE lr.guild_id = $1
+                   AND lr.required_xp > $2
+                   AND lr.role_id IN (
+                    SELECT pr.role_id
+                      FROM persisted_roles pr
+                     WHERE pr.guild_id = lr.guild_id
+                       AND pr.user_id = $3
+                   )
+            """
+
+            role_ids = await LevellingRole.fetchval(query, after.guild_id, after.total_xp, after.user_id)
+
+            if not role_ids:
+                return
+
+            self.bot.dispatch(
+                "remove_persisted_roles", guild_id=after.guild_id, user_id=after.user_id, role_ids=role_ids
+            )
