@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import random
 from io import BytesIO
 
@@ -12,6 +13,8 @@ from bot.extensions.levelling import utils
 from bot.models import IgnoredChannel, LevellingRole, LevellingUser
 from bot.models.custom_roles import CustomRole
 from cli import ROOT_DIR
+
+log = logging.getLogger(__name__)
 
 
 class Levelling(commands.Cog):
@@ -109,7 +112,7 @@ class Levelling(commands.Cog):
 
         self.bot.dispatch("xp_update", before=before, after=after)
 
-    def generate_rank_image(self, member: discord.Member, avatar_bytes, rank, level, xp, final_xp):
+    def generate_rank_image(self, username: str, avatar_bytes: bytes, rank: int, level: int, xp: int, required_xp: int):
         img = Image.new("RGBA", (1000, 240))
         logo = Image.open(BytesIO(avatar_bytes)).resize((200, 200))
 
@@ -183,7 +186,7 @@ class Levelling(commands.Cog):
         # Filling Progress Bar
         bar_length = bar_offset_x_1 - bar_offset_x
 
-        progress = (final_xp - xp) * 100 / final_xp
+        progress = (required_xp - xp) * 100 / required_xp
         progress = 100 - progress
         progress_bar_length = round(bar_length * progress / 100)
         pbar_offset_x_1 = bar_offset_x + progress_bar_length
@@ -216,7 +219,7 @@ class Levelling(commands.Cog):
                 return str(integer)
 
         # Drawing Xp Text
-        text = f"/ {convert_int(final_xp)} XP"
+        text = f"/ {convert_int(required_xp)} XP"
         xp_text_size = draw.textbbox((0, 0), text, font=self.small_font)
         xp_offset_x = bar_offset_x_1 - (xp_text_size[2] - xp_text_size[0])
         xp_offset_y = bar_offset_y - xp_text_size[3] - 10
@@ -227,16 +230,14 @@ class Levelling(commands.Cog):
         xp_offset_x -= xp_text_size[2] - xp_text_size[0]
         draw.text((xp_offset_x, xp_offset_y), text, font=self.small_font, fill="#fff")
 
-        # Placing User Name
-        text = member.display_name
-        if len(text) >= 15:
+        if len(username) >= 15:
             # Truncating the name
-            text = text[:15] + "..."
+            username = username[:15] + "..."
 
-        text_bbox = draw.textbbox((0, 0), text, font=self.medium_font)
+        text_bbox = draw.textbbox((0, 0), username, font=self.medium_font)
         text_offset_x = bar_offset_x - 10
         text_offset_y = bar_offset_y - (text_bbox[3] - text_bbox[1]) - 20
-        draw.text((text_offset_x, text_offset_y), text, font=self.medium_font, fill="#fff")
+        draw.text((text_offset_x, text_offset_y), username, font=self.medium_font, fill="#fff")
 
         # create copy of background
         background = self.background.copy()
@@ -248,10 +249,10 @@ class Levelling(commands.Cog):
         y = (bg_height - img_height) // 2
         background.paste(img, (x, y))
 
-        bytes = BytesIO()
-        background.save(bytes, "PNG")
-        bytes.seek(0)
-        return bytes
+        buf = BytesIO()
+        background.save(buf, "PNG")
+        buf.seek(0)
+        return buf
 
     @app_commands.command()
     async def rank(self, interaction: core.InteractionType, member: discord.Member = None):
@@ -273,10 +274,10 @@ class Levelling(commands.Cog):
 
         record = await LevellingUser.pool.fetchrow(query, interaction.guild.id, member.id)
 
-        if record is None:
-            return await interaction.response.send_message("User Not ranked yet!", ephemeral=True)
+        log.info(record)
 
-        level = utils.get_level_for_xp(user_xp=record.total_xp)
+        if record.total_xp is None:
+            return await interaction.response.send_message("User not ranked yet!", ephemeral=True)
 
         # Fetch the user's avatar as bytes
         avatar_bytes = await member.avatar.with_format("png").read()
