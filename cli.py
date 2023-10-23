@@ -132,10 +132,12 @@ async def main(ctx):
         "jishaku",
         "bot.extensions.challenges",
         "bot.extensions.readthedocs",
-        "bot.cogs.commands",
-        "bot.cogs.filtering",
+        "bot.extensions.suggestions",
+        "bot.extensions.github",
+        "bot.extensions.tags",
+        "bot.extensions.levelling",
+        "bot.extensions.persistent_roles",
         "bot.cogs._help",
-        "bot.cogs.tags",
         "bot.cogs.clashofcode",
         "bot.cogs.roles",
         "bot.cogs.poll",
@@ -158,7 +160,7 @@ async def run_migration(file: str = "000_up__migrations.sql") -> Migration:
     mig = Migration.from_match(match)
 
     await Model.execute(query)
-    click.echo(f"{file} was executed.")
+    log.info(f"Migration {mig.name} ({file}) was executed.")
 
     await mig.post()
     return mig

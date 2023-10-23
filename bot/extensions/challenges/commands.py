@@ -98,6 +98,8 @@ class ChallengeCommands(commands.GroupCog, group_name="challenges"):
         except ValueError:
             return await interaction.response.send_message("Failed to convert message_id to integer.")
 
+        await interaction.response.defer(thinking=True)
+
         try:
             message = await self.bot.http.get_message(
                 channel_id=settings.challenges.discussion_channel_id, message_id=int(message_id)
@@ -129,7 +131,7 @@ class ChallengeCommands(commands.GroupCog, group_name="challenges"):
             output += "\n\nThese users failed though...\n\n"
             output += "\n".join(f"{user_id}: {reason}" for user_id, reason in failed.items())
 
-        return await interaction.response.send_message(output)
+        return await interaction.followup.send(output)
 
     @app_commands.command()
     @app_commands.describe(member="Member to remove role from.")

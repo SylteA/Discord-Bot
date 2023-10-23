@@ -9,6 +9,7 @@ from discord.ext import commands, tasks
 
 from bot.config import settings
 from bot.services import http, paste
+from utils.errors import IgnorableException
 from utils.time import human_timedelta
 
 log = logging.getLogger(__name__)
@@ -95,8 +96,12 @@ class DiscordBot(commands.Bot):
 
     async def on_app_command_error(self, interaction: "InteractionType", error: app_commands.AppCommandError):
         """Handle errors in app commands."""
+        if isinstance(error, IgnorableException):
+            return
+
         if interaction.command is None:
-            return log.error("Ignoring exception in command tree.", exc_info=error)
+            log.error("Ignoring exception in command tree.", exc_info=error)
+            return
 
         if isinstance(error, app_commands.CheckFailure):
             log.info(f"{interaction.user} failed to use the command {interaction.command.qualified_name}")
