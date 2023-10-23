@@ -9,6 +9,16 @@ BM = TypeVar("BM", bound="Model")
 log = logging.getLogger(__name__)
 
 
+class CustomRecord(Record):
+    def __getattr__(self, item: str):
+        try:
+            return self[item]
+        except KeyError:
+            pass
+
+        return super().__getattr__(item)
+
+
 class Model(BaseModel):
     pool: ClassVar[Pool] = None
 
@@ -22,7 +32,9 @@ class Model(BaseModel):
         loop: asyncio.AbstractEventLoop = None,
         **kwargs,
     ) -> None:
-        cls.pool = await create_pool(uri, min_size=min_con, max_size=max_con, loop=loop, **kwargs)
+        cls.pool = await create_pool(
+            uri, min_size=min_con, max_size=max_con, loop=loop, record_class=CustomRecord, **kwargs
+        )
         log.info(f"Established a pool with {min_con} - {max_con} connections\n")
 
     @classmethod
@@ -46,9 +58,12 @@ class Model(BaseModel):
     ) -> Union[BM, Record, None]:
         if con is None:
             con = cls.pool
+
         record = await con.fetchrow(query, *args)
+
         if cls is Model or record is None or convert is False:
             return record
+
         return cls(**record)
 
     @classmethod
