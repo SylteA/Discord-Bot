@@ -277,7 +277,12 @@ class Levelling(commands.Cog):
         log.info(record)
 
         if record.total_xp is None:
-            return await interaction.response.send_message("User not ranked yet!", ephemeral=True)
+            if member.id == interaction.user.id:
+                return await interaction.response.send_message(
+                    "You are not ranked yet, send a few messages and try again!", ephemeral=True
+                )
+
+            return await interaction.response.send_message("That user is not ranked yet...", ephemeral=True)
 
         # Fetch the user's avatar as bytes
         avatar_bytes = await member.avatar.with_format("png").read()
