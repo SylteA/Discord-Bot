@@ -1,18 +1,17 @@
-import datetime
-import random
 import asyncio
+import random
 from io import BytesIO
-from PIL import Image, ImageDraw, ImageFont
-from cli import ROOT_DIR
 
 import discord
 from discord import app_commands
 from discord.ext import commands
+from PIL import Image, ImageDraw, ImageFont
 
 from bot import core
 from bot.extensions.levelling import utils
 from bot.models import IgnoredChannel, LevellingRole, LevellingUser
 from bot.models.custom_roles import CustomRole
+from cli import ROOT_DIR
 
 
 class Levelling(commands.Cog):
@@ -49,7 +48,7 @@ class Levelling(commands.Cog):
         self.ignored_channels: dict[int, list[int]] = {}
         self.required_xp = [0]
         self.xp_boost = 1
-        
+
         # Initializing fonts
         font = f"{ROOT_DIR.as_posix()}/assets/ABeeZee-Regular.otf"
         self.big_font = ImageFont.truetype(font, 60)
@@ -111,18 +110,18 @@ class Levelling(commands.Cog):
         self.bot.dispatch("xp_update", before=before, after=after)
 
     def generate_rank_image(self, member: discord.Member, avatar_bytes, rank, level, xp, final_xp):
-        img = Image.new('RGBA', (1000, 240))
+        img = Image.new("RGBA", (1000, 240))
         logo = Image.open(BytesIO(avatar_bytes)).resize((200, 200))
 
         # Paste the default background image onto the new image
         img.paste(self.background, (0, 0))
 
         # Create a translucent dark layer to see the text better
-        dark_layer = Image.new('RGBA', img.size, (0, 0, 0, 128))
+        dark_layer = Image.new("RGBA", img.size, (0, 0, 0, 128))
         img = Image.alpha_composite(img, dark_layer)
 
         bigsize = (logo.size[0] * 3, logo.size[1] * 3)
-        mask = Image.new('L', bigsize, 0)
+        mask = Image.new("L", bigsize, 0)
         draw = ImageDraw.Draw(mask)
         draw.ellipse((0, 0, bigsize[0], bigsize[1]), fill=255)
         mask = mask.resize(logo.size, Image.Resampling.LANCZOS)
@@ -130,7 +129,7 @@ class Levelling(commands.Cog):
 
         img.paste(logo, (20, 20), mask=logo)
 
-        draw = ImageDraw.Draw(img, 'RGBA')
+        draw = ImageDraw.Draw(img, "RGBA")
 
         # Placing Level text (right-upper part)
         text_size = draw.textbbox((0, 0), f"{level}", font=self.big_font)
@@ -165,13 +164,21 @@ class Levelling(commands.Cog):
         draw.rectangle((bar_offset_x, bar_offset_y, bar_offset_x_1, bar_offset_y_1), fill="#727175")
 
         # Left circle
-        draw.ellipse((bar_offset_x - circle_size // 2, bar_offset_y, bar_offset_x + circle_size // 2,
-                    bar_offset_y + circle_size), fill="#727175")
+        draw.ellipse(
+            (
+                bar_offset_x - circle_size // 2,
+                bar_offset_y,
+                bar_offset_x + circle_size // 2,
+                bar_offset_y + circle_size,
+            ),
+            fill="#727175",
+        )
 
         # Right Circle
         draw.ellipse(
             (bar_offset_x_1 - circle_size // 2, bar_offset_y, bar_offset_x_1 + circle_size // 2, bar_offset_y_1),
-            fill="#727175")
+            fill="#727175",
+        )
 
         # Filling Progress Bar
         bar_length = bar_offset_x_1 - bar_offset_x
@@ -185,18 +192,26 @@ class Levelling(commands.Cog):
         draw.rectangle((bar_offset_x, bar_offset_y, pbar_offset_x_1, bar_offset_y_1), fill="#11ebf2")
 
         # Left circle
-        draw.ellipse((bar_offset_x - circle_size // 2, bar_offset_y, bar_offset_x + circle_size // 2,
-                    bar_offset_y + circle_size), fill="#11ebf2")
-        
+        draw.ellipse(
+            (
+                bar_offset_x - circle_size // 2,
+                bar_offset_y,
+                bar_offset_x + circle_size // 2,
+                bar_offset_y + circle_size,
+            ),
+            fill="#11ebf2",
+        )
+
         # Right Circle
         draw.ellipse(
             (pbar_offset_x_1 - circle_size // 2, bar_offset_y, pbar_offset_x_1 + circle_size // 2, bar_offset_y_1),
-            fill="#11ebf2")
+            fill="#11ebf2",
+        )
 
         def convert_int(integer):
             if integer >= 1000:
                 integer = round(integer / 1000, 2)
-                return f'{integer}K'
+                return f"{integer}K"
             else:
                 return str(integer)
 
@@ -207,16 +222,16 @@ class Levelling(commands.Cog):
         xp_offset_y = bar_offset_y - xp_text_size[3] - 10
         draw.text((xp_offset_x, xp_offset_y), text, font=self.small_font, fill="#727175")
 
-        text = f'{convert_int(xp)} '
+        text = f"{convert_int(xp)} "
         xp_text_size = draw.textbbox((0, 0), text, font=self.small_font)
-        xp_offset_x -= (xp_text_size[2] - xp_text_size[0])
+        xp_offset_x -= xp_text_size[2] - xp_text_size[0]
         draw.text((xp_offset_x, xp_offset_y), text, font=self.small_font, fill="#fff")
 
         # Placing User Name
         text = member.display_name
         if len(text) >= 15:
             # Truncating the name
-            text = text[:15] + '...'
+            text = text[:15] + "..."
 
         text_bbox = draw.textbbox((0, 0), text, font=self.medium_font)
         text_offset_x = bar_offset_x - 10
@@ -234,7 +249,7 @@ class Levelling(commands.Cog):
         background.paste(img, (x, y))
 
         bytes = BytesIO()
-        background.save(bytes, 'PNG')
+        background.save(bytes, "PNG")
         bytes.seek(0)
         return bytes
 
@@ -273,7 +288,9 @@ class Levelling(commands.Cog):
 
         # Run the image generation in a thread to avoid blocking
         loop = asyncio.get_event_loop()
-        result = await loop.run_in_executor(None, self.generate_rank_image, member, avatar_bytes, record.count + 1, level, curr_xp, next_xp)
+        result = await loop.run_in_executor(
+            None, self.generate_rank_image, member, avatar_bytes, record.count + 1, level, curr_xp, next_xp
+        )
 
         # Send result as image
         await interaction.response.send_message(
