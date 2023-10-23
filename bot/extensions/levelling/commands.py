@@ -290,7 +290,7 @@ class Levelling(commands.Cog):
         # Run the image generation in a thread to avoid blocking
         loop = asyncio.get_event_loop()
         result = await loop.run_in_executor(
-            None, self.generate_rank_image, member, avatar_bytes, record.count + 1, level, curr_xp, next_xp
+            None, self.generate_rank_image, member.display_name, avatar_bytes, record.count + 1, level, curr_xp, next_xp
         )
 
         # Send result as image
