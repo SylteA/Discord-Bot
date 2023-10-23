@@ -1,14 +1,17 @@
-import datetime
+import asyncio
 import random
+from io import BytesIO
 
 import discord
 from discord import app_commands
 from discord.ext import commands
+from PIL import Image, ImageDraw, ImageFont
 
 from bot import core
 from bot.extensions.levelling import utils
 from bot.models import IgnoredChannel, LevellingRole, LevellingUser
 from bot.models.custom_roles import CustomRole
+from cli import ROOT_DIR
 
 
 class Levelling(commands.Cog):
@@ -45,6 +48,15 @@ class Levelling(commands.Cog):
         self.ignored_channels: dict[int, list[int]] = {}
         self.required_xp = [0]
         self.xp_boost = 1
+
+        # Initializing fonts
+        font = f"{ROOT_DIR.as_posix()}/assets/ABeeZee-Regular.otf"
+        self.big_font = ImageFont.truetype(font, 60)
+        self.medium_font = ImageFont.truetype(font, 40)
+        self.small_font = ImageFont.truetype(font, 30)
+
+        # Initialize the default background image for rank card
+        self.background = Image.open(f"{ROOT_DIR.as_posix()}/assets/background.png")
 
     async def cog_load(self):
         query = """
@@ -97,6 +109,150 @@ class Levelling(commands.Cog):
 
         self.bot.dispatch("xp_update", before=before, after=after)
 
+    def generate_rank_image(self, member: discord.Member, avatar_bytes, rank, level, xp, final_xp):
+        img = Image.new("RGBA", (1000, 240))
+        logo = Image.open(BytesIO(avatar_bytes)).resize((200, 200))
+
+        # Paste the default background image onto the new image
+        img.paste(self.background, (0, 0))
+
+        # Create a translucent dark layer to see the text better
+        dark_layer = Image.new("RGBA", img.size, (0, 0, 0, 128))
+        img = Image.alpha_composite(img, dark_layer)
+
+        bigsize = (logo.size[0] * 3, logo.size[1] * 3)
+        mask = Image.new("L", bigsize, 0)
+        draw = ImageDraw.Draw(mask)
+        draw.ellipse((0, 0, bigsize[0], bigsize[1]), fill=255)
+        mask = mask.resize(logo.size, Image.Resampling.LANCZOS)
+        logo.putalpha(mask)
+
+        img.paste(logo, (20, 20), mask=logo)
+
+        draw = ImageDraw.Draw(img, "RGBA")
+
+        # Placing Level text (right-upper part)
+        text_size = draw.textbbox((0, 0), f"{level}", font=self.big_font)
+        offset_x = 1000 - 43 - text_size[2]
+        offset_y = 5
+        draw.text((offset_x, offset_y), f"{level}", font=self.big_font, fill="#11ebf2")
+        text_size = draw.textbbox((0, 0), "LEVEL", font=self.small_font)
+
+        offset_x -= 5 + (text_size[2] - text_size[0])
+        offset_y = 35
+        draw.text((offset_x, offset_y), "LEVEL", font=self.small_font, fill="#11ebf2")
+
+        # Placing Rank Text (right-upper part)
+        text_size = draw.textbbox((0, 0), f"#{rank}", font=self.big_font)
+        offset_x -= 15 + (text_size[2] - text_size[0])
+        offset_y = 8
+        draw.text((offset_x, offset_y), f"#{rank}", font=self.big_font, fill="#fff")
+
+        text_size = draw.textbbox((0, 0), "RANK", font=self.small_font)
+        offset_x -= 5 + (text_size[2] - text_size[0])
+        offset_y = 35
+        draw.text((offset_x, offset_y), "RANK", font=self.small_font, fill="#fff")
+
+        # Placing Progress Bar
+        bar_offset_x = logo.size[0] + 20 + 100
+        bar_offset_y = 160
+        bar_offset_x_1 = 1000 - 50
+        bar_offset_y_1 = 200
+        circle_size = bar_offset_y_1 - bar_offset_y
+
+        # Progress bar rect greyer one
+        draw.rectangle((bar_offset_x, bar_offset_y, bar_offset_x_1, bar_offset_y_1), fill="#727175")
+
+        # Left circle
+        draw.ellipse(
+            (
+                bar_offset_x - circle_size // 2,
+                bar_offset_y,
+                bar_offset_x + circle_size // 2,
+                bar_offset_y + circle_size,
+            ),
+            fill="#727175",
+        )
+
+        # Right Circle
+        draw.ellipse(
+            (bar_offset_x_1 - circle_size // 2, bar_offset_y, bar_offset_x_1 + circle_size // 2, bar_offset_y_1),
+            fill="#727175",
+        )
+
+        # Filling Progress Bar
+        bar_length = bar_offset_x_1 - bar_offset_x
+
+        progress = (final_xp - xp) * 100 / final_xp
+        progress = 100 - progress
+        progress_bar_length = round(bar_length * progress / 100)
+        pbar_offset_x_1 = bar_offset_x + progress_bar_length
+
+        # Drawing Rectangle
+        draw.rectangle((bar_offset_x, bar_offset_y, pbar_offset_x_1, bar_offset_y_1), fill="#11ebf2")
+
+        # Left circle
+        draw.ellipse(
+            (
+                bar_offset_x - circle_size // 2,
+                bar_offset_y,
+                bar_offset_x + circle_size // 2,
+                bar_offset_y + circle_size,
+            ),
+            fill="#11ebf2",
+        )
+
+        # Right Circle
+        draw.ellipse(
+            (pbar_offset_x_1 - circle_size // 2, bar_offset_y, pbar_offset_x_1 + circle_size // 2, bar_offset_y_1),
+            fill="#11ebf2",
+        )
+
+        def convert_int(integer):
+            if integer >= 1000:
+                integer = round(integer / 1000, 2)
+                return f"{integer}K"
+            else:
+                return str(integer)
+
+        # Drawing Xp Text
+        text = f"/ {convert_int(final_xp)} XP"
+        xp_text_size = draw.textbbox((0, 0), text, font=self.small_font)
+        xp_offset_x = bar_offset_x_1 - (xp_text_size[2] - xp_text_size[0])
+        xp_offset_y = bar_offset_y - xp_text_size[3] - 10
+        draw.text((xp_offset_x, xp_offset_y), text, font=self.small_font, fill="#727175")
+
+        text = f"{convert_int(xp)} "
+        xp_text_size = draw.textbbox((0, 0), text, font=self.small_font)
+        xp_offset_x -= xp_text_size[2] - xp_text_size[0]
+        draw.text((xp_offset_x, xp_offset_y), text, font=self.small_font, fill="#fff")
+
+        # Placing User Name
+        text = member.display_name
+        if len(text) >= 15:
+            # Truncating the name
+            text = text[:15] + "..."
+
+        text_bbox = draw.textbbox((0, 0), text, font=self.medium_font)
+        text_offset_x = bar_offset_x - 10
+        text_offset_y = bar_offset_y - (text_bbox[3] - text_bbox[1]) - 20
+        draw.text((text_offset_x, text_offset_y), text, font=self.medium_font, fill="#fff")
+
+        # create copy of background
+        background = self.background.copy()
+
+        # Paste the content image into the center of the background
+        bg_width, bg_height = background.size
+        img_width, img_height = img.size
+        x = (bg_width - img_width) // 2
+        y = (bg_height - img_height) // 2
+        background.paste(img, (x, y))
+
+        bytes = BytesIO()
+        background.save(bytes, "PNG")
+        bytes.seek(0)
+        return bytes
+
     @app_commands.command()
     async def rank(self, interaction: core.InteractionType, member: discord.Member = None):
         """Check the rank of another member or yourself"""
@@ -122,13 +278,25 @@ class Levelling(commands.Cog):
 
         level = utils.get_level_for_xp(user_xp=record.total_xp)
 
-        embed = discord.Embed(
-            title=f"Rank: {record.count + 1}\nLevel: {level}, Total XP: {record.total_xp}",
-            timestamp=datetime.datetime.utcnow(),
-            color=discord.Color.blurple(),
+        # Fetch the user's avatar as bytes
+        avatar_bytes = await member.avatar.with_format("png").read()
+
+        level = utils.get_level_for_xp(record.total_xp)
+        prev_xp = utils.get_xp_for_level(level)
+        next_xp = utils.get_xp_for_level(level + 1)
+        curr_xp = record.total_xp - prev_xp
+
+        # Run the image generation in a thread to avoid blocking
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(
+            None, self.generate_rank_image, member, avatar_bytes, record.count + 1, level, curr_xp, next_xp
         )
-        embed.set_thumbnail(url=member.avatar)
-        return await interaction.response.send_message(embed=embed)
+
+        # Send result as image
+        await interaction.response.send_message(
+            file=discord.File(result, filename="rank.png"),
+            allowed_mentions=discord.AllowedMentions.none(),
+        )
 
     @ignored_channels.command()
     @app_commands.describe(channel="The channel to ignore.")
