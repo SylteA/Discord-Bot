@@ -289,7 +289,7 @@ class Levelling(commands.Cog):
 
         level = utils.get_level_for_xp(record.total_xp)
         prev_xp = utils.get_xp_for_level(level)
-        next_xp = utils.get_xp_for_level(level + 1)
+        next_xp = utils.get_xp_for_level(level + 1) - prev_xp
         curr_xp = record.total_xp - prev_xp
 
         # Run the image generation in a thread to avoid blocking
