@@ -86,6 +86,7 @@ class Buttons(ui.View):
 
     @discord.ui.button(label="Create Poll", style=discord.ButtonStyle.gray, emoji="📝")
     async def create_poll(self, interaction: discord.Interaction, _button: ui.Button):
+        # Get the embed
         embed = interaction.message.embeds[0]
 
         # If there are less than 2 options, return
@@ -97,6 +98,10 @@ class Buttons(ui.View):
         # Add reactions
         for i in range(0, str(embed.description).count("\n\n")):
             await message.add_reaction(self.reactions[i])
+
+        # Delete the original message
+        await interaction.response.defer()
+        await interaction.delete_original_response()
 
 
 class Polls(commands.GroupCog, group_name="poll"):
@@ -117,15 +122,6 @@ class Polls(commands.GroupCog, group_name="poll"):
             9: "9️⃣",
             10: "🔟",
         }
-
-    def poll_check(self, message: discord.Message):
-        try:
-            embed = message.embeds[0]
-        except Exception:
-            return False
-        if str(embed.footer.text).count("Poll by") == 1:
-            return message.author == self.__bot.user
-        return False
 
     @app_commands.command()
     @app_commands.checks.cooldown(1, 10)

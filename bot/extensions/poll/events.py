@@ -9,6 +9,16 @@ class PollsEvents(commands.Cog):
 
     def __init__(self, bot: core.DiscordBot):
         self.bot = bot
+        self.emojis = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "9️⃣", "🔟"]
+
+    def poll_check(self, message: discord.Message):
+        try:
+            embed = message.embeds[0]
+        except Exception:
+            return False
+        if str(embed.footer.text).count("Poll by") == 1:
+            return message.author == self.bot.user
+        return False
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
@@ -21,12 +31,11 @@ class PollsEvents(commands.Cog):
         if not self.poll_check(message):
             return
 
-        emojis = list(self.reactions.values())
-        if str(payload.emoji) not in emojis:
+        if str(payload.emoji) not in self.emojis:
             return
 
         for reaction in message.reactions:
-            if str(reaction) not in emojis:
+            if str(reaction) not in self.emojis:
                 return
 
             if str(reaction.emoji) != str(payload.emoji):
