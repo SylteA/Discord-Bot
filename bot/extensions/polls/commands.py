@@ -24,6 +24,15 @@ class Polls(commands.GroupCog, group_name="poll"):
             9: "9️⃣",
             10: "🔟",
         }
+    
+    def poll_check(self, message: discord.Message):
+        try:
+            embed = message.embeds[0]
+        except Exception:
+            return False
+        if str(embed.footer.text).count("Poll by") == 1:
+            return message.author == self.bot.user
+        return False
 
     @app_commands.command()
     @app_commands.checks.cooldown(1, 10)
