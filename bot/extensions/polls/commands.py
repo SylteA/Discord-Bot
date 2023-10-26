@@ -31,7 +31,7 @@ class Polls(commands.GroupCog, group_name="poll"):
         except Exception:
             return False
         if str(embed.footer.text).count("Poll by") == 1:
-            return message.author == self.bot.user
+            return message.author == self.__bot.user
         return False
 
     @app_commands.command()
