@@ -3,7 +3,7 @@ from discord import ui
 
 
 class PollModal(ui.Modal):
-    name = ui.TextInput(label="Option name", placeholder="Enter poll option name", max_length=50, required=True)
+    name = ui.TextInput(label="Choice name", placeholder="Enter poll choice", max_length=50, required=True)
 
     def __init__(self, var: discord.Interaction):
         self.var = var

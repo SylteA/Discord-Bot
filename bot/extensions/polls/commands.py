@@ -36,11 +36,11 @@ class Polls(commands.GroupCog, group_name="poll"):
 
     @app_commands.command()
     @app_commands.checks.cooldown(1, 10)
-    async def new(self, interaction: core.InteractionType, desc: str):
+    async def new(self, interaction: core.InteractionType, title: str):
         """Create a new poll"""
 
         embed = discord.Embed(
-            description=f"**{desc}**\n\n",
+            description=f"**{title}**\n\n",
             timestamp=discord.utils.utcnow(),
             color=discord.colour.Color.gold(),
         )
@@ -57,12 +57,12 @@ class Polls(commands.GroupCog, group_name="poll"):
                 channel = self.__bot.get_channel(int(channel_id))
                 message = await channel.fetch_message(int(msg_id))
             except Exception:
-                return await interaction.response.send_message("Please provide the message ID/link for a valid poll")
+                return await interaction.response.send_message("Please provide the message ID/link for a valid poll", ephemeral=True)
         except Exception:
             try:
                 message = await interaction.channel.fetch_message(int(message))
             except Exception:
-                return await interaction.response.send_message("Please provide the message ID/link for a valid poll")
+                return await interaction.response.send_message("Please provide the message ID/link for a valid poll", ephemeral=True)
 
         if self.poll_check(message):
             poll_embed = message.embeds[0]
@@ -103,7 +103,7 @@ class Polls(commands.GroupCog, group_name="poll"):
             embed.set_footer(text="Poll Result")
             return await interaction.response.send_message(embed=embed, ephemeral=ephemeral)
 
-        return await interaction.response.send_message("Please provide the message ID/link for a valid poll")
+        return await interaction.response.send_message("Please provide the message ID/link for a valid poll", ephemeral=True)
 
 
 async def setup(bot: commands.Bot):
