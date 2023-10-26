@@ -86,12 +86,13 @@ class Buttons(ui.View):
 
     @discord.ui.button(label="Create Poll", style=discord.ButtonStyle.gray, emoji="📝")
     async def create_poll(self, interaction: discord.Interaction, _button: ui.Button):
-        # Get the embed
         embed = interaction.message.embeds[0]
 
         # If there are less than 2 options, return
         if str(embed.description).count("\n\n") < 2:
-            return await interaction.response.send_message("You can't create a poll with no choices", ephemeral=True)
+            return await interaction.response.send_message(
+                "You can't create a poll with less than 2 choices", ephemeral=True
+            )
 
         message = await interaction.channel.send(embed=embed)
 
