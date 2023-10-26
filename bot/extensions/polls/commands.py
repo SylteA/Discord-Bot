@@ -24,7 +24,7 @@ class Polls(commands.GroupCog, group_name="poll"):
             9: "9️⃣",
             10: "🔟",
         }
-    
+
     def poll_check(self, message: discord.Message):
         try:
             embed = message.embeds[0]
@@ -57,12 +57,16 @@ class Polls(commands.GroupCog, group_name="poll"):
                 channel = self.__bot.get_channel(int(channel_id))
                 message = await channel.fetch_message(int(msg_id))
             except Exception:
-                return await interaction.response.send_message("Please provide the message ID/link for a valid poll", ephemeral=True)
+                return await interaction.response.send_message(
+                    "Please provide the message ID/link for a valid poll", ephemeral=True
+                )
         except Exception:
             try:
                 message = await interaction.channel.fetch_message(int(message))
             except Exception:
-                return await interaction.response.send_message("Please provide the message ID/link for a valid poll", ephemeral=True)
+                return await interaction.response.send_message(
+                    "Please provide the message ID/link for a valid poll", ephemeral=True
+                )
 
         if self.poll_check(message):
             poll_embed = message.embeds[0]
@@ -103,7 +107,9 @@ class Polls(commands.GroupCog, group_name="poll"):
             embed.set_footer(text="Poll Result")
             return await interaction.response.send_message(embed=embed, ephemeral=ephemeral)
 
-        return await interaction.response.send_message("Please provide the message ID/link for a valid poll", ephemeral=True)
+        return await interaction.response.send_message(
+            "Please provide the message ID/link for a valid poll", ephemeral=True
+        )
 
 
 async def setup(bot: commands.Bot):
