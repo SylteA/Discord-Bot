@@ -9,7 +9,7 @@ from utils.transformers import MessageTransformer
 
 class Polls(commands.GroupCog, group_name="poll"):
     def __init__(self, bot: commands.AutoShardedBot):
-        self.__bot = bot
+        self.bot = bot
 
     @property
     def reactions(self):
@@ -32,16 +32,16 @@ class Polls(commands.GroupCog, group_name="poll"):
         except Exception:
             return False
         if str(embed.footer.text).count("Poll by") == 1:
-            return message.author == self.__bot.user
+            return message.author == self.bot.user
         return False
 
     @app_commands.command()
-    @app_commands.checks.cooldown(1, 10)
-    async def new(self, interaction: core.InteractionType, title: str):
+    @app_commands.describe(question="Your question")
+    async def new(self, interaction: core.InteractionType, question: str):
         """Create a new poll"""
 
         embed = discord.Embed(
-            description=f"**{title}**\n\n",
+            description=f"**{question}**\n\n",
             timestamp=discord.utils.utcnow(),
             color=discord.colour.Color.gold(),
         )

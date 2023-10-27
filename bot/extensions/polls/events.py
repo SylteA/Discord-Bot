@@ -4,7 +4,7 @@ from discord.ext import commands
 from bot import core
 
 
-class PollsEvents(commands.Cog):
+class PollEvents(commands.Cog):
     """Events for polls in discord."""
 
     def __init__(self, bot: core.DiscordBot):
