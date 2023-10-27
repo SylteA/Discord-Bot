@@ -4,6 +4,7 @@ from discord.ext import commands
 
 from bot import core
 from bot.extensions.polls.views import PollButtons
+from utils.transformers import MessageTransformer
 
 
 class Polls(commands.GroupCog, group_name="poll"):
@@ -48,25 +49,13 @@ class Polls(commands.GroupCog, group_name="poll"):
         await interaction.response.send_message(embed=embed, ephemeral=True, view=PollButtons())
 
     @app_commands.command()
-    async def show(self, interaction: core.InteractionType, message: str, ephemeral: bool = True):
+    async def show(
+        self,
+        interaction: core.InteractionType,
+        message: app_commands.Transform[discord.Message, MessageTransformer],
+        ephemeral: bool = True,
+    ):
         """Show a poll result"""
-        try:
-            *_, channel_id, msg_id = message.split("/")
-
-            try:
-                channel = self.__bot.get_channel(int(channel_id))
-                message = await channel.fetch_message(int(msg_id))
-            except Exception:
-                return await interaction.response.send_message(
-                    "Please provide the message ID/link for a valid poll", ephemeral=True
-                )
-        except Exception:
-            try:
-                message = await interaction.channel.fetch_message(int(message))
-            except Exception:
-                return await interaction.response.send_message(
-                    "Please provide the message ID/link for a valid poll", ephemeral=True
-                )
 
         if self.poll_check(message):
             poll_embed = message.embeds[0]
@@ -107,9 +96,7 @@ class Polls(commands.GroupCog, group_name="poll"):
             embed.set_footer(text="Poll Result")
             return await interaction.response.send_message(embed=embed, ephemeral=ephemeral)
 
-        return await interaction.response.send_message(
-            "Please provide the message ID/link for a valid poll", ephemeral=True
-        )
+        return await interaction.response.send_message("Please provide a valid poll message", ephemeral=True)
 
 
 async def setup(bot: commands.Bot):
