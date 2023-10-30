@@ -69,9 +69,8 @@ class CreatePollView(ui.View):
 
     @discord.ui.button(label="Add Choice", style=discord.ButtonStyle.gray, emoji="➕", custom_id=ADD_CUSTOM_ID)
     async def add_choice(self, interaction: discord.Interaction, _button: ui.Button):
-        # Count the number of options
         num = len(interaction.message.embeds[0].fields)
-        # If there are more than 10 options, return
+
         if num >= 10:
             return await interaction.response.send_message(
                 "You can't make a poll with more than 10 choices", ephemeral=True
@@ -84,13 +83,11 @@ class CreatePollView(ui.View):
     async def remove_choice(self, interaction: discord.Interaction, _button: ui.Button):
         embed = interaction.message.embeds[0]
 
-        # If there are no options, return
         if len(embed.fields) == 0:
             return await interaction.response.send_message(
                 "You can't remove a choice from a poll with no choices", ephemeral=True
             )
 
-        # Edit the message to show the select menu
         options = []
         for i in range(0, len(embed.fields)):
             options.append(
@@ -101,10 +98,8 @@ class CreatePollView(ui.View):
             embed = interaction.message.embeds[0]
             selected = int(interaction.data["values"][0])
 
-            # remove the selected option
             embed.remove_field(selected - 1)
 
-            # Reset correct emoji to each option
             for x in range(0, len(embed.fields)):
                 embed.set_field_at(
                     x,
@@ -113,7 +108,6 @@ class CreatePollView(ui.View):
                     inline=False,
                 )
 
-            # Return old buttons
             await interaction.response.defer()
             await interaction.edit_original_response(embed=embed, view=self)
 
@@ -131,7 +125,6 @@ class CreatePollView(ui.View):
     async def create_poll(self, interaction: discord.Interaction, _button: ui.Button):
         embed = interaction.message.embeds[0]
 
-        # If there are less than 2 options, return
         if len(embed.fields) < 2:
             return await interaction.response.send_message(
                 "You can't create a poll with less than 2 choices", ephemeral=True
@@ -139,10 +132,8 @@ class CreatePollView(ui.View):
 
         message = await interaction.channel.send(embed=embed)
 
-        # Add reactions
         for i in range(0, len(embed.fields)):
             await message.add_reaction(self.reactions[i])
 
-        # Delete the original message
         await interaction.response.defer()
         await interaction.delete_original_response()

@@ -12,12 +12,12 @@ class PollEvents(commands.Cog):
         self.emojis = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "9️⃣", "🔟"]
 
     def poll_check(self, message: discord.Message):
-        if len(message.embeds) != 0:
-            embed = message.embeds[0]
-            if str(embed.footer.text).count("Poll by") == 1:
-                return message.author == self.bot.user
+        if not message.embeds:
+            return False
 
-        return False
+        embed = message.embeds[0]
+        if str(embed.footer.text).count("Poll by") == 1:
+            return message.author == self.bot.user
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):

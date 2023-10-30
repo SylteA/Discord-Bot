@@ -27,12 +27,12 @@ class Polls(commands.GroupCog, group_name="poll"):
         }
 
     def poll_check(self, message: discord.Message):
-        if len(message.embeds) != 0:
-            embed = message.embeds[0]
-            if str(embed.footer.text).count("Poll by") == 1:
-                return message.author == self.bot.user
+        if not message.embeds:
+            return False
 
-        return False
+        embed = message.embeds[0]
+        if str(embed.footer.text).count("Poll by") == 1:
+            return message.author == self.bot.user
 
     @app_commands.command()
     @app_commands.describe(question="Your question")
@@ -44,7 +44,7 @@ class Polls(commands.GroupCog, group_name="poll"):
             timestamp=discord.utils.utcnow(),
             color=discord.colour.Color.gold(),
         )
-        embed.set_footer(text=f"Poll by {str(interaction.user.display_name)}")
+        embed.set_footer(text=f"Poll by {interaction.user.display_name}")
         await interaction.response.send_message(embed=embed, ephemeral=True, view=CreatePollView())
 
     @app_commands.command()
@@ -56,41 +56,41 @@ class Polls(commands.GroupCog, group_name="poll"):
     ):
         """Show a poll result"""
 
-        if self.poll_check(message):
-            poll_embed = message.embeds[0]
-            reactions = message.reactions
-            reactions_total = sum(
-                [reaction.count - 1 if str(reaction.emoji) in self.reactions.values() else 0 for reaction in reactions]
-            )
+        if not self.poll_check(message):
+            return await interaction.response.send_message("Please provide a valid poll message", ephemeral=True)
 
-            options = [field.name for field in poll_embed.fields]
-            desc = poll_embed.description.split("1️")[0]
+        poll_embed = message.embeds[0]
+        reactions = message.reactions
+        reactions_total = sum(
+            [reaction.count - 1 if str(reaction.emoji) in self.reactions.values() else 0 for reaction in reactions]
+        )
 
-            embed = discord.Embed(
-                description=desc,
-                timestamp=poll_embed.timestamp,
-                color=discord.Color.gold(),
-            )
+        options = [field.name for field in poll_embed.fields]
+        desc = poll_embed.description.split("1️")[0]
 
-            for i, option in enumerate(options):
-                reaction_count = reactions[i].count - 1
-                indicator = "░" * 20
-                if reactions_total != 0:
-                    indicator = "█" * int(((reaction_count / reactions_total) * 100) / 5) + "░" * int(
-                        (((reactions_total - reaction_count) / reactions_total) * 100) / 5
-                    )
+        embed = discord.Embed(
+            description=desc,
+            timestamp=poll_embed.timestamp,
+            color=discord.Color.gold(),
+        )
 
-                embed.add_field(
-                    name=option,
-                    value=f"{indicator}  {int((reaction_count / (reactions_total or 1)*100))}%"
-                    f" (**{reaction_count} votes**)",
-                    inline=False,
+        for i, option in enumerate(options):
+            reaction_count = reactions[i].count - 1
+            indicator = "░" * 20
+            if reactions_total != 0:
+                indicator = "█" * int(((reaction_count / reactions_total) * 100) / 5) + "░" * int(
+                    (((reactions_total - reaction_count) / reactions_total) * 100) / 5
                 )
 
-            embed.set_footer(text="Poll Result")
-            return await interaction.response.send_message(embed=embed, ephemeral=ephemeral)
+            embed.add_field(
+                name=option,
+                value=f"{indicator}  {int((reaction_count / (reactions_total or 1)*100))}%"
+                f" (**{reaction_count} votes**)",
+                inline=False,
+            )
 
-        return await interaction.response.send_message("Please provide a valid poll message", ephemeral=True)
+        embed.set_footer(text="Poll Result")
+        return await interaction.response.send_message(embed=embed, ephemeral=ephemeral)
 
 
 async def setup(bot: commands.Bot):
