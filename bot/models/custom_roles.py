@@ -3,6 +3,7 @@ from .model import Model
 
 class CustomRole(Model):
     id: int
+    user_id: int
     guild_id: int
     role_id: int
     name: str

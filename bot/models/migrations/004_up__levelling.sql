@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS levelling_users
 CREATE TABLE IF NOT EXISTS custom_roles
 (
     id          BIGINT PRIMARY KEY DEFAULT create_snowflake(),
+    user_id     BIGINT NOT NULL,
     guild_id    BIGINT NOT NULL,
     role_id     BIGINT NOT NULL,
     name        VARCHAR NOT NULL,
