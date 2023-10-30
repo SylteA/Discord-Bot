@@ -3,7 +3,14 @@ from discord import ui
 
 
 class PollModal(ui.Modal):
-    name = ui.TextInput(label="Choice name", placeholder="Enter poll choice", max_length=50, required=True)
+    name = ui.TextInput(label="Choice name", placeholder="Enter poll choice", max_length=32, required=True)
+    description = ui.TextInput(
+        label="Choice description (optional)",
+        placeholder="Enter poll choice description",
+        style=discord.TextStyle.long,
+        max_length=512,
+        required=False,
+    )
 
     def __init__(self, var: discord.Interaction):
         self.var = var
@@ -27,15 +34,21 @@ class PollModal(ui.Modal):
     async def on_submit(self, interaction: discord.Interaction) -> None:
         message = await self.var.followup.fetch_message(self.var.message.id)
 
-        # Determine the emoji to use based on the number of options
-        num = str(message.embeds[0].description).count("\n\n")
-        message.embeds[0].description += f"\n\n{str(self.reactions[num])}  {self.name}"
+        num = len(message.embeds[0].fields)
+        message.embeds[0].add_field(
+            name=f"{str(self.reactions[num])}  {self.name}", value=self.description, inline=False
+        )
 
         await message.edit(embed=message.embeds[0])
         await interaction.response.defer()
 
 
-class PollButtons(ui.View):
+class CreatePollView(ui.View):
+    CREATE_CUSTOM_ID = "extensions:polls:create"
+    ADD_CUSTOM_ID = "extensions:polls:add"
+    SELECT_CUSTOM_ID = "extensions:polls:select"
+    DELETE_CUSTOM_ID = "extensions:polls:delete"
+
     def __init__(self, *, timeout=180):
         super().__init__(timeout=timeout)
 
@@ -54,10 +67,10 @@ class PollButtons(ui.View):
             9: "🔟",
         }
 
-    @discord.ui.button(label="Add Choice", style=discord.ButtonStyle.gray, emoji="➕")
+    @discord.ui.button(label="Add Choice", style=discord.ButtonStyle.gray, emoji="➕", custom_id=ADD_CUSTOM_ID)
     async def add_choice(self, interaction: discord.Interaction, _button: ui.Button):
         # Count the number of options
-        num = str(interaction.message.embeds[0].description).count("\n\n")
+        num = len(interaction.message.embeds[0].fields)
         # If there are more than 10 options, return
         if num >= 10:
             return await interaction.response.send_message(
@@ -67,26 +80,59 @@ class PollButtons(ui.View):
         modal = PollModal(var=interaction)
         await interaction.response.send_modal(modal)
 
-    @discord.ui.button(label="Remove Choice", style=discord.ButtonStyle.gray, emoji="➖")
+    @discord.ui.button(label="Remove Choice", style=discord.ButtonStyle.gray, emoji="➖", custom_id=DELETE_CUSTOM_ID)
     async def remove_choice(self, interaction: discord.Interaction, _button: ui.Button):
         embed = interaction.message.embeds[0]
 
         # If there are no options, return
-        if str(embed.description).count("\n\n") == 0:
+        if len(embed.fields) == 0:
             return await interaction.response.send_message(
                 "You can't remove a choice from a poll with no choices", ephemeral=True
             )
 
-        # Remove the last option
-        embed.description = "\n\n".join(embed.description.split("\n\n")[:-1])
-        await interaction.response.edit_message(embed=embed)
+        # Edit the message to show the select menu
+        options = []
+        for i in range(0, len(embed.fields)):
+            options.append(
+                discord.SelectOption(label=embed.fields[i].name[4:], value=str(i + 1), emoji=self.reactions[i])
+            )
 
-    @discord.ui.button(label="Create Poll", style=discord.ButtonStyle.gray, emoji="📝")
+        async def callback(interaction: discord.Interaction):
+            embed = interaction.message.embeds[0]
+            selected = int(interaction.data["values"][0])
+
+            # remove the selected option
+            embed.remove_field(selected - 1)
+
+            # Reset correct emoji to each option
+            for x in range(0, len(embed.fields)):
+                embed.set_field_at(
+                    x,
+                    name=f"{str(self.reactions[x])}  {embed.fields[x].name[4:]}",
+                    value=embed.fields[x].value,
+                    inline=False,
+                )
+
+            # Return old buttons
+            await interaction.response.defer()
+            await interaction.edit_original_response(embed=embed, view=self)
+
+        select = discord.ui.Select(
+            placeholder="Select a choice to remove", options=options, custom_id=self.SELECT_CUSTOM_ID
+        )
+        select.callback = callback
+        view = discord.ui.View()
+        view.add_item(select)
+
+        await interaction.response.defer()
+        await interaction.edit_original_response(embed=embed, view=view)
+
+    @discord.ui.button(label="Create Poll", style=discord.ButtonStyle.green, emoji="📝", custom_id=CREATE_CUSTOM_ID)
     async def create_poll(self, interaction: discord.Interaction, _button: ui.Button):
         embed = interaction.message.embeds[0]
 
         # If there are less than 2 options, return
-        if str(embed.description).count("\n\n") < 2:
+        if len(embed.fields) < 2:
             return await interaction.response.send_message(
                 "You can't create a poll with less than 2 choices", ephemeral=True
             )
@@ -94,7 +140,7 @@ class PollButtons(ui.View):
         message = await interaction.channel.send(embed=embed)
 
         # Add reactions
-        for i in range(0, str(embed.description).count("\n\n")):
+        for i in range(0, len(embed.fields)):
             await message.add_reaction(self.reactions[i])
 
         # Delete the original message

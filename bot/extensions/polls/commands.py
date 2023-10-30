@@ -3,12 +3,12 @@ from discord import app_commands
 from discord.ext import commands
 
 from bot import core
-from bot.extensions.polls.views import PollButtons
+from bot.extensions.polls.views import CreatePollView
 from utils.transformers import MessageTransformer
 
 
 class Polls(commands.GroupCog, group_name="poll"):
-    def __init__(self, bot: commands.AutoShardedBot):
+    def __init__(self, bot: core.DiscordBot):
         self.bot = bot
 
     @property
@@ -27,12 +27,11 @@ class Polls(commands.GroupCog, group_name="poll"):
         }
 
     def poll_check(self, message: discord.Message):
-        try:
+        if len(message.embeds) != 0:
             embed = message.embeds[0]
-        except Exception:
-            return False
-        if str(embed.footer.text).count("Poll by") == 1:
-            return message.author == self.bot.user
+            if str(embed.footer.text).count("Poll by") == 1:
+                return message.author == self.bot.user
+
         return False
 
     @app_commands.command()
@@ -46,7 +45,7 @@ class Polls(commands.GroupCog, group_name="poll"):
             color=discord.colour.Color.gold(),
         )
         embed.set_footer(text=f"Poll by {str(interaction.user.display_name)}")
-        await interaction.response.send_message(embed=embed, ephemeral=True, view=PollButtons())
+        await interaction.response.send_message(embed=embed, ephemeral=True, view=CreatePollView())
 
     @app_commands.command()
     async def show(
@@ -64,12 +63,7 @@ class Polls(commands.GroupCog, group_name="poll"):
                 [reaction.count - 1 if str(reaction.emoji) in self.reactions.values() else 0 for reaction in reactions]
             )
 
-            options = list(
-                map(
-                    lambda o: " ".join(o.split()[1:]),
-                    poll_embed.description.split("1️")[1].split("\n\n"),
-                )
-            )
+            options = [field.name for field in poll_embed.fields]
             desc = poll_embed.description.split("1️")[0]
 
             embed = discord.Embed(

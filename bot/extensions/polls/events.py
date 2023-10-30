@@ -12,12 +12,11 @@ class PollEvents(commands.Cog):
         self.emojis = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "9️⃣", "🔟"]
 
     def poll_check(self, message: discord.Message):
-        try:
+        if len(message.embeds) != 0:
             embed = message.embeds[0]
-        except Exception:
-            return False
-        if str(embed.footer.text).count("Poll by") == 1:
-            return message.author == self.bot.user
+            if str(embed.footer.text).count("Poll by") == 1:
+                return message.author == self.bot.user
+
         return False
 
     @commands.Cog.listener()
