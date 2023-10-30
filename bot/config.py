@@ -97,6 +97,10 @@ class ErrorHandling(BaseModel):
     webhook_url: str
 
 
+class CustomRoles(BaseModel):
+    log_channel_id: int
+
+
 class Settings(BaseSettings):
     aoc: AoC
     bot: Bot
@@ -111,6 +115,7 @@ class Settings(BaseSettings):
     timathon: Timathon
     hastebin: Hastebin
     errors: ErrorHandling
+    custom_roles: CustomRoles
 
     class Config:
         env_file = ".env"
