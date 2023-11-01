@@ -130,17 +130,17 @@ async def main(ctx):
     prefixes = ("t.",)
     extensions = (
         "jishaku",
-        "bot.extensions.challenges",
-        "bot.extensions.readthedocs",
-        "bot.extensions.suggestions",
-        "bot.extensions.github",
-        "bot.extensions.tags",
-        "bot.extensions.levelling",
-        "bot.extensions.persistent_roles",
+        # "bot.extensions.challenges",
+        # "bot.extensions.readthedocs",
+        # "bot.extensions.suggestions",
+        # "bot.extensions.github",
+        # "bot.extensions.tags",
+        # "bot.extensions.levelling",
+        # "bot.extensions.persistent_roles",
         "bot.extensions.polls",
-        "bot.cogs._help",
-        "bot.cogs.clashofcode",
-        "bot.cogs.roles",
+        # "bot.cogs._help",
+        # "bot.cogs.clashofcode",
+        # "bot.cogs.roles",
     )
 
     intents = discord.Intents.all()
