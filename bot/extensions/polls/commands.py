@@ -12,6 +12,9 @@ class Polls(commands.GroupCog, group_name="poll"):
     def __init__(self, bot: core.DiscordBot):
         self.bot = bot
 
+        self._create_poll_view = CreatePollView(timeout=None)
+        self.bot.add_view(self._create_poll_view)
+
     @app_commands.command()
     @app_commands.describe(question="Your question")
     async def new(self, interaction: core.InteractionType, question: str):
@@ -23,7 +26,7 @@ class Polls(commands.GroupCog, group_name="poll"):
             color=discord.colour.Color.gold(),
         )
         embed.set_footer(text=f"Poll by {interaction.user.display_name}")
-        await interaction.response.send_message(embed=embed, ephemeral=True, view=CreatePollView())
+        await interaction.response.send_message(embed=embed, ephemeral=True, view=self._create_poll_view)
 
     @app_commands.command()
     async def show(

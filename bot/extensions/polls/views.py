@@ -4,7 +4,7 @@ from discord import ui
 from bot.extensions.polls.utils import emojis
 
 
-class PollModal(ui.Modal):
+class PollModal(ui.Modal, title="Poll Options"):
     name = ui.TextInput(label="Choice name", placeholder="Enter poll choice", max_length=32, required=True)
     description = ui.TextInput(
         label="Choice description (optional)",
@@ -14,18 +14,13 @@ class PollModal(ui.Modal):
         required=False,
     )
 
-    def __init__(self, var: discord.Interaction):
-        self.var = var
-        super().__init__(title="Poll options")
-
     async def on_submit(self, interaction: discord.Interaction) -> None:
-        message = await self.var.followup.fetch_message(self.var.message.id)
+        embed = interaction.message.embeds[0]
+        field_count = len(embed.fields)
 
-        num = len(message.embeds[0].fields)
-        message.embeds[0].add_field(name=f"{str(emojis[num])}  {self.name}", value=self.description, inline=False)
+        embed.add_field(name=f"{str(emojis[field_count])}  {self.name}", value=self.description, inline=False)
 
-        await message.edit(embed=message.embeds[0])
-        await interaction.response.defer()
+        await interaction.response.edit_message(embed=embed)
 
 
 class CreatePollView(ui.View):
@@ -33,9 +28,6 @@ class CreatePollView(ui.View):
     ADD_CUSTOM_ID = "extensions:polls:add"
     SELECT_CUSTOM_ID = "extensions:polls:select"
     DELETE_CUSTOM_ID = "extensions:polls:delete"
-
-    def __init__(self, *, timeout=180):
-        super().__init__(timeout=timeout)
 
     @discord.ui.button(label="Add Choice", style=discord.ButtonStyle.gray, emoji="➕", custom_id=ADD_CUSTOM_ID)
     async def add_choice(self, interaction: discord.Interaction, _button: ui.Button):
@@ -46,7 +38,7 @@ class CreatePollView(ui.View):
                 "You can't make a poll with more than 10 choices", ephemeral=True
             )
 
-        modal = PollModal(var=interaction)
+        modal = PollModal()
         await interaction.response.send_modal(modal)
 
     @discord.ui.button(label="Remove Choice", style=discord.ButtonStyle.gray, emoji="➖", custom_id=DELETE_CUSTOM_ID)
