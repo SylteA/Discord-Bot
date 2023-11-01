@@ -3,6 +3,7 @@ from discord import app_commands
 from discord.ext import commands
 
 from bot import core
+from bot.extensions.polls.utils import emojis, poll_check
 from bot.extensions.polls.views import CreatePollView
 from utils.transformers import MessageTransformer
 
@@ -10,29 +11,6 @@ from utils.transformers import MessageTransformer
 class Polls(commands.GroupCog, group_name="poll"):
     def __init__(self, bot: core.DiscordBot):
         self.bot = bot
-
-    @property
-    def reactions(self):
-        return {
-            1: "1️⃣",
-            2: "2️⃣",
-            3: "3️⃣",
-            4: "4️⃣",
-            5: "5️⃣",
-            6: "6️⃣",
-            7: "7️⃣",
-            8: "8️⃣",
-            9: "9️⃣",
-            10: "🔟",
-        }
-
-    def poll_check(self, message: discord.Message):
-        if not message.embeds:
-            return False
-
-        embed = message.embeds[0]
-        if str(embed.footer.text).count("Poll by") == 1:
-            return message.author == self.bot.user
 
     @app_commands.command()
     @app_commands.describe(question="Your question")
@@ -56,14 +34,12 @@ class Polls(commands.GroupCog, group_name="poll"):
     ):
         """Show a poll result"""
 
-        if not self.poll_check(message):
+        if not poll_check(message, self.bot.user):
             return await interaction.response.send_message("Please provide a valid poll message", ephemeral=True)
 
         poll_embed = message.embeds[0]
         reactions = message.reactions
-        reactions_total = sum(
-            [reaction.count - 1 if str(reaction.emoji) in self.reactions.values() else 0 for reaction in reactions]
-        )
+        reactions_total = sum([reaction.count - 1 if str(reaction.emoji) in emojis else 0 for reaction in reactions])
 
         options = [field.name for field in poll_embed.fields]
         desc = poll_embed.description.split("1️")[0]
@@ -93,5 +69,5 @@ class Polls(commands.GroupCog, group_name="poll"):
         return await interaction.response.send_message(embed=embed, ephemeral=ephemeral)
 
 
-async def setup(bot: commands.Bot):
+async def setup(bot: core.DiscordBot):
     await bot.add_cog(Polls(bot=bot))

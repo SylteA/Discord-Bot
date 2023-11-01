@@ -1,6 +1,8 @@
 import discord
 from discord import ui
 
+from bot.extensions.polls.utils import emojis
+
 
 class PollModal(ui.Modal):
     name = ui.TextInput(label="Choice name", placeholder="Enter poll choice", max_length=32, required=True)
@@ -16,28 +18,11 @@ class PollModal(ui.Modal):
         self.var = var
         super().__init__(title="Poll options")
 
-    @property
-    def reactions(self):
-        return {
-            0: "1️⃣",
-            1: "2️⃣",
-            2: "3️⃣",
-            3: "4️⃣",
-            4: "5️⃣",
-            5: "6️⃣",
-            6: "7️⃣",
-            7: "8️⃣",
-            8: "9️⃣",
-            9: "🔟",
-        }
-
     async def on_submit(self, interaction: discord.Interaction) -> None:
         message = await self.var.followup.fetch_message(self.var.message.id)
 
         num = len(message.embeds[0].fields)
-        message.embeds[0].add_field(
-            name=f"{str(self.reactions[num])}  {self.name}", value=self.description, inline=False
-        )
+        message.embeds[0].add_field(name=f"{str(emojis[num])}  {self.name}", value=self.description, inline=False)
 
         await message.edit(embed=message.embeds[0])
         await interaction.response.defer()
@@ -51,21 +36,6 @@ class CreatePollView(ui.View):
 
     def __init__(self, *, timeout=180):
         super().__init__(timeout=timeout)
-
-    @property
-    def reactions(self):
-        return {
-            0: "1️⃣",
-            1: "2️⃣",
-            2: "3️⃣",
-            3: "4️⃣",
-            4: "5️⃣",
-            5: "6️⃣",
-            6: "7️⃣",
-            7: "8️⃣",
-            8: "9️⃣",
-            9: "🔟",
-        }
 
     @discord.ui.button(label="Add Choice", style=discord.ButtonStyle.gray, emoji="➕", custom_id=ADD_CUSTOM_ID)
     async def add_choice(self, interaction: discord.Interaction, _button: ui.Button):
@@ -90,9 +60,7 @@ class CreatePollView(ui.View):
 
         options = []
         for i in range(0, len(embed.fields)):
-            options.append(
-                discord.SelectOption(label=embed.fields[i].name[4:], value=str(i + 1), emoji=self.reactions[i])
-            )
+            options.append(discord.SelectOption(label=embed.fields[i].name[4:], value=str(i + 1), emoji=emojis[i]))
 
         async def callback(interaction: discord.Interaction):
             embed = interaction.message.embeds[0]
@@ -103,7 +71,7 @@ class CreatePollView(ui.View):
             for x in range(0, len(embed.fields)):
                 embed.set_field_at(
                     x,
-                    name=f"{str(self.reactions[x])}  {embed.fields[x].name[4:]}",
+                    name=f"{str(emojis[x])}  {embed.fields[x].name[4:]}",
                     value=embed.fields[x].value,
                     inline=False,
                 )
@@ -133,7 +101,7 @@ class CreatePollView(ui.View):
         message = await interaction.channel.send(embed=embed)
 
         for i in range(0, len(embed.fields)):
-            await message.add_reaction(self.reactions[i])
+            await message.add_reaction(emojis[i])
 
         await interaction.response.defer()
         await interaction.delete_original_response()
