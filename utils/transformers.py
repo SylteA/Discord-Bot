@@ -22,9 +22,12 @@ class MessageTransformer(app_commands.Transformer):
 
             channel = interaction.guild.get_channel(channel_id)
             return await channel.fetch_message(message_id)
-        except (ValueError, TypeError, IndexError, AttributeError, discord.HTTPException):
+        except (ValueError, TypeError, IndexError, AttributeError):
+            await interaction.response.send_message("Please provide a valid message URL.", ephemeral=True)
+        except discord.HTTPException:
             await interaction.response.send_message("Sorry, I couldn't find that message...", ephemeral=True)
-            raise IgnorableException
+
+        raise IgnorableException
 
 
 class CommandTransformer(app_commands.Transformer):
