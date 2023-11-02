@@ -109,8 +109,10 @@ class CreatePollView(ui.View):
                 "You can't create a poll with less than 2 choices", ephemeral=True
             )
 
-        await interaction.channel.send(embed=embed)
-        message = await interaction.original_response()
+        await interaction.response.defer()
+        message = await interaction.channel.send(embed=embed)
 
         for i in range(0, len(embed.fields)):
             await message.add_reaction(emojis[i])
+
+        await interaction.delete_original_response()
