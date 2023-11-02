@@ -19,8 +19,8 @@ class Tag(Model):
     @classmethod
     async def create(cls, guild_id: int, author_id: int, name: str, content: str) -> "Tag":
         query = """
-            INSERT INTO tags (guild_id, author_id, name, content)
-                 VALUES ($1, $2, $3, $4)
+            INSERT INTO tags (guild_id, author_id, name, content, uses)
+                 VALUES ($1, $2, $3, $4, 0)
               RETURNING *;
         """
         return await cls.fetchrow(query, guild_id, author_id, name, content)
