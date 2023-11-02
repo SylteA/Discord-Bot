@@ -33,9 +33,6 @@ class LogTagCreationView(ui.View):
     DELETE_CUSTOM_ID = "extensions:tags:delete"
     FEATURE_CUSTOM_ID = "extensions:tags:feature"
 
-    def __init__(self, timeout: float = None):
-        super().__init__(timeout=timeout)
-
     @staticmethod
     async def wait_for_confirmation(interaction: core.InteractionType, tag: Tag, reason: str):
         """If the tag name or content has changed, wait for confirmation that they really want to delete."""

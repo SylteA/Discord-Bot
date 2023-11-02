@@ -13,7 +13,7 @@ class TagEvents(commands.Cog):
     def __init__(self, bot: core.DiscordBot):
         self.bot = bot
 
-        self._log_tag_creation_view = LogTagCreationView()
+        self._log_tag_creation_view = LogTagCreationView(timeout=None)
         self.bot.add_view(self._log_tag_creation_view)
 
     @property
