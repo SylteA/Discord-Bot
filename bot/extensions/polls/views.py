@@ -70,9 +70,13 @@ class DeletePollOptions(discord.ui.Select):
         if len(embed.fields) >= 1:
             self.view.add_item(DeletePollOptions(embed.fields))
 
-        # We removed a choice so there gotta be some space for more
+        field_count = len(embed.fields)
+
+        # We removed a choice so reset the disabled state of the buttons
         add_choice_btn = discord.utils.get(self.view.children, custom_id=CreatePollView.ADD_CUSTOM_ID)
+        create_poll_btn = discord.utils.get(self.view.children, custom_id=CreatePollView.CREATE_CUSTOM_ID)
         add_choice_btn.disabled = False
+        create_poll_btn.disabled = field_count < 2
 
         await interaction.response.edit_message(embed=embed, view=self.view)
 
@@ -105,7 +109,7 @@ class CreatePollView(ui.View):
                 "You can't create a poll with less than 2 choices", ephemeral=True
             )
 
-        await interaction.response.send_message(embed=embed)
+        await interaction.channel.send(embed=embed)
         message = await interaction.original_response()
 
         for i in range(0, len(embed.fields)):
