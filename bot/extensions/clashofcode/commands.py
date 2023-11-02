@@ -272,6 +272,19 @@ class ClashOfCode(commands.GroupCog, group_name="coc"):
 
         await interaction.channel.send(embed=embed)
 
+    async def cog_app_command_error(self, interaction: core.InteractionType, error):
+        if not isinstance(error, app_commands.CheckFailure):
+            return
+
+        if isinstance(error, app_commands.MissingAnyRole):
+            await interaction.response.send_message(
+                "You need to have the Clash Of Code role to use this command", ephemeral=True
+            )
+        else:
+            await interaction.response.send_message(
+                "You need to be in the Clash Of Code channel to use this command", ephemeral=True
+            )
+
 
 async def setup(bot: core.DiscordBot):
     await bot.add_cog(ClashOfCode(bot=bot))
