@@ -105,6 +105,16 @@ class DiscordBot(commands.Bot):
             return
 
         if isinstance(error, app_commands.CheckFailure):
+            if interaction.command.qualified_name.startswith("coc "):
+                if isinstance(error, app_commands.MissingAnyRole):
+                    await interaction.response.send_message(
+                        "You need to have the Clash Of Code role to use this command", ephemeral=True
+                    )
+                else:
+                    await interaction.response.send_message(
+                        "You need to be in the Clash Of Code channel to use this command", ephemeral=True
+                    )
+
             log.info(f"{interaction.user} failed to use the command {interaction.command.qualified_name}")
             return
 
