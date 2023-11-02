@@ -25,27 +25,21 @@ class PollModal(ui.Modal, title="Add Choice"):
         field_count = len(embed.fields)
 
         embed.add_field(name=f"{str(emojis[field_count])}  {self.name}", value=self.description, inline=False)
-
-        view = discord.ui.View.from_message(interaction.message, timeout=None)
+        field_count += 1
+        view = CreatePollView()
 
         add_choice_btn = discord.utils.get(view.children, custom_id=CreatePollView.ADD_CUSTOM_ID)
         create_poll_btn = discord.utils.get(view.children, custom_id=CreatePollView.CREATE_CUSTOM_ID)
         delete_select = discord.utils.find(lambda child: isinstance(child, discord.ui.Select), view.children)
 
-        if field_count + 1 == 10:
-            add_choice_btn.disabled = True
-        else:
-            add_choice_btn.disabled = False
+        add_choice_btn.disabled = field_count > 9
+        create_poll_btn.disabled = field_count < 2
 
-        if len(view.children) == 2:
-            create_poll_btn.disabled = False
-            view.add_item(DeletePollOptions(embed.fields))
-        else:
-            view.remove_item(delete_select)
+        view.remove_item(delete_select)
+        if field_count >= 1:
             view.add_item(DeletePollOptions(embed.fields))
 
         await interaction.response.edit_message(embed=embed, view=view)
-        print()
 
 
 class DeletePollOptions(discord.ui.Select):
@@ -56,7 +50,7 @@ class DeletePollOptions(discord.ui.Select):
             placeholder="➖ Select a choice to remove",
             custom_id=CreatePollView.DELETE_CUSTOM_ID,
             options=[
-                discord.SelectOption(emoji=emojis[i], label=field.name[5:], value=str(i + 1))
+                discord.SelectOption(emoji=emojis[i], label=field.name.split(maxsplit=1)[1], value=str(i))
                 for i, field in enumerate(fields)
             ],
         )
@@ -64,14 +58,21 @@ class DeletePollOptions(discord.ui.Select):
     async def callback(self, interaction: core.InteractionType):
         embed = interaction.message.embeds[0]
 
-        for value in self.values:
-            embed.remove_field(int(value) - 1)
+        for value in sorted(self.values, reverse=True):  # to avoid conflict
+            embed.remove_field(int(value))
 
         for i, field in enumerate(embed.fields):
-            embed.set_field_at(i, name=f"{emojis[i]} {field.name[5:]}", value=field.value, inline=False)
+            embed.set_field_at(
+                i, name=f"{emojis[i]}  {field.name.split(maxsplit=1)[1]}", value=field.value, inline=False
+            )
 
         self.view.remove_item(self)
-        self.view.add_item(DeletePollOptions(embed.fields))
+        if len(embed.fields) >= 1:
+            self.view.add_item(DeletePollOptions(embed.fields))
+
+        # We removed a choice so there gotta be some space for more
+        add_choice_btn = discord.utils.get(self.view.children, custom_id=CreatePollView.ADD_CUSTOM_ID)
+        add_choice_btn.disabled = False
 
         await interaction.response.edit_message(embed=embed, view=self.view)
 
@@ -109,5 +110,3 @@ class CreatePollView(ui.View):
 
         for i in range(0, len(embed.fields)):
             await message.add_reaction(emojis[i])
-
-        await interaction.delete_original_response()
