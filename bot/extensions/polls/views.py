@@ -110,9 +110,8 @@ class CreatePollView(ui.View):
             )
 
         await interaction.response.defer()
+        await interaction.delete_original_response()
         message = await interaction.channel.send(embed=embed)
 
         for i in range(0, len(embed.fields)):
             await message.add_reaction(emojis[i])
-
-        await interaction.delete_original_response()
