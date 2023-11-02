@@ -57,7 +57,7 @@ class DiscordBot(commands.Bot):
         await self.wait_until_ready()
 
         await self.load_extensions()
-        # await self.sync_commands()
+        await self.sync_commands()
 
     async def load_extensions(self):
         for ext in self.initial_extensions:
