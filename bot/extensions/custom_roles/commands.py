@@ -6,7 +6,7 @@ from discord.ext import commands
 from discord.utils import escape_markdown, format_dt
 
 from bot import core
-from bot.models.custom_roles import CustomRole
+from bot.models import CustomRole
 
 
 class CustomRoles(commands.Cog):
@@ -15,8 +15,8 @@ class CustomRoles(commands.Cog):
 
     def role_embed(self, heading: str, user: discord.Member, role: discord.Role):
         embed = discord.Embed(
-            description=f"### {heading} {user.mention}\n\n**Name**\n{role.name}\n**Color**\n{role.color}"
-            f"\n**Created**\n {format_dt(role.created_at)}",
+            description=f"### {heading} {user.mention}\n\n**Name**\n{escape_markdown(role.name)}\n**Color**\n"
+            f"{role.color}\n**Created**\n {format_dt(role.created_at)}",
             color=role.color,
             timestamp=datetime.datetime.utcnow(),
         )
@@ -28,8 +28,6 @@ class CustomRoles(commands.Cog):
     @app_commands.default_permissions(administrator=True)
     @app_commands.describe(name="Updating Custom Role name", color="Updating custom role name")
     async def myrole(self, interaction: core.InteractionType, name: str = None, color: str = None):
-        if name:
-            name = escape_markdown(name)
         if color:
             try:
                 color = discord.Color(int(color, 16))
