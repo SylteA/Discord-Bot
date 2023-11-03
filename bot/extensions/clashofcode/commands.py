@@ -38,7 +38,6 @@ class ClashOfCode(commands.GroupCog, group_name="coc"):
         return self.bot.guild.get_role(settings.coc.role_id)
 
     @session_commands.command(name="start")
-    @app_commands.check(lambda interaction: interaction.channel_id == settings.coc.channel_id)
     async def session_start(self, interaction: core.InteractionType):
         """Start a new coc session"""
 
@@ -96,7 +95,6 @@ class ClashOfCode(commands.GroupCog, group_name="coc"):
                 break
 
     @session_commands.command(name="join")
-    @app_commands.check(lambda interaction: interaction.channel_id == settings.coc.channel_id)
     async def session_join(self, interaction: core.InteractionType):
         """Join the current active coc session"""
 
@@ -117,7 +115,6 @@ class ClashOfCode(commands.GroupCog, group_name="coc"):
         return await interaction.response.send_message("You have joined the session. Have fun playing", ephemeral=True)
 
     @session_commands.command(name="leave")
-    @app_commands.check(lambda interaction: interaction.channel_id == settings.coc.channel_id)
     async def session_leave(self, interaction: core.InteractionType):
         """Leave the current active coc session"""
 
@@ -140,7 +137,6 @@ class ClashOfCode(commands.GroupCog, group_name="coc"):
         )
 
     @session_commands.command(name="end")
-    @app_commands.check(lambda interaction: interaction.channel_id == settings.coc.channel_id)
     async def session_end(self, interaction: core.InteractionType):
         """Ends the current coc session"""
 
@@ -167,11 +163,6 @@ class ClashOfCode(commands.GroupCog, group_name="coc"):
         )
 
     @app_commands.command(name="invite")
-    @app_commands.checks.has_any_role(
-        settings.moderation.staff_role_id,
-        settings.coc.role_id,
-    )
-    @app_commands.check(lambda interaction: interaction.channel_id == settings.coc.channel_id)
     async def coc_invite(self, interaction: core.InteractionType, url: str):
         """Mentions all the users with the `Clash Of Code` role that are in the current session."""
 
@@ -272,18 +263,22 @@ class ClashOfCode(commands.GroupCog, group_name="coc"):
 
         await interaction.channel.send(embed=embed)
 
-    async def cog_app_command_error(self, interaction: core.InteractionType, error):
-        if not isinstance(error, app_commands.CheckFailure):
-            return
-
-        if isinstance(error, app_commands.MissingAnyRole):
-            await interaction.response.send_message(
-                "You need to have the Clash Of Code role to use this command", ephemeral=True
-            )
-        else:
+    async def interaction_check(self, interaction: core.InteractionType):
+        if interaction.channel_id != settings.coc.channel_id:
             await interaction.response.send_message(
                 "You need to be in the Clash Of Code channel to use this command", ephemeral=True
             )
+            return False
+
+        if not any(
+            role.id in (settings.moderation.staff_role_id, settings.coc.role_id) for role in interaction.user.roles
+        ):
+            await interaction.response.send_message(
+                "You need to have the Clash Of Code role to use this command", ephemeral=True
+            )
+            return False
+
+        return True
 
 
 async def setup(bot: core.DiscordBot):
