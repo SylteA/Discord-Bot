@@ -3,7 +3,6 @@ from discord.ext import commands
 
 from bot import core
 from bot.config import settings
-from bot.extensions.clashofcode.utils import coc_helper
 
 
 class ClashOfCodeEvents(commands.Cog):
@@ -21,12 +20,6 @@ class ClashOfCodeEvents(commands.Cog):
         if payload.user_id == self.bot.user.id:
             return
 
-        if coc_helper.session_message != 0:
-            if payload.message_id == coc_helper.session_message:
-                if str(payload.emoji) == "🖐️":
-                    if payload.user_id not in coc_helper.session_users:
-                        coc_helper.session_users.append(payload.user_id)
-
         if payload.message_id != settings.coc.message_id:
             return
 
@@ -43,12 +36,6 @@ class ClashOfCodeEvents(commands.Cog):
     async def on_raw_reaction_remove(self, payload: discord.RawReactionActionEvent):
         if payload.user_id == self.bot.user.id:
             return
-
-        if coc_helper.session_message != 0:
-            if payload.message_id == coc_helper.session_message:
-                if str(payload.emoji) == "🖐️":
-                    if payload.user_id in coc_helper.session_users:
-                        coc_helper.session_users.remove(payload.user_id)
 
         if payload.message_id != settings.coc.message_id:
             return

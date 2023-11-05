@@ -18,6 +18,7 @@ jishaku = {extras = ["procinfo", "profiling"], version = "^2.5.1"}
 beautifulsoup4 = "^4.12.2"
 tabulate = "^0.9.0"
 pillow = "^10.1.0"
+codingame = {extras = ["async"], version = "^1.4.2"}
 
 [tool.poetry.group.dev.dependencies]
 isort = "^5.12.0"

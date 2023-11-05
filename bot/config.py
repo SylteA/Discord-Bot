@@ -40,6 +40,7 @@ class CoC(BaseModel):
     channel_id: int
     message_id: int
     role_id: int
+    session_cookie: str
 
 
 class Guild(BaseModel):
