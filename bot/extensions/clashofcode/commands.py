@@ -48,6 +48,7 @@ class ClashOfCode(commands.GroupCog, group_name="coc"):
                 "You need to be in the Clash Of Code channel to use this command", ephemeral=True
             )
             return False
+        return True
 
 
 async def setup(bot: core.DiscordBot):
