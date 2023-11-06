@@ -86,12 +86,10 @@ class CustomRoles(commands.Cog):
 
         # Update data in DB
         query = """UPDATE custom_roles
-                      SET name = $4, color = $5
-                    WHERE guild_id = $1 AND user_id = $2 AND role_id = $3
+                      SET name = $2, color = $3
+                    WHERE role_id = $1
                 RETURNING *"""
-        after = await CustomRole.fetchrow(
-            query, interaction.guild.id, interaction.user.id, before.role_id, name, color or before.color
-        )
+        after = await CustomRole.fetchrow(query, before.role_id, name, color or before.color)
         self.bot.dispatch("custom_role_update", before, after)
 
         return await interaction.response.send_message(
