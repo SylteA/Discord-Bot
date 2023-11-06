@@ -23,7 +23,6 @@ class ChallengeEvents(commands.Cog):
 
     @property
     def participant_role(self) -> discord.Role | None:
-        if
         return self.bot.guild.get_role(settings.challenges.participant_role_id)
 
     @commands.Cog.listener()
