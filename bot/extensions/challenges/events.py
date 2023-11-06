@@ -23,6 +23,7 @@ class ChallengeEvents(commands.Cog):
 
     @property
     def participant_role(self) -> discord.Role | None:
+        if
         return self.bot.guild.get_role(settings.challenges.participant_role_id)
 
     @commands.Cog.listener()
@@ -30,6 +31,9 @@ class ChallengeEvents(commands.Cog):
         """Automatically react to new challenges."""
 
         if message.channel.id != settings.challenges.channel_id:
+            return
+
+        if message.author == self.bot.user:
             return
 
         await message.add_reaction(self.challenge_reaction)
@@ -40,6 +44,10 @@ class ChallengeEvents(commands.Cog):
             return
 
         if payload.emoji != self.challenge_reaction:
+            return
+
+        member = self.bot.guild.get_member(payload.user_id)
+        if member is None or member.bot:
             return
 
         if self.submitted_role in payload.member.roles:
