@@ -102,7 +102,7 @@ class Levelling(commands.Cog):
         """
 
         # TODO: Allow each guild to set custom xp range and boost.
-        xp = random.randint(5, 25) * self.xp_boost
+        xp = random.randint(15, 25) * self.xp_boost
         after = await LevellingUser.fetchrow(query, message.guild.id, message.author.id, xp)
 
         if after is None:
