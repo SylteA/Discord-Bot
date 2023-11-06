@@ -43,7 +43,7 @@ class ChallengeEvents(commands.Cog):
             return
 
         if payload.user_id == self.bot.user.id:
-        return
+            return
 
         if self.submitted_role in payload.member.roles:
             return
