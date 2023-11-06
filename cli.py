@@ -138,6 +138,7 @@ async def main(ctx):
         "bot.extensions.levelling",
         "bot.extensions.persistent_roles",
         "bot.extensions.polls",
+        "bot.extensions.youtube",
         "bot.cogs._help",
         "bot.cogs.clashofcode",
         "bot.cogs.roles",
