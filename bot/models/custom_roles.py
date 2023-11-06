@@ -7,14 +7,14 @@ class CustomRole(Model):
     guild_id: int
     role_id: int
     name: str
-    color: str
+    color: int
 
     @classmethod
-    async def ensure_exists(cls, guild_id: int, role_id: int, name: str, color: str):
+    async def ensure_exists(cls, guild_id: int, role_id: int, name: str, color: int, user_id: int = None):
         """Inserts or updates the custom role."""
         query = """
-            INSERT INTO custom_roles (guild_id, role_id, name, color)
-                 VALUES ($1, $2, $3, $4)
+            INSERT INTO custom_roles (guild_id, role_id, name, color, user_id)
+                 VALUES ($1, $2, $3, $4, $5)
             ON CONFLICT (guild_id, role_id)
               DO UPDATE SET
                    name = $3,
@@ -22,4 +22,4 @@ class CustomRole(Model):
              RETURNING *
         """
 
-        return await cls.fetchrow(query, guild_id, role_id, name, color)
+        return await cls.fetchrow(query, guild_id, role_id, name, color, user_id)

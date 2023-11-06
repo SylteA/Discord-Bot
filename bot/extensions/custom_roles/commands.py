@@ -1,9 +1,8 @@
 import datetime
 
 import discord
-from discord import app_commands
+from discord import app_commands, utils
 from discord.ext import commands
-from discord.utils import escape_markdown, format_dt
 
 from bot import core
 from bot.models import CustomRole
@@ -13,63 +12,64 @@ class CustomRoles(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    def role_embed(self, heading: str, user: discord.Member, role: discord.Role):
+        self.color_converter = commands.ColorConverter()
+
+    @staticmethod
+    def role_embed(heading: str, user: discord.Member, role: discord.Role):
         embed = discord.Embed(
-            description=f"### {heading} {user.mention}\n\n**Name**\n{escape_markdown(role.name)}\n**Color**\n"
-            f"{role.color}\n**Created**\n {format_dt(role.created_at)}",
+            title=heading,
             color=role.color,
             timestamp=datetime.datetime.utcnow(),
         )
-        embed.set_footer(text=user.name)
+        embed.add_field(name="Name", value=utils.escape_markdown(role.name))
+        embed.add_field(name="Color", value=str(role.color))
+        embed.add_field(name="Created at", value=utils.format_dt(role.created_at))
         embed.set_thumbnail(url=user.avatar)
         return embed
 
-    @app_commands.command(description="Manage custom role")
+    @app_commands.command()
     @app_commands.default_permissions(administrator=True)
-    @app_commands.describe(name="Updating Custom Role name", color="Updating custom role name")
+    @app_commands.describe(name="New name", color="New color")
     async def myrole(self, interaction: core.InteractionType, name: str = None, color: str = None):
-        if color:
+        """Manage your custom role"""
+        if color is not None:
             try:
-                color = discord.Color(int(color, 16))
-            except ValueError:
-                return await interaction.response.send_message("Invalid HEX value", ephemeral=True)
+                color = await self.color_converter.convert(None, color)  # noqa
+            except commands.BadColourArgument as e:
+                return await interaction.response.send_message(str(e), ephemeral=True)
 
-        query = """SELECT * FROM custom_roles
-                    WHERE guild_id = $1 AND user_id = $2"""
+        query = "SELECT * FROM custom_roles WHERE guild_id = $1 AND user_id = $2"
         before = await CustomRole.fetchrow(query, interaction.guild.id, interaction.user.id)
 
-        # Insert data if it doesn't exist
         if before is None:
-            # Validate the name parameter
             if name is None:
                 return await interaction.response.send_message("You don't have a custom role yet!", ephemeral=True)
 
             # Create and assign the role to user
-            discord_role = await interaction.guild.create_role(name=name, colour=color or discord.Color.default())
-            await interaction.user.add_roles(discord_role)
+            role = await interaction.guild.create_role(name=name, colour=color or discord.Color.random())
 
-            query = """INSERT INTO custom_roles (user_id, guild_id, role_id, name, color)
-                            VALUES ($1, $2, $3, $4, $5)
-                         RETURNING *"""
-            record = await CustomRole.fetchrow(
-                query,
-                interaction.user.id,
-                interaction.guild.id,
-                discord_role.id,
-                discord_role.name,
-                str(discord_role.color),
+            record = await CustomRole.ensure_exists(
+                guild_id=interaction.guild.id,
+                user_id=interaction.user.id,
+                role_id=role.id,
+                name=role.name,
+                color=role.color.value,
             )
-            # Persist the role
+
+            self.bot.dispatch("custom_role_create", custom_role=record)
             self.bot.dispatch(
-                "persist_roles", guild_id=interaction.guild.id, user_id=interaction.user.id, role_ids=[discord_role.id]
+                "persist_roles",
+                guild_id=interaction.guild.id,
+                user_id=interaction.user.id,
+                role_ids=[role.id],
             )
-            # Log the role
-            self.bot.dispatch("custom_role_create", data=record)
 
             return await interaction.response.send_message(
-                embed=self.role_embed("**Custom Role has been assigned**", interaction.user, discord_role),
+                embed=self.role_embed("**Custom Role has been assigned**", interaction.user, role),
                 ephemeral=True,
             )
+
+        role = interaction.guild.get_role(before.role_id)
 
         # Return role information if no parameter is passed
         if not name and not color:
@@ -78,18 +78,19 @@ class CustomRoles(commands.Cog):
                 ephemeral=True,
             )
 
-        # Editing the role
-        await interaction.guild.get_role(before.role_id).edit(
+        await role.edit(
             name=name or before.name,
-            colour=color or discord.Color(int(before.color.lstrip("#"), 16)),
+            colour=color or discord.Color(int(before.color)),
         )
 
-        # Update data in DB
-        query = """UPDATE custom_roles
-                      SET name = $2, color = $3
-                    WHERE role_id = $1
-                RETURNING *"""
-        after = await CustomRole.fetchrow(query, before.role_id, name, color or before.color)
+        after = await CustomRole.ensure_exists(
+            guild_id=interaction.guild.id,
+            user_id=interaction.user.id,
+            role_id=role.id,
+            name=role.name,
+            color=role.color.value,
+        )
+
         self.bot.dispatch("custom_role_update", before, after)
 
         return await interaction.response.send_message(
