@@ -96,7 +96,8 @@ class DiscordBot(commands.Bot):
 
     async def on_app_command_error(self, interaction: "InteractionType", error: app_commands.AppCommandError):
         """Handle errors in app commands."""
-        if isinstance(error, IgnorableException):
+
+        if isinstance(error.__cause__, IgnorableException):
             return
 
         if interaction.command is None:

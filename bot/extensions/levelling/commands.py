@@ -102,7 +102,7 @@ class Levelling(commands.Cog):
         """
 
         # TODO: Allow each guild to set custom xp range and boost.
-        xp = random.randint(5, 25) * self.xp_boost
+        xp = random.randint(15, 25) * self.xp_boost
         after = await LevellingUser.fetchrow(query, message.guild.id, message.author.id, xp)
 
         if after is None:
@@ -230,14 +230,13 @@ class Levelling(commands.Cog):
         xp_offset_x -= xp_text_size[2] - xp_text_size[0]
         draw.text((xp_offset_x, xp_offset_y), text, font=self.small_font, fill="#fff")
 
-        if len(username) >= 15:
+        if len(username) >= 18:
             # Truncating the name
             username = username[:15] + "..."
 
         text_bbox = draw.textbbox((0, 0), username, font=self.medium_font)
-        text_offset_x = bar_offset_x - 10
         text_offset_y = bar_offset_y - (text_bbox[3] - text_bbox[1]) - 20
-        draw.text((text_offset_x, text_offset_y), username, font=self.medium_font, fill="#fff")
+        draw.text((bar_offset_x, text_offset_y), username, font=self.medium_font, fill="#fff")
 
         # create copy of background
         background = self.background.copy()
@@ -273,8 +272,6 @@ class Levelling(commands.Cog):
         """
 
         record = await LevellingUser.pool.fetchrow(query, interaction.guild.id, member.id)
-
-        log.info(record)
 
         if record.total_xp is None:
             if member.id == interaction.user.id:

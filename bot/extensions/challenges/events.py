@@ -42,6 +42,9 @@ class ChallengeEvents(commands.Cog):
         if payload.emoji != self.challenge_reaction:
             return
 
+        if payload.user_id == self.bot.user.id:
+            return
+
         if self.submitted_role in payload.member.roles:
             return
 
