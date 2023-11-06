@@ -32,9 +32,6 @@ class ChallengeEvents(commands.Cog):
         if message.channel.id != settings.challenges.channel_id:
             return
 
-        if message.author == self.bot.user:
-            return
-
         await message.add_reaction(self.challenge_reaction)
 
     @commands.Cog.listener()
@@ -45,9 +42,8 @@ class ChallengeEvents(commands.Cog):
         if payload.emoji != self.challenge_reaction:
             return
 
-        member = self.bot.guild.get_member(payload.user_id)
-        if member is None or member.bot:
-            return
+        if payload.user_id == self.bot.user.id:
+        return
 
         if self.submitted_role in payload.member.roles:
             return
