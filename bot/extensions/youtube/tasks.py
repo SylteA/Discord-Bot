@@ -1,4 +1,5 @@
 import asyncio
+import re
 import xml.etree.ElementTree as ET
 from datetime import datetime
 from io import BytesIO
@@ -11,6 +12,8 @@ from PIL import Image
 
 from bot import core
 from bot.config import settings
+
+YOUTUBE_URL = re.compile(r"(?P<url>https?://www\.youtube\.com/watch\?v=[\w-]+)")
 
 
 class YoutubeTasks(commands.Cog):
@@ -49,10 +52,13 @@ class YoutubeTasks(commands.Cog):
 
         if not self.videos:
             async for message in self.channel.history(limit=10):
-                try:
+                if message.embeds:
                     self.videos.append(message.embeds[0].url)
-                except IndexError:
-                    pass
+                else:
+                    match = YOUTUBE_URL.search(message.content)
+                    if match:
+                        self.videos.append(match.group("url"))
+
             self.videos.reverse()
 
         url = "https://www.youtube.com/feeds/videos.xml?channel_id=UC4JX40jDee_tINbkjycV4Sg"
