@@ -1,5 +1,5 @@
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 
 import aiohttp
@@ -61,13 +61,13 @@ class AdventOfCode(commands.GroupCog, group_name="aoc"):
         if self.role not in interaction.user.roles:
             await interaction.user.add_roles(self.role)
             await interaction.response.send_message(
-                "Okay! You have been __subscribed__ to notifications about new Advent of Code tasks."
+                "Okay! You have been __subscribed__ to notifications about new Advent of Code puzzles."
                 "You can run `/aoc unsubscribe` to disable them again for you.",
                 ephemeral=True,
             )
         else:
             await interaction.response.send_message(
-                "Hey, you already are receiving notifications about new Advent of Code tasks."
+                "Hey, you already are receiving notifications about new Advent of Code puzzles."
                 "If you don't want them any more, run `/aoc unsubscribe` instead.",
                 ephemeral=True,
             )
@@ -79,12 +79,12 @@ class AdventOfCode(commands.GroupCog, group_name="aoc"):
         if self.role in interaction.user.roles:
             await interaction.user.remove_roles(self.role)
             await interaction.response.send_message(
-                "Okay! You have been __unsubscribed__ from notifications about new Advent of Code tasks.",
+                "Okay! You have been __unsubscribed__ from notifications about new Advent of Code puzzles.",
                 ephemeral=True,
             )
         else:
             await interaction.response.send_message(
-                "Hey, you don't even get any notifications about new Advent of Code tasks currently anyway.",
+                "Hey, you don't even get any notifications about new Advent of Code puzzles currently anyway.",
                 ephemeral=True,
             )
 
@@ -92,23 +92,23 @@ class AdventOfCode(commands.GroupCog, group_name="aoc"):
     async def countdown(self, interaction: core.InteractionType):
         """Get the time left until the next puzzle is released"""
 
-        if (
-            int(datetime.now(tz=pytz.timezone("EST")).day) in range(1, 25)
-            and int(datetime.now(tz=pytz.timezone("EST")).month) == 12
-        ):
-            days = 24 - int(datetime.now().strftime("%d"))
-            hours = 23 - int(datetime.now().strftime("%H"))
-            minutes = 59 - int(datetime.now().strftime("%M"))
-
-            embed = discord.Embed(
-                title="Advent of Code",
-                description=f"There are {str(days)} days {str(hours)} hours "
-                f"and {str(minutes)} minutes left until AOC gets over.",
-            )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
-
+        now = datetime.now(tz=pytz.timezone("EST"))
+        if now.month == 12:
+            # If it's December, calculate time until the next midnight EST time
+            target = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
         else:
-            await interaction.response.send_message("Advent of Code is not currently running.", ephemeral=True)
+            # If it's not December, calculate time until the first of December
+            target = datetime(now.year, 12, 1, tzinfo=pytz.timezone("EST"))
+
+        if target < now:
+            return await interaction.response.send_message(
+                "Advent of Code is over for this year! See you next year!", ephemeral=True
+            )
+
+        await interaction.response.send_message(
+            f"There are {discord.utils.format_dt(target, 'R')} left until the next puzzle is released!",
+            ephemeral=True,
+        )
 
     @app_commands.command(name="join")
     async def join_leaderboard(self, interaction: core.InteractionType):
