@@ -1,10 +1,12 @@
 import discord
+from aiohttp import ContentTypeError
+from codingame.http import HTTPError
 from discord import app_commands
 from discord.ext import commands
 
 from bot import core
 from bot.config import settings
-from bot.extensions.clashofcode.utils import coc_helper
+from bot.extensions.clashofcode.utils import coc_client, coc_helper
 from bot.extensions.clashofcode.views import CreateCocView
 
 
@@ -28,6 +30,34 @@ class ClashOfCode(commands.GroupCog, group_name="coc"):
 
     @app_commands.command()
     @app_commands.default_permissions()
+    async def start(self, interaction: core.InteractionType):
+        """Starts the current clash"""
+
+        if not coc_helper.session:
+            return await interaction.response.send_message("There is no active clash of code session", ephemeral=True)
+
+        if coc_helper.clash.started:
+            return await interaction.response.send_message("The clash has already started", ephemeral=True)
+
+        try:
+            await coc_client.request(
+                "ClashOfCode", "startClashByHandle", [coc_client.codingamer.id, coc_helper.clash.public_handle]
+            )
+        except HTTPError:
+            return await interaction.response.send_message(
+                "An error occurred while starting the clash. Please try again later", ephemeral=True
+            )
+        except ContentTypeError:
+            # Issue with the codingame library always assuming the response is JSON
+            pass
+
+        await interaction.response.send_message(
+            "Clash started!",
+            ephemeral=True,
+        )
+
+    @app_commands.command()
+    @app_commands.default_permissions()
     async def end(self, interaction: core.InteractionType):
         """Ends the current coc session"""
 
@@ -36,6 +66,7 @@ class ClashOfCode(commands.GroupCog, group_name="coc"):
 
         coc_helper.last_clash = 0
         coc_helper.session = False
+        coc_helper.clash = None
 
         return await interaction.response.send_message(
             f"Clash session has been closed by {interaction.user.mention}. See you later",

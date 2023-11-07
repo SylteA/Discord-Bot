@@ -4,6 +4,7 @@ import codingame
 class ClashOfCodeHelper:
     def __init__(self):
         self.session = False
+        self.clash = None
         self.last_clash = 0
 
 
