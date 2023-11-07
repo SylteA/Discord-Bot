@@ -62,7 +62,7 @@ class AdventOfCodeTasks(commands.Cog):
 
         soup = BeautifulSoup(raw_html, "html.parser")
         article = soup.find("article", class_="day-desc")
-        title = article.find("h2").text.strip().replace("---", "")
+        title = article.find("h2").text.replace("---", "").strip()
         desc = article.find("p").text.strip()
 
         embed = discord.Embed(
@@ -71,6 +71,9 @@ class AdventOfCodeTasks(commands.Cog):
             color=discord.Color.red(),
             url=puzzle_url,
             timestamp=datetime.now(tz=pytz.timezone("EST")).replace(hour=0, minute=0, second=0, microsecond=0),
+        )
+        embed.set_author(
+            name="Advent Of Code", url="https://adventofcode.com", icon_url="https://adventofcode.com/favicon.png"
         )
 
         await self.channel.send(
