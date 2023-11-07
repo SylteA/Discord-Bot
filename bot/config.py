@@ -10,6 +10,8 @@ log = logging.getLogger(__name__)
 class AoC(BaseModel):
     channel_id: int
     role_id: int
+    leaderboard_id: int
+    leaderboard_code: str
     session_cookie: str
 
 

@@ -1,6 +1,6 @@
-import logging
 import re
 from datetime import datetime
+from typing import Optional
 
 import aiohttp
 import discord
@@ -8,16 +8,17 @@ import pytz
 from bs4 import BeautifulSoup
 from discord import app_commands
 from discord.ext import commands
+from pydantic import BaseModel, validator
 
 from bot import core
 from bot.config import settings
 
-log = logging.getLogger(__name__)
-
 YEAR = datetime.now(tz=pytz.timezone("EST")).year
-API_URL = f"https://adventofcode.com/{YEAR}/leaderboard/private/view/975452.json"
-INTERVAL = 120
-AOC_REQUEST_HEADER = {"user-agent": "TWT AoC Event Bot"}
+
+LEADERBOARD_ID = settings.aoc.leaderboard_id
+LEADERBOARD_CODE = settings.aoc.leaderboard_code
+API_URL = f"https://adventofcode.com/{YEAR}/leaderboard/private/view/{LEADERBOARD_ID}.json"
+AOC_REQUEST_HEADER = {"user-agent": "Tech With Tim Discord Bot https://github.com/SylteA/Discord-Bot"}
 AOC_SESSION_COOKIE = {"session": settings.aoc.session_cookie}
 
 
@@ -29,15 +30,20 @@ def ordinal(n: int):
     return str(n) + suffix
 
 
-class Member:
-    def __init__(self, results):
-        self.global_score = results["global_score"]
-        self.name = results["name"]
-        self.stars = results["stars"]
-        self.last_star_ts = results["last_star_ts"]
-        self.completion_day_level = results["completion_day_level"]
-        self.id = results["id"]
-        self.local_score = results["local_score"]
+class Member(BaseModel):
+    global_score: int
+    name: str
+    stars: int
+    last_star_ts: int
+    completion_day_level: dict
+    id: int
+    local_score: int
+
+    @validator("name", pre=True)
+    def set_name_to_anonymous(cls, val: Optional[str]) -> str:
+        if val is None:
+            return "Anonymous User"
+        return val
 
 
 class AdventOfCode(commands.GroupCog, group_name="aoc"):
@@ -49,7 +55,7 @@ class AdventOfCode(commands.GroupCog, group_name="aoc"):
         return self.bot.get_role(settings.aoc.role_id)
 
     @app_commands.command()
-    async def subscribe(self, interaction: core.InteractionType) -> None:
+    async def subscribe(self, interaction: core.InteractionType):
         """Subscribe to receive notifications for new puzzles"""
 
         if self.role not in interaction.user.roles:
@@ -67,7 +73,7 @@ class AdventOfCode(commands.GroupCog, group_name="aoc"):
             )
 
     @app_commands.command()
-    async def unsubscribe(self, interaction: core.InteractionType) -> None:
+    async def unsubscribe(self, interaction: core.InteractionType):
         """Unsubscribe from receiving notifications for new puzzles"""
 
         if self.role in interaction.user.roles:
@@ -83,7 +89,7 @@ class AdventOfCode(commands.GroupCog, group_name="aoc"):
             )
 
     @app_commands.command()
-    async def countdown(self, interaction: core.InteractionType) -> None:
+    async def countdown(self, interaction: core.InteractionType):
         """Get the time left until the next puzzle is released"""
 
         if (
@@ -105,17 +111,17 @@ class AdventOfCode(commands.GroupCog, group_name="aoc"):
             await interaction.response.send_message("Advent of Code is not currently running.", ephemeral=True)
 
     @app_commands.command(name="join")
-    async def join_leaderboard(self, interaction: core.InteractionType) -> None:
+    async def join_leaderboard(self, interaction: core.InteractionType):
         """Learn how to join the leaderboard"""
 
         await interaction.response.send_message(
             "Head over to https://adventofcode.com/leaderboard/private"
-            "with the code `975452-d90a48b0` to join the TWT private leaderboard!",
+            f"with the code `{LEADERBOARD_CODE}` to join the TWT private leaderboard!",
             ephemeral=True,
         )
 
     @app_commands.command()
-    async def leaderboard(self, interaction: core.InteractionType) -> None:
+    async def leaderboard(self, interaction: core.InteractionType):
         """Get a snapshot of the TWT private AoC leaderboard"""
 
         if interaction.channel_id != settings.aoc.channel_id:
@@ -130,12 +136,12 @@ class AdventOfCode(commands.GroupCog, group_name="aoc"):
                 else:
                     resp.raise_for_status()
 
-        members = [Member(leaderboard["members"][id]) for id in leaderboard["members"]]
+        members = [Member(**member_data) for member_data in leaderboard["members"].values()]
 
         embed = discord.Embed(
             title=f"{interaction.guild.name} Advent of Code Leaderboard",
-            colour=discord.Colour(0x68C290),
-            url=f"https://adventofcode.com/{YEAR}/leaderboard/private/view/975452",
+            colour=0x68C290,
+            url=f"https://adventofcode.com/{YEAR}/leaderboard/private/view/{LEADERBOARD_ID}",
         )
 
         leaderboard = {
@@ -205,7 +211,7 @@ class AdventOfCode(commands.GroupCog, group_name="aoc"):
 
         embed = discord.Embed(
             title="Advent of Code Global Leaderboard",
-            colour=discord.Colour(0x68C290),
+            colour=0x68C290,
             url="https://adventofcode.com",
             description=s_desc,
         )
