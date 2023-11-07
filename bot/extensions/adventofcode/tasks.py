@@ -7,6 +7,7 @@ from datetime import datetime
 import aiohttp
 import discord
 import pytz
+from bs4 import BeautifulSoup
 from discord.ext import commands, tasks
 
 from bot import core
@@ -43,17 +44,38 @@ class AdventOfCodeTasks(commands.Cog):
             return
 
         puzzle_url = f"https://adventofcode.com/{YEAR}/day/{day}"
-        # Check if the puzzle is already available
+        raw_html = None
         for retry in range(4):
             async with aiohttp.ClientSession(raise_for_status=False) as session:
                 async with session.get(puzzle_url) as resp:
                     if resp.status == 200:
+                        raw_html = await resp.text()
                         break
                 await asyncio.sleep(10)
 
+        if not raw_html:
+            return await self.channel.send(
+                f"<@&{settings.aoc.role_id}> Good morning! Day {day} is ready to be attempted."
+                f"View it online now at {puzzle_url}. Good luck!",
+                allowed_mentions=discord.AllowedMentions(roles=True),
+            )
+
+        soup = BeautifulSoup(raw_html, "html.parser")
+        article = soup.find("article", class_="day-desc")
+        title = article.find("h2").text.strip().replace("---", "")
+        desc = article.find("p").text.strip()
+
+        embed = discord.Embed(
+            title=title,
+            description=desc,
+            color=discord.Color.red(),
+            url=puzzle_url,
+            timestamp=datetime.now(tz=pytz.timezone("EST")).replace(hour=0, minute=0, second=0, microsecond=0),
+        )
+
         await self.channel.send(
-            f"<@&{settings.aoc.role_id}> Good morning! Day {day} is ready to be attempted."
-            f"View it online now at {puzzle_url}. Good luck!",
+            f"<@&{settings.aoc.role_id}> Good morning! Day {day} is ready to be attempted.",
+            embed=embed,
             allowed_mentions=discord.AllowedMentions(roles=True),
         )
 
