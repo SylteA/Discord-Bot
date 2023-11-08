@@ -31,18 +31,15 @@ class CustomRoles(commands.Cog):
     @app_commands.command()
     @app_commands.default_permissions(administrator=True)
     @app_commands.describe(name="New name", color="New color")
-    async def myrole(self, interaction: core.InteractionType, name: str = None, color: str = None):
+    async def myrole(
+        self, interaction: core.InteractionType, name: app_commands.Range[str, 2, 100] | None, color: str = None
+    ):
         """Manage your custom role"""
         if color is not None:
             try:
                 color = await self.color_converter.convert(None, color)  # noqa
             except commands.BadColourArgument as e:
                 return await interaction.response.send_message(str(e), ephemeral=True)
-
-        if len(name) > 100:
-            return await interaction.response.send_message(
-                "Role name can not be more than 100 characters.", ephemeral=True
-            )
 
         query = "SELECT * FROM custom_roles WHERE guild_id = $1 AND user_id = $2"
         before = await CustomRole.fetchrow(query, interaction.guild.id, interaction.user.id)
