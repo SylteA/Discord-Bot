@@ -5,6 +5,7 @@ from discord import app_commands, utils
 from discord.ext import commands
 
 from bot import core
+from bot.config import settings
 from bot.models import CustomRole
 
 
@@ -38,6 +39,11 @@ class CustomRoles(commands.Cog):
             except commands.BadColourArgument as e:
                 return await interaction.response.send_message(str(e), ephemeral=True)
 
+        if len(name) > 100:
+            return await interaction.response.send_message(
+                "Role name can not be more than 100 characters.", ephemeral=True
+            )
+
         query = "SELECT * FROM custom_roles WHERE guild_id = $1 AND user_id = $2"
         before = await CustomRole.fetchrow(query, interaction.guild.id, interaction.user.id)
 
@@ -47,6 +53,9 @@ class CustomRoles(commands.Cog):
 
             # Create and assign the role to user
             role = await interaction.guild.create_role(name=name, colour=color or discord.Color.random())
+
+            divider_role = interaction.guild.get_role(settings.custom_roles.divider_role_id)
+            await role.edit(position=divider_role.position + 1)
 
             record = await CustomRole.ensure_exists(
                 guild_id=interaction.guild.id,
