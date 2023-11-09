@@ -4,7 +4,6 @@ import xml.etree.ElementTree as ET
 from datetime import datetime
 from io import BytesIO
 
-import aiohttp
 import discord
 import requests
 from discord.ext import commands, tasks
@@ -13,6 +12,7 @@ from pydantic import BaseModel
 
 from bot import core
 from bot.config import settings
+from bot.services import http
 
 YOUTUBE_URL = re.compile(r"(?P<url>https?://www\.youtube\.com/watch\?v=[\w-]+)")
 
@@ -87,22 +87,21 @@ class YoutubeTasks(commands.Cog):
         """Check for new videos"""
 
         url = "https://www.youtube.com/feeds/videos.xml?channel_id=UC4JX40jDee_tINbkjycV4Sg"
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as response:
-                data = await response.text()
-                tree = ET.fromstring(data)
-                ns = "{http://www.w3.org/2005/Atom}"
-                md = "{http://search.yahoo.com/mrss/}"
+        async with http.session.get(url) as response:
+            data = await response.text()
+            tree = ET.fromstring(data)
+            ns = "{http://www.w3.org/2005/Atom}"
+            md = "{http://search.yahoo.com/mrss/}"
 
-                entry = tree.find(ns + "entry")
-                media_group = entry.find(md + "group")
-                video = Video(
-                    link=entry.find(ns + "link").attrib["href"],
-                    title=entry.find(ns + "title").text,
-                    published=entry.find(ns + "published").text,
-                    description=media_group.find(md + "description").text,
-                    thumbnail=media_group.find(md + "thumbnail").attrib["url"],
-                )
+            entry = tree.find(ns + "entry")
+            media_group = entry.find(md + "group")
+            video = Video(
+                link=entry.find(ns + "link").attrib["href"],
+                title=entry.find(ns + "title").text,
+                published=entry.find(ns + "published").text,
+                description=media_group.find(md + "description").text,
+                thumbnail=media_group.find(md + "thumbnail").attrib["url"],
+            )
 
         if video.link in self.video_links:
             return
