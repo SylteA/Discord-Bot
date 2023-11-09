@@ -1,6 +1,3 @@
-
----
-
 # Contributing
 
 ## Setup Discord Application
