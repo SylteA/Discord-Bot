@@ -107,8 +107,6 @@ class YoutubeTasks(commands.Cog):
             return
 
         self.video_links.append(video.link)
-        self.video_links.pop(0)
-
         await self.send_notification(video)
 
     @check_for_new_videos.before_loop
