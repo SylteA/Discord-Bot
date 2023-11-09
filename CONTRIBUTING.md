@@ -1,48 +1,66 @@
 
+---
 
 # Contributing
 
-## Setup Discord application
-Create a new Discord application [here](https://discord.com/developers/applications) by clicking the `New application` button and name it whatever you want.
+## Setup Discord Application
 
-![New application](https://cdn.discordapp.com/attachments/721750194797936823/794646477505822730/unknown.png)
-
-Go to the Bot section on the right-hand side and click on Add Bot.
-
-![Add Bot](https://cdn.discordapp.com/attachments/852867509765799956/853984486970359838/unknown.png)
-
-Copy the bot token (to be used in .env file when setting up project)
-
-![Token](https://cdn.discordapp.com/attachments/852867509765799956/853985222127124500/unknown.png)
-
-
-To Invite the bot to your server go to Oauth2 select bot then select administrator and go to the link
-![Invite Bot](https://cdn.discordapp.com/attachments/852867509765799956/853985694183850004/unknown.png)
-
+Refer to the official discord.py [documentation](https://discordpy.readthedocs.io/en/stable/discord.html) to create a bot.
 
 ## Project Setup & Installation
 
 1. Fork the repository to your own profile.
-2. Setup postgresql DB
-```postgresql://username:password@localhost/db_name```
-Replace username, password, db_name with appropriate values
-3. Run migrations  
-```python cli.py migrate up```
-4. To install packages run:-
+2. Set up a local PostgreSQL database or use [Docker](#Docker-Setup).
 
-    ```pip install poetry```  
-    ```poetry install```
-5. Create a .env file and copy the contents of example.env, setup the env vars.
+   ```postgresql://username:password@localhost/db_name```
 
-6. Once above steps are done, run the bot using command  
-   ```python cli.py```
+   Replace username, password, db_name with appropriate values.
+
+3. Run migrations.
+
+   ```python cli.py migrate up```
+
+4. To install packages, run:
+
+   ```bash
+   pip install poetry
+   poetry install
+   ```
+
+5. Create a .env file and copy the contents of example.env, setting up the environment variables.
+
+6. Once the above steps are done, run the bot using the command:
+
+   ```bash
+   python cli.py
+   ```
+
 7. Feel free to join the server in case of any issues.
 
-## Guidelines
+## Docker-Setup
 
-Please keep the following guidelines in mind when contributing:
+1. Ensure you have Docker installed and set up on your system. Refer to the [Docker's official guide](https://docs.docker.com/get-started/overview/) if needed.
+2. To run a PostgreSQL instance, execute:
+
+   ```bash
+   docker compose up -d postgres
+   ```
+   The `-d` flag runs the instance in detached mode.
+
+3. Run migrations.
+
+   ```python cli.py migrate up```
+# Guidelines
+
+Please adhere to the following guidelines when contributing:
 
 - Follow the coding style and conventions used in the project.
 - Write clear and concise commit messages.
 - Test your changes thoroughly before submitting a pull request.
 - Be respectful and constructive in all interactions with other contributors.
+
+## Code Quality and Testing
+
+- Ensure your code follows best practices and is well-documented.
+- Write unit tests for new features and ensure existing tests pass.
+- Perform code reviews and address feedback from other contributors.
