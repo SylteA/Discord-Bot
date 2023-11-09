@@ -282,7 +282,7 @@ class Levelling(commands.Cog):
             return await interaction.response.send_message("That user is not ranked yet...", ephemeral=True)
 
         # Fetch the user's avatar as bytes
-        avatar_bytes = await member.avatar.with_format("png").read()
+        avatar_bytes = await member.display_avatar.with_format("png").read()
 
         level = utils.get_level_for_xp(record.total_xp)
         prev_xp = utils.get_xp_for_level(level)
