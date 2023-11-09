@@ -9,11 +9,20 @@ import discord
 import requests
 from discord.ext import commands, tasks
 from PIL import Image
+from pydantic import BaseModel
 
 from bot import core
 from bot.config import settings
 
 YOUTUBE_URL = re.compile(r"(?P<url>https?://www\.youtube\.com/watch\?v=[\w-]+)")
+
+
+class Video(BaseModel):
+    link: str
+    title: str
+    published: str
+    description: str
+    thumbnail: str
 
 
 class YoutubeTasks(commands.Cog):
@@ -46,17 +55,17 @@ class YoutubeTasks(commands.Cog):
         buf.seek(0)
         return buf
 
-    async def send_notification(self, video: dict) -> None:
+    async def send_notification(self, video: Video) -> None:
         loop = asyncio.get_event_loop()
-        result = await loop.run_in_executor(None, self.crop_borders, video["thumbnail"])
+        result = await loop.run_in_executor(None, self.crop_borders, video.thumbnail)
         file = discord.File(fp=result, filename="thumbnail.png")
 
         embed = discord.Embed(
-            title=video["title"],
-            description=video["description"].split("\n\n")[0],
-            url=video["link"],
+            title=video.title,
+            description=video.description.split("\n\n")[0],
+            url=video.link,
             color=discord.Color.red(),
-            timestamp=datetime.strptime(video["published"], "%Y-%m-%dT%H:%M:%S%z"),
+            timestamp=datetime.strptime(video.published, "%Y-%m-%dT%H:%M:%S%z"),
         )
         embed.set_image(url="attachment://thumbnail.png")
         embed.set_author(
@@ -87,18 +96,18 @@ class YoutubeTasks(commands.Cog):
 
                 entry = tree.find(ns + "entry")
                 media_group = entry.find(md + "group")
-                video = {
-                    "link": entry.find(ns + "link").attrib["href"],
-                    "title": entry.find(ns + "title").text,
-                    "published": entry.find(ns + "published").text,
-                    "description": media_group.find(md + "description").text,
-                    "thumbnail": media_group.find(md + "thumbnail").attrib["url"],
-                }
+                video = Video(
+                    link=entry.find(ns + "link").attrib["href"],
+                    title=entry.find(ns + "title").text,
+                    published=entry.find(ns + "published").text,
+                    description=media_group.find(md + "description").text,
+                    thumbnail=media_group.find(md + "thumbnail").attrib["url"],
+                )
 
-        if video["link"] in self.video_links:
+        if video.link in self.video_links:
             return
 
-        self.video_links.append(video["link"])
+        self.video_links.append(video.link)
         self.video_links.pop(0)
 
         await self.send_notification(video)
