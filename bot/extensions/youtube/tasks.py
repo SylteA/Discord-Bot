@@ -46,18 +46,36 @@ class YoutubeTasks(commands.Cog):
         buf.seek(0)
         return buf
 
+    async def send_notification(self, video: dict) -> None:
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(None, self.crop_borders, video["thumbnail"])
+        file = discord.File(fp=result, filename="thumbnail.png")
+
+        embed = discord.Embed(
+            title=video["title"],
+            description=video["description"].split("\n\n")[0],
+            url=video["link"],
+            color=discord.Color.red(),
+            timestamp=datetime.strptime(video["published"], "%Y-%m-%dT%H:%M:%S%z"),
+        )
+        embed.set_image(url="attachment://thumbnail.png")
+        embed.set_author(
+            name="Tech With Tim",
+            url="https://www.youtube.com/c/TechWithTim",
+            icon_url=self.bot.user.display_avatar.url,
+        )
+        embed.set_footer(text="Uploaded", icon_url=self.bot.user.display_avatar.url)
+
+        await self.channel.send(
+            content=f"Hey <@&{settings.notification.role_id}>, **Tim** just posted a video! Go check it out!",
+            file=file,
+            embed=embed,
+            allowed_mentions=discord.AllowedMentions(roles=True),
+        )
+
     @tasks.loop(minutes=2)
     async def check_for_new_videos(self):
-        """Check for new videos and send notifications"""
-
-        if not self.videos:
-            async for message in self.channel.history(limit=10, oldest_first=True):
-                if message.embeds:
-                    self.videos.append(message.embeds[0].url)
-                else:
-                    match = YOUTUBE_URL.search(message.content)
-                    if match:
-                        self.videos.append(match.group("url"))
+        """Check for new videos"""
 
         url = "https://www.youtube.com/feeds/videos.xml?channel_id=UC4JX40jDee_tINbkjycV4Sg"
         async with aiohttp.ClientSession() as session:
@@ -83,28 +101,15 @@ class YoutubeTasks(commands.Cog):
         self.videos.append(video["link"])
         self.videos.pop(0)
 
-        loop = asyncio.get_event_loop()
-        result = await loop.run_in_executor(None, self.crop_borders, video["thumbnail"])
-        file = discord.File(fp=result, filename="thumbnail.png")
+        await self.send_notification(video)
 
-        embed = discord.Embed(
-            title=video["title"],
-            description=video["description"].split("\n\n")[0],
-            url=video["link"],
-            color=discord.Color.red(),
-            timestamp=datetime.strptime(video["published"], "%Y-%m-%dT%H:%M:%S%z"),
-        )
-        embed.set_image(url="attachment://thumbnail.png")
-        embed.set_author(
-            name="Tech With Tim",
-            url="https://www.youtube.com/c/TechWithTim",
-            icon_url=self.bot.user.display_avatar.url,
-        )
-        embed.set_footer(text="Uploaded", icon_url=self.bot.user.display_avatar.url)
-
-        await self.channel.send(
-            content=f"<@&{settings.notification.role_id}> New upload!",
-            file=file,
-            embed=embed,
-            allowed_mentions=discord.AllowedMentions(roles=True),
-        )
+    @check_for_new_videos.before_loop
+    async def before_check(self):
+        if not self.videos:
+            async for message in self.channel.history(limit=10, oldest_first=True):
+                if message.embeds:
+                    self.videos.append(message.embeds[0].url)
+                else:
+                    match = YOUTUBE_URL.search(message.content)
+                    if match:
+                        self.videos.append(match.group("url"))
