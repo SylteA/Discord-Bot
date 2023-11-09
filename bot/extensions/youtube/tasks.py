@@ -21,7 +21,7 @@ class YoutubeTasks(commands.Cog):
 
     def __init__(self, bot: core.DiscordBot):
         self.bot = bot
-        self.videos = []
+        self.video_links: list[str] = []
         self.check_for_new_videos.start()
 
     def cog_unload(self) -> None:
@@ -95,21 +95,21 @@ class YoutubeTasks(commands.Cog):
                     "thumbnail": media_group.find(md + "thumbnail").attrib["url"],
                 }
 
-        if video["link"] in self.videos:
+        if video["link"] in self.video_links:
             return
 
-        self.videos.append(video["link"])
-        self.videos.pop(0)
+        self.video_links.append(video["link"])
+        self.video_links.pop(0)
 
         await self.send_notification(video)
 
     @check_for_new_videos.before_loop
     async def before_check(self):
-        if not self.videos:
+        if not self.video_links:
             async for message in self.channel.history(limit=10, oldest_first=True):
                 if message.embeds:
-                    self.videos.append(message.embeds[0].url)
+                    self.video_links.append(message.embeds[0].url)
                 else:
                     match = YOUTUBE_URL.search(message.content)
                     if match:
-                        self.videos.append(match.group("url"))
+                        self.video_links.append(match.group("url"))
