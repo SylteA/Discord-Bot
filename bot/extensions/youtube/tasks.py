@@ -115,10 +115,12 @@ class YoutubeTasks(commands.Cog):
     @check_for_new_videos.before_loop
     async def before_check(self):
         if not self.video_links:
-            async for message in self.channel.history(limit=10, oldest_first=True):
+            async for message in self.channel.history(limit=10):
                 if message.embeds:
                     self.video_links.append(message.embeds[0].url)
                 else:
                     match = YOUTUBE_URL.search(message.content)
                     if match:
                         self.video_links.append(match.group("url"))
+
+            self.video_links.reverse()
