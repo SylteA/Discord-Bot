@@ -51,15 +51,13 @@ class YoutubeTasks(commands.Cog):
         """Check for new videos and send notifications"""
 
         if not self.videos:
-            async for message in self.channel.history(limit=10):
+            async for message in self.channel.history(limit=10, oldest_first=True):
                 if message.embeds:
                     self.videos.append(message.embeds[0].url)
                 else:
                     match = YOUTUBE_URL.search(message.content)
                     if match:
                         self.videos.append(match.group("url"))
-
-            self.videos.reverse()
 
         url = "https://www.youtube.com/feeds/videos.xml?channel_id=UC4JX40jDee_tINbkjycV4Sg"
         async with aiohttp.ClientSession() as session:
