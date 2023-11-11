@@ -13,16 +13,15 @@ Refer to the official discord.py [documentation](https://discordpy.readthedocs.i
 
    Replace username, password, db_name with appropriate values.
 
-3. Run migrations.
-
-   ```python cli.py migrate up```
-
-4. To install packages, run:
+3. To install packages, run:
 
    ```bash
    pip install poetry
    poetry install
    ```
+4. Once all the packages are installed, run migrations using:
+
+   ```python cli.py migrate up```
 
 5. Create a .env file and copy the contents of example.env, setting up the environment variables.
 
