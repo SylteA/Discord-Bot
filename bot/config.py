@@ -57,10 +57,8 @@ class Moderation(BaseModel):
 
 
 class Notification(BaseModel):
-    api_key: str  # Youtube Data AP - API Key: https://developers.google.com/youtub/docs
     channel_id: int
     role_id: int
-    webhook: str
 
 
 class Postgres(BaseModel):
