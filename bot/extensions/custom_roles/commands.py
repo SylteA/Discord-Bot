@@ -1,4 +1,4 @@
-import datetime
+from __future__ import annotations
 
 import discord
 from discord import app_commands, utils
@@ -16,16 +16,15 @@ class CustomRoles(commands.Cog):
         self.color_converter = commands.ColorConverter()
 
     @staticmethod
-    def role_embed(heading: str, user: discord.Member, role: discord.Role):
+    def role_embed(heading: str, role: discord.Role):
         embed = discord.Embed(
             title=heading,
             color=role.color,
-            timestamp=datetime.datetime.utcnow(),
+            timestamp=role.created_at,
         )
         embed.add_field(name="Name", value=utils.escape_markdown(role.name))
         embed.add_field(name="Color", value=str(role.color))
-        embed.add_field(name="Created at", value=utils.format_dt(role.created_at))
-        embed.set_thumbnail(url=user.avatar)
+        embed.set_footer(text="Created at")
         return embed
 
     @app_commands.command()
@@ -71,7 +70,7 @@ class CustomRoles(commands.Cog):
             )
 
             return await interaction.response.send_message(
-                embed=self.role_embed("**Custom Role has been assigned**", interaction.user, role),
+                embed=self.role_embed("**Custom Role has been assigned**", role),
                 ephemeral=True,
             )
 
@@ -80,7 +79,9 @@ class CustomRoles(commands.Cog):
         # Return role information if no parameter is passed
         if (name is None or name == before.name) and (color is None or color.value == before.color):
             return await interaction.response.send_message(
-                embed=self.role_embed("Custom Role for", interaction.user, interaction.guild.get_role(before.role_id)),
+                embed=self.role_embed(
+                    f"Custom Role for {interaction.user.mention}", interaction.guild.get_role(before.role_id)
+                ),
                 ephemeral=True,
             )
 
@@ -100,9 +101,7 @@ class CustomRoles(commands.Cog):
         self.bot.dispatch("custom_role_update", before, after)
 
         return await interaction.response.send_message(
-            embed=self.role_embed(
-                "**Custom Role has been updated**", interaction.user, interaction.guild.get_role(before.role_id)
-            ),
+            embed=self.role_embed("**Custom Role has been updated**", interaction.guild.get_role(before.role_id)),
             ephemeral=True,
         )
 
