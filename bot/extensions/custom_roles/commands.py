@@ -78,7 +78,7 @@ class CustomRoles(commands.Cog):
         role = interaction.guild.get_role(before.role_id)
 
         # Return role information if no parameter is passed
-        if (name == before.name or name is None) and (color.value == before.color or color is None):
+        if (name is None or name == before.name) and (color is None or color.value == before.color):
             return await interaction.response.send_message(
                 embed=self.role_embed("Custom Role for", interaction.user, interaction.guild.get_role(before.role_id)),
                 ephemeral=True,
