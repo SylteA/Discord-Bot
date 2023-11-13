@@ -18,7 +18,7 @@ class CustomRoles(commands.Cog):
     @staticmethod
     def role_embed(heading: str, role: discord.Role):
         embed = discord.Embed(
-            description=f"# {heading}",
+            description=f"**{heading}**",
             timestamp=role.created_at,
             color=role.color,
         )
