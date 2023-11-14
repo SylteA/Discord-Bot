@@ -4,4 +4,4 @@
 
 # Contributing
 
-If you're looking to contribute , take a look at the [Contributing](CONTRIBUTING.md). If you're looking for things to do, check out our [issues](https://github.com/SylteA/Discord-Bot/issues).
+If you're interested in contributing, please review the [Contributing](CONTRIBUTING.md) section. For specific tasks and opportunities, explore our list of open [issues](https://github.com/SylteA/Discord-Bot/issues).
