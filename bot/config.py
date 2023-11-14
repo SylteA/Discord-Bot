@@ -56,11 +56,6 @@ class Moderation(BaseModel):
         return json.loads(v)
 
 
-class Notification(BaseModel):
-    channel_id: int
-    role_id: int
-
-
 class Postgres(BaseModel):
     max_pool_connections: int
     min_pool_connections: int
@@ -100,6 +95,13 @@ class CustomRoles(BaseModel):
     divider_role_id: int
 
 
+class YouTube(BaseModel):
+    channel_id: str
+
+    text_channel_id: int
+    role_id: int
+
+
 class Settings(BaseSettings):
     aoc: AoC
     bot: Bot
@@ -108,13 +110,13 @@ class Settings(BaseSettings):
     postgres: Postgres
     guild: Guild
     moderation: Moderation
-    notification: Notification  # For tim's YouTube channel (currently unused)
     reaction_roles: ReactionRoles
     tags: Tags
     timathon: Timathon
     hastebin: Hastebin
     errors: ErrorHandling
     custom_roles: CustomRoles
+    youtube: YouTube
 
     class Config:
         env_file = ".env"
