@@ -119,7 +119,7 @@ class DiscordBot(commands.Bot):
             f"Ignored exception in command **{interaction.command.qualified_name}** Invoked by **{interaction.user}**"
             f"in channel **{interaction.channel.name}**"
         )
-        invoked_details_document = await paste.create(str(json.dumps(interaction.data, indent=4)))
+        invoked_details_document = await paste.create(str(json.dumps(interaction.data, indent=2)))
 
         def wrap(code: str) -> str:
             code = code.replace("`", "\u200b`")
