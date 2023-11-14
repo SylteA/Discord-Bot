@@ -1,4 +1,5 @@
 import datetime
+import json
 import logging
 import os
 import traceback
@@ -113,8 +114,12 @@ class DiscordBot(commands.Bot):
 
     async def publish_error(self, interaction: "InteractionType", error: app_commands.AppCommandError) -> None:
         """Publishes the error to our error webhook."""
-        content = "\n".join(traceback.format_exception(type(error), error, error.__traceback__))
-        header = f"Ignored exception in command **{interaction.command.qualified_name}**"
+        content = "".join(traceback.format_exception(type(error), error, error.__traceback__))
+        header = (
+            f"Ignored exception in command **{interaction.command.qualified_name}** Invoked by **{interaction.user}**"
+            f"in channel **{interaction.channel.name}**"
+        )
+        invoked_details_document = await paste.create(str(json.dumps(interaction.data, indent=2)))
 
         def wrap(code: str) -> str:
             code = code.replace("`", "\u200b`")
@@ -129,6 +134,7 @@ class DiscordBot(commands.Bot):
         embed = discord.Embed(
             title=header, description=content, color=discord.Color.red(), timestamp=discord.utils.utcnow()
         )
+        embed.add_field(name="Command Details: ", value=invoked_details_document.url, inline=True)
         await self.error_webhook.send(embed=embed)
 
     @tasks.loop(hours=24)

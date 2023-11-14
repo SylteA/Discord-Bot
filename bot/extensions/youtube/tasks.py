@@ -1,13 +1,9 @@
-import asyncio
 import re
 import xml.etree.ElementTree as ET
 from datetime import datetime
-from io import BytesIO
 
 import discord
-import requests
 from discord.ext import commands, tasks
-from PIL import Image
 from pydantic import BaseModel
 
 from bot import core
@@ -15,6 +11,7 @@ from bot.config import settings
 from bot.services import http
 
 YOUTUBE_URL = re.compile(r"(?P<url>https?://www\.youtube\.com/watch\?v=[\w-]+)")
+RSS_FEED_BASE_URL = "https://www.youtube.com/feeds/videos.xml"
 
 
 class Video(BaseModel):
@@ -31,6 +28,7 @@ class YoutubeTasks(commands.Cog):
     def __init__(self, bot: core.DiscordBot):
         self.bot = bot
         self.video_links: list[str] = []
+        self.old_thumbnails: list[tuple[discord.Message, str]] = []
         self.check_for_new_videos.start()
 
     def cog_unload(self) -> None:
@@ -38,55 +36,50 @@ class YoutubeTasks(commands.Cog):
 
     @property
     def channel(self) -> discord.TextChannel | None:
-        return self.bot.get_channel(settings.notification.channel_id)
-
-    def crop_borders(self, url):
-        response = requests.get(url)
-        if response.status_code != 200:
-            raise Exception("Failed to download the image.")
-
-        img = Image.open(BytesIO(response.content))
-        width, height = img.size
-
-        img_cropped = img.crop((0, 45, width, height - 45))
-
-        buf = BytesIO()
-        img_cropped.save(buf, format="PNG")
-        buf.seek(0)
-        return buf
-
-    async def send_notification(self, video: Video) -> None:
-        loop = asyncio.get_event_loop()
-        result = await loop.run_in_executor(None, self.crop_borders, video.thumbnail)
-        file = discord.File(fp=result, filename="thumbnail.png")
-
-        embed = discord.Embed(
-            title=video.title,
-            description=video.description.split("\n\n")[0],
-            url=video.link,
-            color=discord.Color.red(),
-            timestamp=datetime.strptime(video.published, "%Y-%m-%dT%H:%M:%S%z"),
-        )
-        embed.set_image(url="attachment://thumbnail.png")
-        embed.set_author(
-            name="Tech With Tim",
-            url="https://www.youtube.com/c/TechWithTim",
-            icon_url=self.bot.user.display_avatar.url,
-        )
-        embed.set_footer(text="Uploaded", icon_url=self.bot.user.display_avatar.url)
-
-        await self.channel.send(
-            content=f"Hey <@&{settings.notification.role_id}>, **Tim** just posted a video! Go check it out!",
-            file=file,
-            embed=embed,
-            allowed_mentions=discord.AllowedMentions(roles=True),
-        )
+        return self.bot.get_channel(settings.youtube.text_channel_id)
 
     @tasks.loop(minutes=2)
     async def check_for_new_videos(self):
-        """Check for new videos"""
+        """Checks old thumbnails for higher resolution images and looks for new videos"""
+        await self.check_old_thumbnails()
+        await self.find_new_videos()
 
-        url = "https://www.youtube.com/feeds/videos.xml?channel_id=UC4JX40jDee_tINbkjycV4Sg"
+    @check_for_new_videos.before_loop
+    async def before_check(self):
+        """Fetches the 10 last videos posted so we don't accidentally re-post it."""
+        if self.video_links:
+            return
+
+        async for message in self.channel.history(limit=10):
+            if message.embeds:
+                embed = message.embeds[0]
+                self.video_links.append(embed.url)
+                if embed.image.url.endswith("/mqdefault.jpg"):
+                    self.old_thumbnails.append((message, embed.image.url))
+
+            else:
+                match = YOUTUBE_URL.search(message.content)
+                if match:
+                    self.video_links.append(match.group("url"))
+
+    async def check_old_thumbnails(self):
+        """Tries to fetch new thumbnails for any videos we've posted with a low resolution thumbnail."""
+        for message, thumbnail_url in self.old_thumbnails:
+            max_resolution = thumbnail_url.replace("/mqdefault.jpg", "/maxresdefault.jpg")
+
+            if not await self.image_exists(max_resolution):
+                continue
+
+            embed = message.embeds[0]
+            embed.set_image(url=thumbnail_url)
+            await message.edit(embed=embed)
+
+            self.old_thumbnails.remove((message, thumbnail_url))
+
+    async def find_new_videos(self):
+        """Fetches most recent videos from rss feed and publishes any new videos."""
+        url = RSS_FEED_BASE_URL + "?channel_id=" + settings.youtube.channel_id
+
         async with http.session.get(url) as response:
             data = await response.text()
             tree = ET.fromstring(data)
@@ -109,15 +102,39 @@ class YoutubeTasks(commands.Cog):
         self.video_links.append(video.link)
         await self.send_notification(video)
 
-    @check_for_new_videos.before_loop
-    async def before_check(self):
-        if not self.video_links:
-            async for message in self.channel.history(limit=10):
-                if message.embeds:
-                    self.video_links.append(message.embeds[0].url)
-                else:
-                    match = YOUTUBE_URL.search(message.content)
-                    if match:
-                        self.video_links.append(match.group("url"))
+    async def send_notification(self, video: Video) -> None:
+        """Sends an embed to discord with the new video."""
+        max_resolution = video.thumbnail.replace("/mqdefault.jpg", "/maxresdefault.jpg")
+        use_max_resolution = await self.image_exists(max_resolution)
 
-            self.video_links.reverse()
+        if use_max_resolution:
+            video.thumbnail = max_resolution
+
+        embed = discord.Embed(
+            title=video.title,
+            description=video.description.split("\n\n")[0],
+            url=video.link,
+            color=discord.Color.red(),
+            timestamp=datetime.strptime(video.published, "%Y-%m-%dT%H:%M:%S%z"),
+        )
+        embed.set_image(url=video.thumbnail)
+        embed.set_author(
+            name="Tech With Tim",
+            url="https://www.youtube.com/c/TechWithTim",
+            icon_url=self.bot.user.display_avatar.url,
+        )
+        embed.set_footer(text="Uploaded", icon_url=self.bot.user.display_avatar.url)
+
+        message = await self.channel.send(
+            content=f"Hey <@&{settings.youtube.role_id}>, **Tim** just posted a video! Go check it out!",
+            embed=embed,
+            allowed_mentions=discord.AllowedMentions(roles=True),
+        )
+
+        if not use_max_resolution:
+            self.old_thumbnails.append((message, video.thumbnail))
+
+    @staticmethod
+    async def image_exists(url: str):
+        async with http.session.head(url) as response:
+            return response.status == 200
