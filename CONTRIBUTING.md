@@ -4,6 +4,14 @@
 
 Refer to the official discord.py [documentation](https://discordpy.readthedocs.io/en/stable/discord.html) to create a bot.
 
+Also, please make sure that the scope application.commands is enabled. 
+
+Make sure to enable intents as well—check the official guide for detailed instructions [here](https://discordpy.readthedocs.io/en/latest/intents.html).
+
+<img width="1313" alt="Screenshot 2023-11-14 at 12 51 00 PM" src="https://github.com/sarzz2/Discord-Bot/assets/45039724/97fd0d7f-8e6b-4d7b-b4f9-008a07dfb26b">
+
+
+
 ## Project Setup & Installation
 
 1. Fork the repository to your own profile.
