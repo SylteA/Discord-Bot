@@ -40,7 +40,7 @@ class YoutubeTasks(commands.Cog):
     async def send_notification(self, video: Video) -> None:
         update_thumbnail = False
         max_res = video.thumbnail.replace("/hqdefault.jpg", "/maxresdefault.jpg")
-        async with http.session.get(max_res) as response:
+        async with http.session.head(max_res) as response:
             if response.status == 200:
                 video.thumbnail = max_res
             else:
@@ -71,12 +71,9 @@ class YoutubeTasks(commands.Cog):
         if update_thumbnail:
             self.update_thumbnail.append((message.id, video.thumbnail))
 
-    @tasks.loop(minutes=2)
-    async def check_for_new_videos(self):
-        """Check for new videos"""
-
+    async def check_old_thumbnails(self):
         for message_id, thumbnail_url in self.update_thumbnail:
-            async with http.session.get(thumbnail_url.replace("/mqdefault.jpg", "/maxresdefault.jpg")) as response:
+            async with http.session.head(thumbnail_url.replace("/mqdefault.jpg", "/maxresdefault.jpg")) as response:
                 if response.status == 404:
                     continue
 
@@ -85,6 +82,12 @@ class YoutubeTasks(commands.Cog):
             embed.set_image(url=thumbnail_url)
             await message.edit(embed=embed)
             self.update_thumbnail.remove((message_id, thumbnail_url))
+
+    @tasks.loop(minutes=2)
+    async def check_for_new_videos(self):
+        """Check for new videos"""
+
+        await self.check_old_thumbnails()
 
         url = "https://www.youtube.com/feeds/videos.xml?channel_id=UC4JX40jDee_tINbkjycV4Sg"
         async with http.session.get(url) as response:
@@ -111,13 +114,16 @@ class YoutubeTasks(commands.Cog):
 
     @check_for_new_videos.before_loop
     async def before_check(self):
-        if not self.video_links:
-            async for message in self.channel.history(limit=10):
-                if message.embeds:
-                    self.video_links.append(message.embeds[0].url)
-                else:
-                    match = YOUTUBE_URL.search(message.content)
-                    if match:
-                        self.video_links.append(match.group("url"))
+        if self.video_links:
+            return
 
-            self.video_links.reverse()
+        async for message in self.channel.history(limit=10):
+            if message.embeds:
+                embed = message.embeds[0]
+                self.video_links.append(embed.url)
+                if embed.image.url.endswith("/mqdefault.jpg"):
+                    self.update_thumbnail.append((message.id, embed.image.url))
+            else:
+                match = YOUTUBE_URL.search(message.content)
+                if match:
+                    self.video_links.append(match.group("url"))
