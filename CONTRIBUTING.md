@@ -4,7 +4,7 @@
 
 Refer to the official discord.py [documentation](https://discordpy.readthedocs.io/en/stable/discord.html) to create a bot.
 
-Also, please make sure that the scope application.commands is enabled. 
+Also, please make sure that the scope application.commands is enabled.
 
 Make sure to enable intents as well—check the official guide for detailed instructions [here](https://discordpy.readthedocs.io/en/latest/intents.html).
 
