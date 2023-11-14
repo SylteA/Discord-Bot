@@ -1,13 +1,9 @@
-import asyncio
 import re
 import xml.etree.ElementTree as ET
 from datetime import datetime
-from io import BytesIO
 
 import discord
-import requests
 from discord.ext import commands, tasks
-from PIL import Image
 from pydantic import BaseModel
 
 from bot import core
@@ -40,26 +36,7 @@ class YoutubeTasks(commands.Cog):
     def channel(self) -> discord.TextChannel | None:
         return self.bot.get_channel(settings.notification.channel_id)
 
-    def crop_borders(self, url):
-        response = requests.get(url)
-        if response.status_code != 200:
-            raise Exception("Failed to download the image.")
-
-        img = Image.open(BytesIO(response.content))
-        width, height = img.size
-
-        img_cropped = img.crop((0, 45, width, height - 45))
-
-        buf = BytesIO()
-        img_cropped.save(buf, format="PNG")
-        buf.seek(0)
-        return buf
-
     async def send_notification(self, video: Video) -> None:
-        loop = asyncio.get_event_loop()
-        result = await loop.run_in_executor(None, self.crop_borders, video.thumbnail)
-        file = discord.File(fp=result, filename="thumbnail.png")
-
         embed = discord.Embed(
             title=video.title,
             description=video.description.split("\n\n")[0],
@@ -67,7 +44,7 @@ class YoutubeTasks(commands.Cog):
             color=discord.Color.red(),
             timestamp=datetime.strptime(video.published, "%Y-%m-%dT%H:%M:%S%z"),
         )
-        embed.set_image(url="attachment://thumbnail.png")
+        embed.set_image(url=video.thumbnail.replace("/hqdefault.jpg", "/mqdefault.jpg"))
         embed.set_author(
             name="Tech With Tim",
             url="https://www.youtube.com/c/TechWithTim",
@@ -77,7 +54,6 @@ class YoutubeTasks(commands.Cog):
 
         await self.channel.send(
             content=f"Hey <@&{settings.notification.role_id}>, **Tim** just posted a video! Go check it out!",
-            file=file,
             embed=embed,
             allowed_mentions=discord.AllowedMentions(roles=True),
         )
