@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import traceback
+from typing import Any
 
 import discord
 from discord import app_commands
@@ -10,6 +11,7 @@ from discord.ext import commands, tasks
 
 from bot.config import settings
 from bot.services import http, paste
+from bot.services.paste import Document
 from utils.errors import IgnorableException
 from utils.time import human_timedelta
 
@@ -95,6 +97,32 @@ class DiscordBot(commands.Bot):
         log.info(f"{ctx.author} invoking command: {ctx.clean_prefix}{ctx.command.qualified_name}")
         await self.invoke(ctx)
 
+    async def send_error(self, content: str, header: str, invoked_details_document: Document = None) -> None:
+        def wrap(code: str) -> str:
+            code = code.replace("`", "\u200b`")
+            return f"```py\n{code}\n```"
+
+        if len(content) > 1024:  # Keeping it short for readability.
+            document = await paste.create(content)
+            content = wrap(content[:1024]) + f"\n\n [Full traceback]({document.url})"
+        else:
+            content = wrap(content)
+
+        embed = discord.Embed(
+            title=header, description=content, color=discord.Color.red(), timestamp=discord.utils.utcnow()
+        )
+        if invoked_details_document:
+            embed.add_field(name="Command Details: ", value=invoked_details_document.url, inline=True)
+
+        await self.error_webhook.send(embed=embed)
+
+    async def on_error(self, event_method: str, *args: Any, **kwargs: Any) -> None:
+        message = args[0]
+        content = "\n".join(traceback.format_exception(type(message), message, message.__traceback__))
+        header = f"Ignored exception in event method **{event_method}**"
+
+        await self.send_error(content, header)
+
     async def on_app_command_error(self, interaction: "InteractionType", error: app_commands.AppCommandError):
         """Handle errors in app commands."""
 
@@ -109,33 +137,14 @@ class DiscordBot(commands.Bot):
             log.info(f"{interaction.user} failed to use the command {interaction.command.qualified_name}")
             return
 
-        await self.publish_error(interaction=interaction, error=error)
-        log.error("Ignoring unhandled exception", exc_info=error)
-
-    async def publish_error(self, interaction: "InteractionType", error: app_commands.AppCommandError) -> None:
-        """Publishes the error to our error webhook."""
         content = "".join(traceback.format_exception(type(error), error, error.__traceback__))
         header = (
-            f"Ignored exception in command **{interaction.command.qualified_name}** Invoked by **{interaction.user}**"
+            f"Ignored exception in command **{interaction.command.qualified_name}** Invoked by **{interaction.user}** "
             f"in channel **{interaction.channel.name}**"
         )
         invoked_details_document = await paste.create(str(json.dumps(interaction.data, indent=2)))
-
-        def wrap(code: str) -> str:
-            code = code.replace("`", "\u200b`")
-            return f"```py\n{code}\n```"
-
-        if len(content) > 1024:  # Keeping it short for readability.
-            document = await paste.create(content)
-            content = wrap(content[:1024]) + f"\n\n [Full traceback]({document.url})"
-        else:
-            content = wrap(content)
-
-        embed = discord.Embed(
-            title=header, description=content, color=discord.Color.red(), timestamp=discord.utils.utcnow()
-        )
-        embed.add_field(name="Command Details: ", value=invoked_details_document.url, inline=True)
-        await self.error_webhook.send(embed=embed)
+        await self.send_error(content, header, invoked_details_document)
+        log.error("Ignoring unhandled exception", exc_info=error)
 
     @tasks.loop(hours=24)
     async def presence(self):

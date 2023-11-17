@@ -44,6 +44,11 @@ class YoutubeTasks(commands.Cog):
         await self.check_old_thumbnails()
         await self.find_new_videos()
 
+    @check_for_new_videos.error
+    async def on_check_error(self, error: Exception):
+        """Logs any errors that occur during the check_for_new_videos task"""
+        await self.bot.on_error("check_for_new_videos", error)
+
     @check_for_new_videos.before_loop
     async def before_check(self):
         """Fetches the 10 last videos posted so we don't accidentally re-post it."""
@@ -54,7 +59,7 @@ class YoutubeTasks(commands.Cog):
             if message.embeds:
                 embed = message.embeds[0]
                 self.video_links.append(embed.url)
-                if embed.image.url.endswith("/mqdefault.jpg"):
+                if message.author == self.bot.user and embed.image.url.endswith("/mqdefault.jpg"):
                     self.old_thumbnails.append((message, embed.image.url))
 
             else:
@@ -93,7 +98,7 @@ class YoutubeTasks(commands.Cog):
                 title=entry.find(ns + "title").text,
                 published=entry.find(ns + "published").text,
                 description=media_group.find(md + "description").text,
-                thumbnail=media_group.find(md + "thumbnail").attrib["url"],
+                thumbnail=media_group.find(md + "thumbnail").attrib["url"].replace("/hqdefault.jpg", "/mqdefault.jpg"),
             )
 
         if video.link in self.video_links:
