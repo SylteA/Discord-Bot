@@ -2,9 +2,9 @@ import asyncio
 import datetime as dt
 import logging
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 import discord
-import pytz
 from bs4 import BeautifulSoup
 from discord.ext import commands, tasks
 
@@ -14,8 +14,8 @@ from bot.services import http
 
 log = logging.getLogger(__name__)
 
-aoc_time = dt.time(hour=0, minute=0, second=1, tzinfo=pytz.timezone("EST"))
-YEAR = datetime.now(tz=pytz.timezone("EST")).year
+aoc_time = dt.time(hour=0, minute=0, second=1, tzinfo=ZoneInfo("EST"))
+YEAR = datetime.now(tz=ZoneInfo("EST")).year
 
 
 class AdventOfCodeTasks(commands.Cog):
@@ -36,8 +36,8 @@ class AdventOfCodeTasks(commands.Cog):
     async def daily_puzzle(self):
         """Post the daily Advent of Code puzzle"""
 
-        day = datetime.now(tz=pytz.timezone("EST")).day
-        month = datetime.now(tz=pytz.timezone("EST")).month
+        day = datetime.now(tz=ZoneInfo("EST")).day
+        month = datetime.now(tz=ZoneInfo("EST")).month
         if day > 25 or month != 12:
             return
 
@@ -67,7 +67,7 @@ class AdventOfCodeTasks(commands.Cog):
             description=desc,
             color=discord.Color.red(),
             url=puzzle_url,
-            timestamp=datetime.now(tz=pytz.timezone("EST")).replace(hour=0, minute=0, second=0, microsecond=0),
+            timestamp=datetime.now(tz=ZoneInfo("EST")).replace(hour=0, minute=0, second=0, microsecond=0),
         )
         embed.set_author(
             name="Advent Of Code", url="https://adventofcode.com", icon_url="https://adventofcode.com/favicon.png"

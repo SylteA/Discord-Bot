@@ -1,14 +1,14 @@
 from datetime import datetime, timedelta
 from typing import Optional
+from zoneinfo import ZoneInfo
 
 import aiohttp
 import discord
-import pytz
 from pydantic import BaseModel, validator
 
 from bot.config import settings
 
-YEAR = datetime.now(tz=pytz.timezone("EST")).year
+YEAR = datetime.now(tz=ZoneInfo("EST")).year
 LEADERBOARD_ID = settings.aoc.leaderboard_id
 LEADERBOARD_CODE = settings.aoc.leaderboard_code
 API_URL = f"https://adventofcode.com/{YEAR}/leaderboard/private/view/{LEADERBOARD_ID}.json"
@@ -50,7 +50,7 @@ def ordinal(n: int):
 
 
 def next_puzzle():
-    now = datetime.now(tz=pytz.timezone("EST"))
+    now = datetime.now(tz=ZoneInfo("EST"))
     if now.month == 12:
         if now.day >= 25:
             return False
@@ -59,7 +59,7 @@ def next_puzzle():
         target = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
     else:
         # If it's not December, calculate time until the first of December
-        target = datetime(now.year, 12, 1, tzinfo=pytz.timezone("EST"))
+        target = datetime(now.year, 12, 1, tzinfo=ZoneInfo("EST"))
 
     return target
 
