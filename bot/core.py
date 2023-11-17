@@ -2,6 +2,7 @@ import datetime
 import json
 import logging
 import os
+import sys
 import traceback
 from typing import Any
 
@@ -117,8 +118,7 @@ class DiscordBot(commands.Bot):
         await self.error_webhook.send(embed=embed)
 
     async def on_error(self, event_method: str, *args: Any, **kwargs: Any) -> None:
-        message = args[0]
-        content = "\n".join(traceback.format_exception(type(message), message, message.__traceback__))
+        content = "\n".join(traceback.format_exception(*sys.exc_info()))
         header = f"Ignored exception in event method **{event_method}**"
 
         await self.send_error(content, header)

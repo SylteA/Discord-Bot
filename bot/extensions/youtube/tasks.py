@@ -45,9 +45,9 @@ class YoutubeTasks(commands.Cog):
         await self.find_new_videos()
 
     @check_for_new_videos.error
-    async def on_check_error(self, error: Exception):
+    async def on_check_error(self, _error: Exception):
         """Logs any errors that occur during the check_for_new_videos task"""
-        await self.bot.on_error("check_for_new_videos", error)
+        await self.bot.on_error("check_for_new_videos")
 
     @check_for_new_videos.before_loop
     async def before_check(self):
