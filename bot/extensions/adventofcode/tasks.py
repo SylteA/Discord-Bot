@@ -1,10 +1,8 @@
 import asyncio
 import datetime as dt
 import logging
-import traceback
 from datetime import datetime
 
-import aiohttp
 import discord
 import pytz
 from bs4 import BeautifulSoup
@@ -12,7 +10,7 @@ from discord.ext import commands, tasks
 
 from bot import core
 from bot.config import settings
-from bot.services import http, paste
+from bot.services import http
 
 log = logging.getLogger(__name__)
 
@@ -46,12 +44,11 @@ class AdventOfCodeTasks(commands.Cog):
         puzzle_url = f"https://adventofcode.com/{YEAR}/day/{day}"
         raw_html = None
         for retry in range(4):
-            async with aiohttp.ClientSession(raise_for_status=False) as session:
-                async with session.get(puzzle_url) as resp:
-                    if resp.status == 200:
-                        raw_html = await resp.text()
-                        break
-                await asyncio.sleep(10)
+            async with http.session.get(puzzle_url, raise_for_status=False) as resp:
+                if resp.status == 200:
+                    raw_html = await resp.text()
+                    break
+            await asyncio.sleep(10)
 
         if not raw_html:
             return await self.channel.send(
@@ -83,25 +80,6 @@ class AdventOfCodeTasks(commands.Cog):
         )
 
     @daily_puzzle.error
-    async def daily_puzzle_error(self, error: Exception):
-        """Log any errors raised by the daily puzzle task"""
-
-        content = "\n".join(traceback.format_exception(type(error), error, error.__traceback__))
-        header = "Ignored exception in daily puzzle task"
-
-        def wrap(code: str) -> str:
-            code = code.replace("`", "\u200b`")
-            return f"```py\n{code}\n```"
-
-        if len(content) > 1024:
-            document = await paste.create(content)
-            content = wrap(content[:1024]) + f"\n\n [Full traceback]({document.url})"
-        else:
-            content = wrap(content)
-
-        embed = discord.Embed(
-            title=header, description=content, color=discord.Color.red(), timestamp=discord.utils.utcnow()
-        )
-        await discord.Webhook.from_url(url=settings.errors.webhook_url, session=http.session).send(embed=embed)
-
-        log.error("Daily puzzle task failed", exc_info=error)
+    async def daily_puzzle_error(self, _error: Exception):
+        """Logs any errors that occur during the daily puzzle task"""
+        await self.bot.on_error("daily_puzzle")
