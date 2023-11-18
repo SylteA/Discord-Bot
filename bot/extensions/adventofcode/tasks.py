@@ -1,6 +1,5 @@
 import asyncio
 import datetime as dt
-import logging
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
@@ -10,12 +9,10 @@ from discord.ext import commands, tasks
 
 from bot import core
 from bot.config import settings
+from bot.extensions.adventofcode.utils import YEAR
 from bot.services import http
 
-log = logging.getLogger(__name__)
-
 aoc_time = dt.time(hour=0, minute=0, second=1, tzinfo=ZoneInfo("EST"))
-YEAR = datetime.now(tz=ZoneInfo("EST")).year
 
 
 class AdventOfCodeTasks(commands.Cog):
@@ -36,9 +33,9 @@ class AdventOfCodeTasks(commands.Cog):
     async def daily_puzzle(self):
         """Post the daily Advent of Code puzzle"""
 
-        day = datetime.now(tz=ZoneInfo("EST")).day
-        month = datetime.now(tz=ZoneInfo("EST")).month
-        if day > 25 or month != 12:
+        now = datetime.now(tz=ZoneInfo("EST"))
+        day = now.day
+        if day > 25 or now.month != 12:
             return
 
         puzzle_url = f"https://adventofcode.com/{YEAR}/day/{day}"
@@ -67,7 +64,7 @@ class AdventOfCodeTasks(commands.Cog):
             description=desc,
             color=discord.Color.red(),
             url=puzzle_url,
-            timestamp=datetime.now(tz=ZoneInfo("EST")).replace(hour=0, minute=0, second=0, microsecond=0),
+            timestamp=now.replace(hour=0, minute=0, second=0, microsecond=0),
         )
         embed.set_author(
             name="Advent Of Code", url="https://adventofcode.com", icon_url="https://adventofcode.com/favicon.png"

@@ -9,9 +9,8 @@ from bot.config import settings
 from bot.services import http
 
 YEAR = datetime.now(tz=ZoneInfo("EST")).year
-LEADERBOARD_ID = settings.aoc.leaderboard_id
 LEADERBOARD_CODE = settings.aoc.leaderboard_code
-API_URL = f"https://adventofcode.com/{YEAR}/leaderboard/private/view/{LEADERBOARD_ID}.json"
+LEADERBOARD_ID = LEADERBOARD_CODE.split("-")[0]
 AOC_REQUEST_HEADERS = {
     "User-Agent": "Tech With Tim Discord Bot https://github.com/SylteA/Discord-Bot",
     "Cookie": f"session={settings.aoc.session_cookie}",

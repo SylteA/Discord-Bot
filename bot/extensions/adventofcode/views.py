@@ -75,7 +75,7 @@ class CreateAdventOfCodeView(ui.View):
         embed = discord.Embed(
             title="Advent of Code Global Leaderboard",
             colour=0x68C290,
-            url="https://adventofcode.com",
+            url=f"https://adventofcode.com/{YEAR}/leaderboard",
         )
 
         if soup.find("p").text == "Nothing to show on the leaderboard... yet.":
