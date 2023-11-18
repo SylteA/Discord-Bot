@@ -1,4 +1,3 @@
-import json
 import re
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -31,7 +30,6 @@ class CreateAdventOfCodeView(ui.View):
     )
     async def local_leaderboard(self, interaction: core.InteractionType, button: ui.Button):
         leaderboard = await fetch_leaderboard(local=True)
-        leaderboard = json.loads(leaderboard)
 
         members = [Member(**member_data) for member_data in leaderboard["members"].values()]
 

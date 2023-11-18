@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Optional, Union
 from zoneinfo import ZoneInfo
 
 import discord
@@ -12,8 +12,10 @@ YEAR = datetime.now(tz=ZoneInfo("EST")).year
 LEADERBOARD_ID = settings.aoc.leaderboard_id
 LEADERBOARD_CODE = settings.aoc.leaderboard_code
 API_URL = f"https://adventofcode.com/{YEAR}/leaderboard/private/view/{LEADERBOARD_ID}.json"
-AOC_REQUEST_HEADER = {"User-Agent": "Tech With Tim Discord Bot https://github.com/SylteA/Discord-Bot"}
-AOC_SESSION_COOKIE = {"session": settings.aoc.session_cookie}
+AOC_REQUEST_HEADERS = {
+    "User-Agent": "Tech With Tim Discord Bot https://github.com/SylteA/Discord-Bot",
+    "Cookie": f"session={settings.aoc.session_cookie}",
+}
 
 
 def home_embed():
@@ -80,15 +82,16 @@ class Member(BaseModel):
         return val
 
 
-async def fetch_leaderboard(local: bool = False) -> str:
+async def fetch_leaderboard(local: bool = False) -> Union[str, dict]:
     url = f"https://adventofcode.com/{YEAR}/leaderboard"
     if local:
         url += f"/private/view/{LEADERBOARD_ID}.json"
 
-    http.session.cookie_jar.update_cookies(AOC_SESSION_COOKIE)
-    async with http.session.get(url, headers=AOC_REQUEST_HEADER, raise_for_status=True) as resp:
+    async with http.session.get(url, headers=AOC_REQUEST_HEADERS, raise_for_status=True) as resp:
         if resp.status == 200:
-            response = await resp.text()
-    http.session.cookie_jar.clear()
+            if local:
+                response = await resp.json()
+            else:
+                response = await resp.text()
 
     return response
