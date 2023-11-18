@@ -2,17 +2,17 @@ from datetime import datetime, timedelta
 from typing import Optional
 from zoneinfo import ZoneInfo
 
-import aiohttp
 import discord
 from pydantic import BaseModel, validator
 
 from bot.config import settings
+from bot.services import http
 
 YEAR = datetime.now(tz=ZoneInfo("EST")).year
 LEADERBOARD_ID = settings.aoc.leaderboard_id
 LEADERBOARD_CODE = settings.aoc.leaderboard_code
 API_URL = f"https://adventofcode.com/{YEAR}/leaderboard/private/view/{LEADERBOARD_ID}.json"
-AOC_REQUEST_HEADER = {"user-agent": "Tech With Tim Discord Bot https://github.com/SylteA/Discord-Bot"}
+AOC_REQUEST_HEADER = {"User-Agent": "Tech With Tim Discord Bot https://github.com/SylteA/Discord-Bot"}
 AOC_SESSION_COOKIE = {"session": settings.aoc.session_cookie}
 
 
@@ -85,11 +85,10 @@ async def fetch_leaderboard(local: bool = False) -> str:
     if local:
         url += f"/private/view/{LEADERBOARD_ID}.json"
 
-    async with aiohttp.ClientSession(cookies=AOC_SESSION_COOKIE, headers=AOC_REQUEST_HEADER) as session:
-        async with session.get(url) as resp:
-            if resp.status == 200:
-                response = await resp.text()
-            else:
-                resp.raise_for_status()
+    http.session.cookie_jar.update_cookies(AOC_SESSION_COOKIE)
+    async with http.session.get(url, headers=AOC_REQUEST_HEADER, raise_for_status=True) as resp:
+        if resp.status == 200:
+            response = await resp.text()
+    http.session.cookie_jar.clear()
 
     return response

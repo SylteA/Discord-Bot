@@ -1,9 +1,9 @@
 import json
 import re
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 import discord
-import pytz
 from bs4 import BeautifulSoup
 from discord import ui
 
@@ -54,7 +54,7 @@ class CreateAdventOfCodeView(ui.View):
                 value=f"Local Score: {member.local_score} | Global Score: {member.global_score}",
                 inline=False,
             )
-        embed.set_footer(text=f"Current Day: {datetime.now(tz=pytz.timezone('EST')).day}/25")
+        embed.set_footer(text=f"Current Day: {datetime.now(tz=ZoneInfo('EST')).day}/25")
 
         button.disabled = True
         self.children[0].disabled = False
