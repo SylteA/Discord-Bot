@@ -17,13 +17,28 @@ class SelectableRoleCommands(commands.GroupCog, group_name="selectable-role"):
         self.bot.add_view(self._create_selectable_role_view)
 
     @app_commands.command()
-    async def create(self, interaction: core.InteractionType, title: str, channel: discord.TextChannel = None):
+    async def create(
+        self,
+        interaction: core.InteractionType,
+        title: str,
+        channel: discord.TextChannel = None,
+        description: str = None,
+        footer: str = None,
+    ):
         """Create a new selectable role message"""
 
         if channel is None:
             channel = interaction.channel
 
-        await channel.send(title, view=self._create_selectable_role_view)
+        embed = discord.Embed(
+            title=title,
+            description=description,
+            color=discord.Color.gold(),
+        )
+        if footer:
+            embed.set_footer(text=footer)
+
+        await channel.send(embed=embed, view=self._create_selectable_role_view)
         await interaction.response.send_message(
             "Successfully created selectable role message! Please add role options to it by using /selectable-role add",
             ephemeral=True,
@@ -34,7 +49,7 @@ class SelectableRoleCommands(commands.GroupCog, group_name="selectable-role"):
         self,
         interaction: core.InteractionType,
         message: app_commands.Transform[discord.Message, MessageTransformer],
-        text: str,
+        description: str,
         role: discord.Role,
         emoji: str,
     ):
@@ -54,11 +69,15 @@ class SelectableRoleCommands(commands.GroupCog, group_name="selectable-role"):
         view = CreateSelectableRoleView(timeout=None)
         view.add_item(
             SelectableRoleOptions(
-                options + [discord.SelectOption(label=role.name, description=text, value=str(role.id), emoji=emoji)]
+                options
+                + [discord.SelectOption(label=role.name, description=description, value=str(role.id), emoji=emoji)]
             )
         )
 
-        await message.edit(view=view)
+        embed = message.embeds[0]
+        embed.add_field(name=f"{emoji} {role.name}", value=description, inline=False)
+
+        await message.edit(embed=embed, view=view)
         await interaction.response.send_message("Successfully added role to selectable role message!", ephemeral=True)
 
     @app_commands.command()
@@ -76,17 +95,26 @@ class SelectableRoleCommands(commands.GroupCog, group_name="selectable-role"):
             )
 
         view = discord.ui.View.from_message(message, timeout=None)
+        embed = message.embeds[0]
         options = []
         if view.children:
             options = view.children[0].options
-        options = [option for option in options if option.value != str(role.id)]
+
+        try:
+            role_index = [option.value for option in options].index(str(role.id))
+            options.pop(role_index)
+            embed.remove_field(role_index)
+        except ValueError:
+            return await interaction.response.send_message(
+                "The role you provided is not a selectable role in this message.", ephemeral=True
+            )
 
         if len(options) == 0:
-            await message.edit(view=None)
+            await message.edit(embed=embed, view=None)
         else:
             view = CreateSelectableRoleView(timeout=None)
             view.add_item(SelectableRoleOptions(options))
-            await message.edit(view=view)
+            await message.edit(embed=embed, view=view)
 
         await interaction.response.send_message(
             "Successfully removed role from selectable role message!", ephemeral=True

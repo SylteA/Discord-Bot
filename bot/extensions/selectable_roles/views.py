@@ -9,10 +9,16 @@ class SelectableRoleOptions(discord.ui.Select):
         super().__init__(
             placeholder="Select a role",
             custom_id=CreateSelectableRoleView.DROPDOWN_CUSTOM_ID,
+            min_values=0,
             options=options,
         )
 
     async def callback(self, interaction: core.InteractionType):
+        if not self.values:
+            roles = [interaction.guild.get_role(int(option.value)) for option in self.options]
+            await interaction.user.remove_roles(*roles, reason="Selectable role")
+            return await interaction.response.send_message("Successfully removed the role from you!", ephemeral=True)
+
         selected_role_id = int(self.values[0])
         role = interaction.guild.get_role(selected_role_id)
 

@@ -1,6 +1,5 @@
 import json
 import logging
-from typing import List
 
 from pydantic import BaseModel, BaseSettings, PostgresDsn, ValidationError, validator
 
@@ -14,7 +13,7 @@ class AoC(BaseModel):
 
 
 class Bot(BaseModel):
-    commands_channels_ids: List[int]
+    commands_channels_ids: list[int]
     games_channel_id: int  # #bot-games
     token: str
 
@@ -48,7 +47,7 @@ class Guild(BaseModel):
 
 
 class Moderation(BaseModel):
-    admin_roles_ids: List[int]
+    admin_roles_ids: list[int]
     staff_role_id: int
 
     @validator("admin_roles_ids", pre=True)
