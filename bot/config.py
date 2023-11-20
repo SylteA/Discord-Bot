@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import Dict, List
+from typing import List
 
 from pydantic import BaseModel, BaseSettings, PostgresDsn, ValidationError, validator
 
@@ -62,16 +62,6 @@ class Postgres(BaseModel):
     uri: PostgresDsn
 
 
-class ReactionRoles(BaseModel):
-    required_role_id: int  # [lvl 20] Developer
-    roles: Dict[int, int]  # Dict[emoji_id, role_id]
-    message_id: int
-
-    @validator("roles", pre=True)
-    def val_func(cls, val):
-        return {int(k): v for k, v in json.loads(val).items()}
-
-
 class Tags(BaseModel):
     log_channel_id: int
     required_role_id: int  # [lvl 30] Engineer
@@ -110,7 +100,6 @@ class Settings(BaseSettings):
     postgres: Postgres
     guild: Guild
     moderation: Moderation
-    reaction_roles: ReactionRoles
     tags: Tags
     timathon: Timathon
     hastebin: Hastebin

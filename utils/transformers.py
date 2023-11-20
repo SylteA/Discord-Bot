@@ -13,7 +13,6 @@ class MessageTransformer(app_commands.Transformer):
         try:
             parts: list[str] = value.split("/")
 
-            # check that there are 2 parts
             if len(parts) != 2:
                 return await interaction.channel.fetch_message(int(value))
 
@@ -23,7 +22,7 @@ class MessageTransformer(app_commands.Transformer):
             channel = interaction.guild.get_channel(channel_id)
             return await channel.fetch_message(message_id)
         except (ValueError, TypeError, IndexError, AttributeError):
-            await interaction.response.send_message("Please provide a valid message URL.", ephemeral=True)
+            await interaction.response.send_message("Please provide a valid message ID.", ephemeral=True)
         except discord.HTTPException:
             await interaction.response.send_message("Sorry, I couldn't find that message...", ephemeral=True)
 
