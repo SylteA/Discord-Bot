@@ -23,7 +23,6 @@ MIGRATIONS_PATH = ROOT_DIR / "bot" / "models" / "migrations"
 
 REVISION_FILE = re.compile(r"(?P<version>\d+)_(?P<direction>(up)|(down))__(?P<name>.+).sql")
 
-
 log = logging.getLogger(__name__)
 
 
@@ -176,6 +175,25 @@ async def get_current_db_rev() -> Optional[Migration]:
         await run_migration()
 
 
+async def get_available_migrations():
+    """Gets info about migrations which have not been executed"""
+    # Fetch a set of applied migrations from the database
+    async with Model.pool.acquire() as connection:
+        async with connection.transaction():
+            result = await connection.fetch("SELECT version, direction FROM migrations")
+            applied_migrations = {(record["version"], record["direction"]) for record in result}
+
+    all_migrations = Revisions.revisions()
+    # Filter out the applied migrations
+    available_migrations = [
+        migration
+        for version_direction, migration in all_migrations.items()
+        if version_direction not in applied_migrations and migration.direction == "up"
+    ]
+
+    return available_migrations
+
+
 @main.group(invoke_without_command=True)
 @click.pass_context
 @async_command
@@ -194,11 +212,23 @@ async def migrate(ctx):
         click.echo("No migrations was found. Start one using the `up` command.")
     else:
         click.echo(
+            "Current Migration:\n"
             f"Name      : {rev.name}\n"
             f"Version   : {rev.version}\n"
             f"Direction : {rev.direction}\n"
             f"Latest run: {rev.timestamp}"
         )
+    available_migrations = await get_available_migrations()
+
+    if available_migrations:
+        click.echo("Available Migrations:")
+        for migration in available_migrations:
+            click.echo(
+                f"Name      : {migration.name}\n"
+                f"Version   : {migration.version}\n"
+                f"Direction : {migration.direction}\n"
+                f"Timestamp : {migration.timestamp}\n"
+            )
 
 
 async def update(n: int, is_target: bool = False):
