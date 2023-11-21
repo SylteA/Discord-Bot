@@ -1,121 +1,112 @@
+from typing import List
+
 import discord
 from discord import app_commands
 from discord.ext import commands
+from pydantic import BaseModel
 
 from bot import core
-from bot.extensions.selectable_roles.views import CreateSelectableRoleView, SelectableRoleOptions
-from utils.transformers import MessageTransformer
+from bot.models import SelectableRole
+
+
+class Role(BaseModel):
+    name: str
+    id: int
 
 
 @app_commands.default_permissions(administrator=True)
-class SelectableRoleCommands(commands.GroupCog, group_name="selectable-role"):
+@app_commands.guild_only()
+class SelectableRoleCommands(commands.GroupCog, group_name="role"):
     def __init__(self, bot: core.DiscordBot):
         self.bot = bot
+        self.roles: dict[int, list[Role]] = {}
 
-        # TODO: Make the view work even after a restart
-        self._create_selectable_role_view = CreateSelectableRoleView(timeout=None)
-        self.bot.add_view(self._create_selectable_role_view)
+    def update_roles(self, guild_id: int, data: tuple[str, int]) -> None:
+        if self.roles.get(guild_id):
+            self.roles[guild_id].append(Role(name=data[0], id=data[1]))
+        else:
+            self.roles[guild_id] = [Role(name=data[0], id=data[1])]
+
+    async def cog_load(self) -> None:
+        query = "SELECT * FROM selectable_roles"
+        records = await SelectableRole.fetch(query)
+
+        for record in records:
+            self.update_roles(record.guild_id, (record.role_name, record.role_id))
+
+    async def role_autocomplete(self, interaction: discord.Interaction, current: str) -> List[app_commands.Choice[str]]:
+        if interaction.data["options"][0]["name"] == "add":
+            roles = interaction.guild.roles
+        else:
+            if not self.roles.get(interaction.guild.id):
+                return []
+            roles = self.roles[interaction.guild.id]
+
+        return [
+            app_commands.Choice(name=role.name, value=str(role.id))
+            for role in roles
+            if current.lower() in role.name.lower()
+        ][:25]
 
     @app_commands.command()
-    async def create(
+    @app_commands.autocomplete(role=role_autocomplete)
+    async def get(
         self,
         interaction: core.InteractionType,
-        title: str,
-        channel: discord.TextChannel = None,
-        description: str = None,
-        footer: str = None,
+        role: str,
     ):
-        """Create a new selectable role message"""
+        """Get the selected role"""
 
-        if channel is None:
-            channel = interaction.channel
+        if not self.roles.get(interaction.guild.id):
+            return await interaction.response.send_message("There are no selectable roles!", ephemeral=True)
 
-        embed = discord.Embed(
-            title=title,
-            description=description,
-            color=discord.Color.gold(),
-        )
-        if footer:
-            embed.set_footer(text=footer)
+        role = interaction.guild.get_role(int(role))
+        if role is None:
+            return await interaction.response.send_message("That role doesn't exist!", ephemeral=True)
+        await interaction.user.add_roles(role, reason="Selectable role")
 
-        await channel.send(embed=embed, view=self._create_selectable_role_view)
-        await interaction.response.send_message(
-            "Successfully created selectable role message! Please add role options to it by using /selectable-role add",
-            ephemeral=True,
-        )
+        to_remove = []
+        for role_ in self.roles[interaction.guild.id]:
+            if role_.id != role.id:
+                to_remove.append(interaction.guild.get_role(role_.id))
+        await interaction.user.remove_roles(*to_remove, reason="Selectable role")
+
+        await interaction.response.send_message(f"Successfully added {role.mention} to you!", ephemeral=True)
 
     @app_commands.command()
+    @app_commands.autocomplete(role=role_autocomplete)
     async def add(
         self,
         interaction: core.InteractionType,
-        message: app_commands.Transform[discord.Message, MessageTransformer],
-        description: str,
-        role: discord.Role,
-        emoji: str,
+        role: str,
     ):
-        """Add a selectable role to a message"""
+        """Add a selectable role to the database"""
 
-        if message.author != self.bot.user:
-            return await interaction.response.send_message(
-                "This message is not a selectable role message.", ephemeral=True
-            )
-
-        emoji = discord.utils.get(interaction.guild.emojis, name=emoji)
-        view = discord.ui.View.from_message(message, timeout=None)
-        options = []
-        if view.children:
-            options = view.children[0].options
-
-        view = CreateSelectableRoleView(timeout=None)
-        view.add_item(
-            SelectableRoleOptions(
-                options
-                + [discord.SelectOption(label=role.name, description=description, value=str(role.id), emoji=emoji)]
-            )
-        )
-
-        embed = message.embeds[0]
-        embed.add_field(name=f"{emoji} {role.name}", value=description, inline=False)
-
-        await message.edit(embed=embed, view=view)
-        await interaction.response.send_message("Successfully added role to selectable role message!", ephemeral=True)
+        role = interaction.guild.get_role(int(role))
+        await SelectableRole.ensure_exists(interaction.guild.id, role.id, role.name)
+        self.update_roles(interaction.guild.id, (role.name, role.id))
+        await interaction.response.send_message(f"Successfully added {role.mention} to the database!", ephemeral=True)
 
     @app_commands.command()
+    @app_commands.autocomplete(role=role_autocomplete)
     async def remove(
         self,
         interaction: core.InteractionType,
-        message: app_commands.Transform[discord.Message, MessageTransformer],
-        role: discord.Role,
+        role: str,
     ):
-        """Remove a selectable role from a message"""
+        """Remove a selectable role from the database"""
 
-        if message.author != self.bot.user:
-            return await interaction.response.send_message(
-                "This message is not a selectable role message.", ephemeral=True
-            )
+        if not self.roles.get(interaction.guild.id):
+            return await interaction.response.send_message("There are no selectable roles!", ephemeral=True)
 
-        view = discord.ui.View.from_message(message, timeout=None)
-        embed = message.embeds[0]
-        options = []
-        if view.children:
-            options = view.children[0].options
+        role = interaction.guild.get_role(int(role))
+        query = "DELETE FROM selectable_roles WHERE guild_id = $1 AND role_id = $2"
+        await SelectableRole.execute(query, interaction.guild.id, role.id)
 
-        try:
-            role_index = [option.value for option in options].index(str(role.id))
-            options.pop(role_index)
-            embed.remove_field(role_index)
-        except ValueError:
-            return await interaction.response.send_message(
-                "The role you provided is not a selectable role in this message.", ephemeral=True
-            )
-
-        if len(options) == 0:
-            await message.edit(embed=embed, view=None)
-        else:
-            view = CreateSelectableRoleView(timeout=None)
-            view.add_item(SelectableRoleOptions(options))
-            await message.edit(embed=embed, view=view)
+        for i, role_ in enumerate(self.roles[interaction.guild.id]):
+            if role_.id == role.id:
+                del self.roles[interaction.guild.id][i]
 
         await interaction.response.send_message(
-            "Successfully removed role from selectable role message!", ephemeral=True
+            f"Successfully removed {role.mention} from the database!", ephemeral=True
         )
