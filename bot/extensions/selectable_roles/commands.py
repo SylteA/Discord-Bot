@@ -57,12 +57,13 @@ class SelectableRoleCommands(commands.GroupCog, group_name="role"):
     ):
         """Get the selected role"""
 
-        if not self.roles.get(interaction.guild.id):
-            return await interaction.response.send_message("There are no selectable roles!", ephemeral=True)
+        if not self.roles.get(interaction.guild.id) or not role.isdigit():
+            return await interaction.response.send_message("That role isn't selectable!", ephemeral=True)
 
         role = interaction.guild.get_role(int(role))
-        if role is None:
-            return await interaction.response.send_message("That role doesn't exist!", ephemeral=True)
+        if role is None or not any(role.id == role_.id for role_ in self.roles[interaction.guild.id]):
+            return await interaction.response.send_message("That role isn't selectable!", ephemeral=True)
+
         await interaction.user.add_roles(role, reason="Selectable role")
 
         to_remove = []
