@@ -69,15 +69,18 @@ class CustomRoleEvents(commands.Cog):
             timestamp=datetime.datetime.utcnow(),
         )
 
-        if before.name != after.name:
-            embed.add_field(name="Name (Updated)", value=f"{before.name} -> {after.name}")
-        else:
+        if before.name == after.name:
             embed.add_field(name="Name", value=before.name)
-        embed.add_field(name="\u200B", value="\u200B")
-        if before.color != after.color:
-            embed.add_field(name="Color (Updated)", value=f"#{hex(before.color)[2:]} -> #{hex(after.color)[2:]}")
         else:
+            embed.add_field(name="Name (Updated)", value=f"{before.name} -> {after.name}")
+
+        embed.add_field(name="\u200B", value="\u200B")
+
+        if before.color == after.color:
             embed.add_field(name="Color", value="#" + hex(after.color)[2:])
+        else:
+            embed.add_field(name="Color (Updated)", value=f"#{hex(before.color)[2:]} -> #{hex(after.color)[2:]}")
+
         embed.set_thumbnail(url=user.avatar)
         embed.set_author(name=user.name, icon_url=user.avatar)
         embed.set_footer(text=f"user_id: {after.user_id}")
