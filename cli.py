@@ -131,6 +131,7 @@ async def main(ctx):
     extensions = (
         "jishaku",
         "bot.extensions.challenges",
+        "bot.extensions.chess",
         "bot.extensions.readthedocs",
         "bot.extensions.suggestions",
         "bot.extensions.github",

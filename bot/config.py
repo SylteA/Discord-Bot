@@ -102,6 +102,13 @@ class YouTube(BaseModel):
     role_id: int
 
 
+class Chess(BaseModel):
+    channel_id: int
+    role_id: int
+    team_id: str
+    access_token: str
+
+
 class Settings(BaseSettings):
     aoc: AoC
     bot: Bot
@@ -117,6 +124,7 @@ class Settings(BaseSettings):
     errors: ErrorHandling
     custom_roles: CustomRoles
     youtube: YouTube
+    chess: Chess
 
     class Config:
         env_file = ".env"
