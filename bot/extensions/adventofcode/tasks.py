@@ -1,6 +1,5 @@
 import asyncio
-import datetime as dt
-from datetime import datetime
+from datetime import datetime, time
 from zoneinfo import ZoneInfo
 
 import discord
@@ -12,7 +11,7 @@ from bot.config import settings
 from bot.extensions.adventofcode.utils import YEAR
 from bot.services import http
 
-aoc_time = dt.time(hour=0, minute=0, second=1, tzinfo=ZoneInfo("EST"))
+aoc_time = time(hour=0, minute=0, second=1, tzinfo=ZoneInfo("EST"))
 
 
 class AdventOfCodeTasks(commands.Cog):

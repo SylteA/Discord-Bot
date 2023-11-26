@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup
 from discord import ui
 
 from bot import core
-from bot.extensions.adventofcode.utils import LEADERBOARD_ID, YEAR, Member, fetch_leaderboard, home_embed, ordinal
+from bot.extensions.adventofcode.utils import LEADERBOARD_ID, YEAR, Member, cache, home_embed, ordinal
 
 
 class CreateAdventOfCodeView(ui.View):
@@ -15,21 +15,15 @@ class CreateAdventOfCodeView(ui.View):
     LOCAL_LEADERBOARD_CUSTOM_ID = "extensions:adventofcode:local"
     GLOBAL_LEADERBOARD_CUSTOM_ID = "extensions:adventofcode:global"
 
-    def reset_buttons(self):
-        self.children[0].disabled = True
-        self.children[1].disabled = False
-        self.children[2].disabled = False
-
-    @discord.ui.button(label="Home", style=discord.ButtonStyle.gray, emoji="🏠", custom_id=HOME_CUSTOM_ID, disabled=True)
+    @discord.ui.button(label="Home", style=discord.ButtonStyle.gray, emoji="🏠", custom_id=HOME_CUSTOM_ID)
     async def home(self, interaction: core.InteractionType, _button: ui.Button):
-        self.reset_buttons()
         await interaction.response.edit_message(embed=home_embed(), view=self)
 
     @discord.ui.button(
         label="Local Leaderboard", style=discord.ButtonStyle.gray, emoji="👥", custom_id=LOCAL_LEADERBOARD_CUSTOM_ID
     )
     async def local_leaderboard(self, interaction: core.InteractionType, button: ui.Button):
-        leaderboard = await fetch_leaderboard(local=True)
+        leaderboard = await cache.fetch_leaderboard(local=True)
 
         members = [Member(**member_data) for member_data in leaderboard["members"].values()]
 
@@ -54,23 +48,14 @@ class CreateAdventOfCodeView(ui.View):
             )
         embed.set_footer(text=f"Current Day: {datetime.now(tz=ZoneInfo('EST')).day}/25")
 
-        button.disabled = True
-        self.children[0].disabled = False
-        self.children[2].disabled = False
-
         await interaction.response.edit_message(embed=embed, view=self)
-        self.reset_buttons()
 
     @discord.ui.button(
         label="Global Leaderboard", style=discord.ButtonStyle.gray, emoji="🌎", custom_id=GLOBAL_LEADERBOARD_CUSTOM_ID
     )
     async def global_leaderboard(self, interaction: core.InteractionType, button: ui.Button):
-        raw_html = await fetch_leaderboard()
+        raw_html = await cache.fetch_leaderboard(local=False)
         soup = BeautifulSoup(raw_html, "html.parser")
-
-        button.disabled = True
-        self.children[0].disabled = False
-        self.children[1].disabled = False
 
         embed = discord.Embed(
             title="Advent of Code Global Leaderboard",
@@ -80,8 +65,7 @@ class CreateAdventOfCodeView(ui.View):
 
         if soup.find("p").text == "Nothing to show on the leaderboard... yet.":
             embed.description = "The global leaderboard is not available yet. Please try again later."
-            await interaction.response.edit_message(embed=embed, view=self)
-            return self.reset_buttons()
+            return await interaction.response.edit_message(embed=embed, view=self)
 
         ele = soup.find_all("div", class_="leaderboard-entry")
         exp = r"(?:[ ]{,2}(\d+)\))?[ ]+(\d+)\s+([\w\(\)\#\@\-\d ]+)"
@@ -114,4 +98,3 @@ class CreateAdventOfCodeView(ui.View):
         embed.description = s_desc
 
         await interaction.response.edit_message(embed=embed, view=self)
-        self.reset_buttons()
