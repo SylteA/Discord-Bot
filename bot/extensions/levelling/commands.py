@@ -115,6 +115,8 @@ class Levelling(commands.Cog):
     def generate_rank_image(self, username: str, avatar_bytes: bytes, rank: int, level: int, xp: int, required_xp: int):
         img = Image.new("RGBA", (1000, 240))
         logo = Image.open(BytesIO(avatar_bytes)).resize((200, 200))
+        if logo.mode != "RGBA":
+            logo = logo.convert("RGBA")
 
         # Paste the default background image onto the new image
         img.paste(self.background, (0, 0))
@@ -282,7 +284,10 @@ class Levelling(commands.Cog):
             return await interaction.response.send_message("That user is not ranked yet...", ephemeral=True)
 
         # Fetch the user's avatar as bytes
-        avatar_bytes = await member.display_avatar.with_format("png").read()
+        try:
+            avatar_bytes = await member.display_avatar.with_format("png").read()
+        except discord.errors.NotFound:
+            avatar_bytes = await member.default_avatar.with_format("png").read()
 
         level = utils.get_level_for_xp(record.total_xp)
         prev_xp = utils.get_xp_for_level(level)
