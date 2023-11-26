@@ -14,9 +14,14 @@ class Role(BaseModel):
     id: int
 
 
-@app_commands.default_permissions(administrator=True)
-@app_commands.guild_only()
-class SelectableRoleCommands(commands.GroupCog, group_name="role"):
+class SelectableRoleCommands(commands.Cog):
+    admin_commands = app_commands.Group(
+        name="selectable-roles",
+        description="Commands for managing selectable roles",
+        default_permissions=discord.Permissions(administrator=True),
+        guild_only=True,
+    )
+
     def __init__(self, bot: core.DiscordBot):
         self.bot = bot
         self.roles: dict[int, list[Role]] = {}
@@ -48,7 +53,8 @@ class SelectableRoleCommands(commands.GroupCog, group_name="role"):
             if current.lower() in role.name.lower()
         ][:25]
 
-    @app_commands.command()
+    @app_commands.command(name="get-role")
+    @app_commands.guild_only()
     @app_commands.autocomplete(role=role_autocomplete)
     async def get(
         self,
@@ -74,7 +80,7 @@ class SelectableRoleCommands(commands.GroupCog, group_name="role"):
 
         await interaction.response.send_message(f"Successfully added {role.mention} to you!", ephemeral=True)
 
-    @app_commands.command()
+    @admin_commands.command()
     @app_commands.autocomplete(role=role_autocomplete)
     async def add(
         self,
@@ -88,7 +94,7 @@ class SelectableRoleCommands(commands.GroupCog, group_name="role"):
         self.update_roles(interaction.guild.id, (role.name, role.id))
         await interaction.response.send_message(f"Successfully added {role.mention} to the database!", ephemeral=True)
 
-    @app_commands.command()
+    @admin_commands.command()
     @app_commands.autocomplete(role=role_autocomplete)
     async def remove(
         self,
@@ -111,3 +117,17 @@ class SelectableRoleCommands(commands.GroupCog, group_name="role"):
         await interaction.response.send_message(
             f"Successfully removed {role.mention} from the database!", ephemeral=True
         )
+
+    @admin_commands.command()
+    async def list(
+        self,
+        interaction: core.InteractionType,
+    ):
+        """List all selectable roles"""
+
+        if not self.roles.get(interaction.guild.id):
+            return await interaction.response.send_message("There are no selectable roles!", ephemeral=True)
+
+        roles = [f"<@&{role.id}>" for role in self.roles[interaction.guild.id]]
+        embed = discord.Embed(title="Selectable roles", description="\n".join(roles), color=discord.Color.gold())
+        await interaction.response.send_message(embed=embed)
