@@ -118,13 +118,18 @@ async def main(ctx):
     else:
         latest, _ = max(Revisions.revisions().keys())
 
-        output = f"Running on migration {cur.version}"
-
-        if cur.version < latest:
-            log.warning("There are new database migrations available.")
-            output += ", latest: " + str(latest)
-
+        output = f"Running on migration {str(cur.version).zfill(3)}"
         log.info(output)
+
+        available_migrations = await get_available_migrations()
+
+        if available_migrations:
+            log.info("+" + "-" * 35 + "+")
+            log.info(f" There are {len(available_migrations)} available Migrations! ")
+            for migration in reversed(available_migrations):
+                log.info(f" {str(migration.version).zfill(3)}: {migration.name}")
+            log.info("+" + "-" * 35 + "+")
+            await asyncio.sleep(2)
 
     prefixes = ("t.",)
     extensions = (
@@ -208,10 +213,10 @@ async def migrate(ctx):
         log.info(f"Version   : {rev.version}")
         log.info(f"Direction : {rev.direction}")
         log.info(f"Latest run: {rev.timestamp}")
+
     available_migrations = await get_available_migrations()
 
     if available_migrations:
-        log.info(f"There are {len(available_migrations)} available Migrations!")
         for migration in reversed(available_migrations):
             log.info(f"{str(migration.version).zfill(3)}: {migration.name}")
 
