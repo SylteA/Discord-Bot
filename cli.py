@@ -177,19 +177,11 @@ async def get_current_db_rev() -> Optional[Migration]:
 
 async def get_available_migrations():
     """Gets info about migrations which have not been executed"""
-    # Fetch a set of applied migrations from the database
-    async with Model.pool.acquire() as connection:
-        async with connection.transaction():
-            result = await connection.fetch("SELECT version, direction FROM migrations")
-            applied_migrations = {(record["version"], record["direction"]) for record in result}
-
-    all_migrations = Revisions.revisions()
-    # Filter out the applied migrations
-    available_migrations = [
-        migration
-        for version_direction, migration in all_migrations.items()
-        if version_direction not in applied_migrations and migration.direction == "up"
-    ]
+    curr_migration = await get_current_db_rev()
+    available_migrations = []
+    for values in Revisions.revisions().values():
+        if values.version > curr_migration.version and values.direction == "up":
+            available_migrations.append(values)
 
     return available_migrations
 
@@ -219,12 +211,9 @@ async def migrate(ctx):
     available_migrations = await get_available_migrations()
 
     if available_migrations:
-        log.info("Available Migrations:")
-        for migration in available_migrations:
-            log.info(f"Name      : {migration.name}")
-            log.info(f"Version   : {migration.version}")
-            log.info(f"Direction : {migration.direction}")
-            log.info(f"Timestamp : {migration.timestamp}")
+        log.info(f"There are {len(available_migrations)} available Migrations!")
+        for migration in reversed(available_migrations):
+            log.info(f"{str(migration.version).zfill(3)}: {migration.name}")
 
 
 async def update(n: int, is_target: bool = False):
