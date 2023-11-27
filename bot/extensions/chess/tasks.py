@@ -85,6 +85,11 @@ class ChessTasks(commands.Cog):
                 allowed_mentions=discord.AllowedMentions(roles=True),
             )
 
+            await event.edit(
+                name=f"Weekly {time_control[0]} Tournament",
+                location=f"https://lichess.org/swiss/{tournament['id']}",
+            )
+
             await asyncio.sleep(until)
             while True:
                 async with http.session.get(
