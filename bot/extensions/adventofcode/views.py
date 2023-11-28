@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup
 from discord import ui
 
 from bot import core
-from bot.extensions.adventofcode.utils import LEADERBOARD_ID, YEAR, Member, cache, home_embed, ordinal
+from bot.extensions.adventofcode.utils import LEADERBOARD_ID, YEAR, Member, fetch_leaderboard, home_embed, ordinal
 
 
 class CreateAdventOfCodeView(ui.View):
@@ -23,7 +23,7 @@ class CreateAdventOfCodeView(ui.View):
         label="Local Leaderboard", style=discord.ButtonStyle.gray, emoji="👥", custom_id=LOCAL_LEADERBOARD_CUSTOM_ID
     )
     async def local_leaderboard(self, interaction: core.InteractionType, button: ui.Button):
-        leaderboard = await cache.fetch_leaderboard(local=True)
+        leaderboard = await fetch_leaderboard(local=True)
 
         members = [Member(**member_data) for member_data in leaderboard["members"].values()]
 
@@ -54,7 +54,7 @@ class CreateAdventOfCodeView(ui.View):
         label="Global Leaderboard", style=discord.ButtonStyle.gray, emoji="🌎", custom_id=GLOBAL_LEADERBOARD_CUSTOM_ID
     )
     async def global_leaderboard(self, interaction: core.InteractionType, button: ui.Button):
-        raw_html = await cache.fetch_leaderboard(local=False)
+        raw_html = await fetch_leaderboard(local=False)
         soup = BeautifulSoup(raw_html, "html.parser")
 
         embed = discord.Embed(

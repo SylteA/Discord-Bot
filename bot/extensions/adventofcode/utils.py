@@ -3,6 +3,7 @@ from typing import Optional, Union
 from zoneinfo import ZoneInfo
 
 import discord
+from async_lru import alru_cache
 from pydantic import BaseModel, validator
 
 from bot.config import settings
@@ -81,45 +82,17 @@ class Member(BaseModel):
         return val
 
 
-class Cache:
-    def __init__(self):
-        self.global_cache = {"data": "", "expiration": datetime(1972, 1, 1)}
-        self.local_cache = {"data": {}, "expiration": datetime(1972, 1, 1)}
+@alru_cache(ttl=60)
+async def fetch_leaderboard(local: bool = False) -> Union[str, dict]:
+    url = f"https://adventofcode.com/{YEAR}/leaderboard"
+    if local:
+        url += f"/private/view/{LEADERBOARD_ID}.json"
 
-    async def fetch_leaderboard(self, local: bool = False) -> Union[str, dict]:
-        now = datetime.now()
-
-        if local:
-            if now > self.local_cache["expiration"]:
-                response = await self._fetch_from_api(local=True)
-                self.local_cache["data"] = response
-                self.local_cache["expiration"] = now + timedelta(minutes=1)
+    async with http.session.get(url, headers=AOC_REQUEST_HEADERS, raise_for_status=True) as resp:
+        if resp.status == 200:
+            if local:
+                response = await resp.json()
             else:
-                response = self.local_cache["data"]
-        else:
-            if now > self.global_cache["expiration"]:
-                response = await self._fetch_from_api(local=False)
-                self.global_cache["data"] = response
-                self.global_cache["expiration"] = now + timedelta(minutes=1)
-            else:
-                response = self.global_cache["data"]
+                response = await resp.text()
 
-        return response
-
-    @staticmethod
-    async def _fetch_from_api(local: bool = False) -> Union[str, dict]:
-        url = f"https://adventofcode.com/{YEAR}/leaderboard"
-        if local:
-            url += f"/private/view/{LEADERBOARD_ID}.json"
-
-        async with http.session.get(url, headers=AOC_REQUEST_HEADERS, raise_for_status=True) as resp:
-            if resp.status == 200:
-                if local:
-                    response = await resp.json()
-                else:
-                    response = await resp.text()
-
-        return response
-
-
-cache = Cache()
+    return response

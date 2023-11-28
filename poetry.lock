@@ -138,6 +138,20 @@ six = ">=1.6.1,<2.0"
 wheel = ">=0.23.0,<1.0"
 
 [[package]]
+name = "async-lru"
+version = "2.0.4"
+description = "Simple LRU cache for asyncio"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "async-lru-2.0.4.tar.gz", hash = "sha256:b8a59a5df60805ff63220b2a0c5b5393da5521b113cd5465a44eb037d81a5627"},
+    {file = "async_lru-2.0.4-py3-none-any.whl", hash = "sha256:ff02944ce3c288c5be660c42dbcca0742b32c3b279d6dceda655190240b99224"},
+]
+
+[package.dependencies]
+typing-extensions = {version = ">=4.0.0", markers = "python_version < \"3.11\""}
+
+[[package]]
 name = "async-timeout"
 version = "4.0.2"
 description = "Timeout context manager for asyncio programs"
@@ -1331,4 +1345,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "0faf30752db0cb31ba0d77ff3b1ede7423c660351dc1f9d036870cd7ec86ef5e"
+content-hash = "3f63299e4f321c26e411a6af6ec89184569f08009d6b6455f218c04917a3247f"
