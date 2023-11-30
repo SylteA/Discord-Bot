@@ -40,16 +40,12 @@ class SelectableRoleCommands(commands.Cog):
             self.update_roles(record.guild_id, (record.role_name, record.role_id))
 
     async def role_autocomplete(self, interaction: discord.Interaction, current: str) -> List[app_commands.Choice[str]]:
-        if interaction.data["options"][0]["name"] == "add":
-            roles = interaction.guild.roles
-        else:
-            if not self.roles.get(interaction.guild.id):
-                return []
-            roles = self.roles[interaction.guild.id]
+        if not self.roles.get(interaction.guild.id):
+            return []
 
         return [
             app_commands.Choice(name=role.name, value=str(role.id))
-            for role in roles
+            for role in self.roles[interaction.guild.id]
             if current.lower() in role.name.lower()
         ][:25]
 
@@ -81,15 +77,13 @@ class SelectableRoleCommands(commands.Cog):
         await interaction.response.send_message(f"Successfully added {role.mention} to you!", ephemeral=True)
 
     @admin_commands.command()
-    @app_commands.autocomplete(role=role_autocomplete)
     async def add(
         self,
         interaction: core.InteractionType,
-        role: str,
+        role: discord.Role,
     ):
         """Add a selectable role to the database"""
 
-        role = interaction.guild.get_role(int(role))
         await SelectableRole.ensure_exists(interaction.guild.id, role.id, role.name)
         self.update_roles(interaction.guild.id, (role.name, role.id))
         await interaction.response.send_message(f"Successfully added {role.mention} to the database!", ephemeral=True)
