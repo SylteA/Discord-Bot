@@ -93,14 +93,12 @@ async def fetch_leaderboard(local: bool = False) -> Union[str, dict]:
         if resp.status == 200:
             if local:
                 try:
-                    response = await resp.json()
+                    return await resp.json()
                 except aiohttp.ContentTypeError:
-                    response = "Failed to get leaderboard data. Please check that the leaderboard code is correct."
+                    return "Failed to get leaderboard data. Please check that the leaderboard code is correct."
             else:
-                response = await resp.text()
+                return await resp.text()
         elif resp.status == 500:
-            response = "Failed to get leaderboard data. Please check that the session cookie is correct."
+            return "Failed to get leaderboard data. Please check that the session cookie is correct."
         else:
-            response = "Failed to get leaderboard data. Please check that all the env values are correct."
-
-    return response
+            return "Failed to get leaderboard data. Please check that all the env values are correct."
