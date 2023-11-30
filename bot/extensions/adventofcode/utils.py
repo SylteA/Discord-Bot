@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from typing import Optional, Union
 from zoneinfo import ZoneInfo
 
+import aiohttp
 import discord
 from async_lru import alru_cache
 from pydantic import BaseModel, validator
@@ -76,7 +77,7 @@ class Member(BaseModel):
     local_score: int
 
     @validator("name", pre=True)
-    def set_name_to_anonymous(cls, val: Optional[str]) -> str:
+    def check_username(cls, val: Optional[str]) -> str:
         if val is None:
             return "Anonymous User"
         return val
@@ -88,11 +89,18 @@ async def fetch_leaderboard(local: bool = False) -> Union[str, dict]:
     if local:
         url += f"/private/view/{LEADERBOARD_ID}.json"
 
-    async with http.session.get(url, headers=AOC_REQUEST_HEADERS, raise_for_status=True) as resp:
+    async with http.session.get(url, headers=AOC_REQUEST_HEADERS) as resp:
         if resp.status == 200:
             if local:
-                response = await resp.json()
+                try:
+                    response = await resp.json()
+                except aiohttp.ContentTypeError:
+                    response = "Failed to get leaderboard data. Please check that the leaderboard code is correct."
             else:
                 response = await resp.text()
+        elif resp.status == 500:
+            response = "Failed to get leaderboard data. Please check that the session cookie is correct."
+        else:
+            response = "Failed to get leaderboard data. Please check that all the env values are correct."
 
     return response
