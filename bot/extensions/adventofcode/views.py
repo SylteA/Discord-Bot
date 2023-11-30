@@ -1,10 +1,12 @@
 import re
 from datetime import datetime
+from typing import Any
 from zoneinfo import ZoneInfo
 
 import discord
 from bs4 import BeautifulSoup
-from discord import ui
+from discord import Interaction, ui
+from discord.ui import Item
 
 from bot import core
 from bot.extensions.adventofcode.utils import LEADERBOARD_ID, YEAR, Member, fetch_leaderboard, home_embed, ordinal
@@ -109,3 +111,6 @@ class AdventOfCodeView(ui.View):
         embed.description = s_desc
 
         await interaction.response.edit_message(embed=embed, view=self)
+
+    async def on_error(self, interaction: Interaction, _error: Exception, _item: Item[Any], /) -> None:
+        await interaction.client.on_error("adventofcode_view")

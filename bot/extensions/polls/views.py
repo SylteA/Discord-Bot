@@ -1,7 +1,7 @@
 import typing as t
 
 import discord
-from discord import ui
+from discord import Interaction, ui
 
 from bot import core
 from bot.extensions.polls.utils import emojis
@@ -118,3 +118,6 @@ class PollView(ui.View):
 
         for i in range(0, len(embed.fields)):
             await message.add_reaction(emojis[i])
+
+    async def on_error(self, interaction: Interaction, _error: Exception, _item: ui.Item[t.Any], /) -> None:
+        await interaction.client.on_error("poll_view")
