@@ -10,7 +10,10 @@ from bot import core
 from bot.extensions.adventofcode.utils import LEADERBOARD_ID, YEAR, Member, fetch_leaderboard, home_embed, ordinal
 
 
-class CreateAdventOfCodeView(ui.View):
+class AdventOfCodeView(ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
     HOME_CUSTOM_ID = "extensions:adventofcode:home"
     LOCAL_LEADERBOARD_CUSTOM_ID = "extensions:adventofcode:local"
     GLOBAL_LEADERBOARD_CUSTOM_ID = "extensions:adventofcode:global"

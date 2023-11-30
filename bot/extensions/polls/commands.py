@@ -4,16 +4,14 @@ from discord.ext import commands
 
 from bot import core
 from bot.extensions.polls.utils import emojis, poll_check
-from bot.extensions.polls.views import CreatePollView
+from bot.extensions.polls.views import PollView
 from utils.transformers import MessageTransformer
 
 
 class Polls(commands.GroupCog, group_name="poll"):
     def __init__(self, bot: core.DiscordBot):
         self.bot = bot
-
-        self._create_poll_view = CreatePollView(timeout=None)
-        self.bot.add_view(self._create_poll_view)
+        self.bot.add_view(PollView())
 
     @app_commands.command()
     @app_commands.describe(question="Your question")
@@ -26,7 +24,7 @@ class Polls(commands.GroupCog, group_name="poll"):
             color=discord.colour.Color.gold(),
         )
         embed.set_footer(text=f"Poll by {interaction.user.display_name}")
-        await interaction.response.send_message(embed=embed, ephemeral=True, view=self._create_poll_view)
+        await interaction.response.send_message(embed=embed, ephemeral=True, view=PollView())
 
     @app_commands.command()
     async def show(
