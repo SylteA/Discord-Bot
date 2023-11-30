@@ -10,6 +10,7 @@ log = logging.getLogger(__name__)
 class AoC(BaseModel):
     channel_id: int
     role_id: int
+    leaderboard_code: str
     session_cookie: str
 
 
@@ -97,7 +98,6 @@ class CustomRoles(BaseModel):
 
 class YouTube(BaseModel):
     channel_id: str
-
     text_channel_id: int
     role_id: int
 
