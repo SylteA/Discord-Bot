@@ -78,11 +78,6 @@ class Tags(BaseModel):
     required_role_id: int  # [lvl 30] Engineer
 
 
-class Timathon(BaseModel):
-    channel_id: int
-    participant_role_id: int
-
-
 class Hastebin(BaseModel):
     base_url: str
 
@@ -112,7 +107,6 @@ class Settings(BaseSettings):
     moderation: Moderation
     reaction_roles: ReactionRoles
     tags: Tags
-    timathon: Timathon
     hastebin: Hastebin
     errors: ErrorHandling
     custom_roles: CustomRoles

@@ -26,8 +26,8 @@ class PollModal(ui.Modal, title="Add Choice"):
 
         embed.add_field(name=f"{str(emojis[field_count])}  {self.name}", value=self.description, inline=False)
         field_count += 1
-        view = CreatePollView()
 
+        view = CreatePollView()
         add_choice_btn = discord.utils.get(view.children, custom_id=CreatePollView.ADD_CUSTOM_ID)
         create_poll_btn = discord.utils.get(view.children, custom_id=CreatePollView.CREATE_CUSTOM_ID)
         delete_select = discord.utils.find(lambda child: isinstance(child, discord.ui.Select), view.children)
@@ -82,6 +82,9 @@ class DeletePollOptions(discord.ui.Select):
 
 
 class CreatePollView(ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
     ADD_CUSTOM_ID = "extensions:polls:add"
     DELETE_CUSTOM_ID = "extensions:polls:delete"
     CREATE_CUSTOM_ID = "extensions:polls:create"
@@ -115,3 +118,6 @@ class CreatePollView(ui.View):
 
         for i in range(0, len(embed.fields)):
             await message.add_reaction(emojis[i])
+
+    async def on_error(self, interaction: core.InteractionType, _error: Exception, _item: ui.Item[t.Any], /) -> None:
+        await interaction.client.on_error("poll_view")
