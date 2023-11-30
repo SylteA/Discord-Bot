@@ -27,9 +27,9 @@ class PollModal(ui.Modal, title="Add Choice"):
         embed.add_field(name=f"{str(emojis[field_count])}  {self.name}", value=self.description, inline=False)
         field_count += 1
 
-        view = PollView()
-        add_choice_btn = discord.utils.get(view.children, custom_id=PollView.ADD_CUSTOM_ID)
-        create_poll_btn = discord.utils.get(view.children, custom_id=PollView.CREATE_CUSTOM_ID)
+        view = CreatePollView()
+        add_choice_btn = discord.utils.get(view.children, custom_id=CreatePollView.ADD_CUSTOM_ID)
+        create_poll_btn = discord.utils.get(view.children, custom_id=CreatePollView.CREATE_CUSTOM_ID)
         delete_select = discord.utils.find(lambda child: isinstance(child, discord.ui.Select), view.children)
 
         add_choice_btn.disabled = field_count > 9
@@ -48,7 +48,7 @@ class DeletePollOptions(discord.ui.Select):
             row=2,
             max_values=len(fields),
             placeholder="➖ Select a choice to remove",
-            custom_id=PollView.DELETE_CUSTOM_ID,
+            custom_id=CreatePollView.DELETE_CUSTOM_ID,
             options=[
                 discord.SelectOption(emoji=emojis[i], label=field.name.split(maxsplit=1)[1], value=str(i))
                 for i, field in enumerate(fields)
@@ -73,15 +73,15 @@ class DeletePollOptions(discord.ui.Select):
         field_count = len(embed.fields)
 
         # We removed a choice so reset the disabled state of the buttons
-        add_choice_btn = discord.utils.get(self.view.children, custom_id=PollView.ADD_CUSTOM_ID)
-        create_poll_btn = discord.utils.get(self.view.children, custom_id=PollView.CREATE_CUSTOM_ID)
+        add_choice_btn = discord.utils.get(self.view.children, custom_id=CreatePollView.ADD_CUSTOM_ID)
+        create_poll_btn = discord.utils.get(self.view.children, custom_id=CreatePollView.CREATE_CUSTOM_ID)
         add_choice_btn.disabled = False
         create_poll_btn.disabled = field_count < 2
 
         await interaction.response.edit_message(embed=embed, view=self.view)
 
 
-class PollView(ui.View):
+class CreatePollView(ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 

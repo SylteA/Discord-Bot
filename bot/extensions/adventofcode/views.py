@@ -1,6 +1,6 @@
 import re
+import typing as t
 from datetime import datetime
-from typing import Any
 from zoneinfo import ZoneInfo
 
 import discord
@@ -112,5 +112,5 @@ class AdventOfCodeView(ui.View):
 
         await interaction.response.edit_message(embed=embed, view=self)
 
-    async def on_error(self, interaction: Interaction, _error: Exception, _item: Item[Any], /) -> None:
+    async def on_error(self, interaction: Interaction, _error: Exception, _item: Item[t.Any], /) -> None:
         await interaction.client.on_error("adventofcode_view")
