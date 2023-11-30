@@ -1,16 +1,21 @@
 import re
+import typing as t
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
 import discord
 from bs4 import BeautifulSoup
 from discord import ui
+from discord.ui import Item
 
 from bot import core
 from bot.extensions.adventofcode.utils import LEADERBOARD_ID, YEAR, Member, fetch_leaderboard, home_embed, ordinal
 
 
-class CreateAdventOfCodeView(ui.View):
+class AdventOfCodeView(ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
     HOME_CUSTOM_ID = "extensions:adventofcode:home"
     LOCAL_LEADERBOARD_CUSTOM_ID = "extensions:adventofcode:local"
     GLOBAL_LEADERBOARD_CUSTOM_ID = "extensions:adventofcode:global"
@@ -22,16 +27,20 @@ class CreateAdventOfCodeView(ui.View):
     @discord.ui.button(
         label="Local Leaderboard", style=discord.ButtonStyle.gray, emoji="👥", custom_id=LOCAL_LEADERBOARD_CUSTOM_ID
     )
-    async def local_leaderboard(self, interaction: core.InteractionType, button: ui.Button):
+    async def local_leaderboard(self, interaction: core.InteractionType, _button: ui.Button):
         leaderboard = await fetch_leaderboard(local=True)
-
-        members = [Member(**member_data) for member_data in leaderboard["members"].values()]
 
         embed = discord.Embed(
             title=f"{interaction.guild.name} Advent of Code Leaderboard",
             colour=0x68C290,
             url=f"https://adventofcode.com/{YEAR}/leaderboard/private/view/{LEADERBOARD_ID}",
         )
+
+        if isinstance(leaderboard, str):
+            embed.description = leaderboard
+            return await interaction.response.edit_message(embed=embed, view=self)
+
+        members = [Member(**member_data) for member_data in leaderboard["members"].values()]
 
         leaderboard = {
             "owner_id": leaderboard["owner_id"],
@@ -53,9 +62,8 @@ class CreateAdventOfCodeView(ui.View):
     @discord.ui.button(
         label="Global Leaderboard", style=discord.ButtonStyle.gray, emoji="🌎", custom_id=GLOBAL_LEADERBOARD_CUSTOM_ID
     )
-    async def global_leaderboard(self, interaction: core.InteractionType, button: ui.Button):
+    async def global_leaderboard(self, interaction: core.InteractionType, _button: ui.Button):
         raw_html = await fetch_leaderboard(local=False)
-        soup = BeautifulSoup(raw_html, "html.parser")
 
         embed = discord.Embed(
             title="Advent of Code Global Leaderboard",
@@ -63,6 +71,11 @@ class CreateAdventOfCodeView(ui.View):
             url=f"https://adventofcode.com/{YEAR}/leaderboard",
         )
 
+        if raw_html.startswith("Failed to get leaderboard data."):
+            embed.description = raw_html
+            return await interaction.response.edit_message(embed=embed, view=self)
+
+        soup = BeautifulSoup(raw_html, "html.parser")
         if soup.find("p").text == "Nothing to show on the leaderboard... yet.":
             embed.description = "The global leaderboard is not available yet. Please try again later."
             return await interaction.response.edit_message(embed=embed, view=self)
@@ -98,3 +111,6 @@ class CreateAdventOfCodeView(ui.View):
         embed.description = s_desc
 
         await interaction.response.edit_message(embed=embed, view=self)
+
+    async def on_error(self, interaction: core.InteractionType, _error: Exception, _item: Item[t.Any], /) -> None:
+        await interaction.client.on_error("adventofcode_view")
