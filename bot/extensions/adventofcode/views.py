@@ -5,7 +5,7 @@ from zoneinfo import ZoneInfo
 
 import discord
 from bs4 import BeautifulSoup
-from discord import Interaction, ui
+from discord import ui
 from discord.ui import Item
 
 from bot import core
@@ -112,5 +112,5 @@ class AdventOfCodeView(ui.View):
 
         await interaction.response.edit_message(embed=embed, view=self)
 
-    async def on_error(self, interaction: Interaction, _error: Exception, _item: Item[t.Any], /) -> None:
+    async def on_error(self, interaction: core.InteractionType, _error: Exception, _item: Item[t.Any], /) -> None:
         await interaction.client.on_error("adventofcode_view")
