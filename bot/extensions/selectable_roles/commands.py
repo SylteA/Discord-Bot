@@ -28,6 +28,9 @@ class SelectableRoleCommands(commands.Cog):
 
     def update_roles(self, guild_id: int, data: tuple[str, int]) -> None:
         if self.roles.get(guild_id):
+            for role in self.roles[guild_id]:
+                if role.id == data[1]:
+                    return
             self.roles[guild_id].append(Role(name=data[0], id=data[1]))
         else:
             self.roles[guild_id] = [Role(name=data[0], id=data[1])]
