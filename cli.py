@@ -23,7 +23,6 @@ MIGRATIONS_PATH = ROOT_DIR / "bot" / "models" / "migrations"
 
 REVISION_FILE = re.compile(r"(?P<version>\d+)_(?P<direction>(up)|(down))__(?P<name>.+).sql")
 
-
 log = logging.getLogger(__name__)
 
 
@@ -119,13 +118,18 @@ async def main(ctx):
     else:
         latest, _ = max(Revisions.revisions().keys())
 
-        output = f"Running on migration {cur.version}"
-
-        if cur.version < latest:
-            log.warning("There are new database migrations available.")
-            output += ", latest: " + str(latest)
-
+        output = f"Running on migration {str(cur.version).zfill(3)}"
         log.info(output)
+
+        available_migrations = await get_available_migrations()
+
+        if available_migrations:
+            log.info("+" + "-" * 35 + "+")
+            log.info(f" There are {len(available_migrations)} available Migrations! ")
+            for migration in reversed(available_migrations):
+                log.info(f" {str(migration.version).zfill(3)}: {migration.name}")
+            log.info("+" + "-" * 35 + "+")
+            await asyncio.sleep(2)
 
     prefixes = ("t.",)
     extensions = (
@@ -173,8 +177,19 @@ async def get_current_db_rev() -> Optional[Migration]:
     try:
         return await Migration.fetch_latest()
     except asyncpg.UndefinedTableError:
-        click.echo("Relation 'migrations' does not exits.\nCreating one now...", err=True)
+        log.error("Relation 'migrations' does not exits.\nCreating one now...")
         await run_migration()
+
+
+async def get_available_migrations():
+    """Gets info about migrations which have not been executed"""
+    curr_migration = await get_current_db_rev()
+    available_migrations = []
+    for values in Revisions.revisions().values():
+        if values.version > curr_migration.version and values.direction == "up":
+            available_migrations.append(values)
+
+    return available_migrations
 
 
 @main.group(invoke_without_command=True)
@@ -184,7 +199,7 @@ async def migrate(ctx):
     """Show the current migrate info"""
 
     if not await prepare_postgres(settings.postgres.uri):  # Setup db for (sub)commands to use
-        return click.echo("Failed to prepare Postgres.", err=True)
+        return log.error("Failed to prepare Postgres.")
 
     if ctx.invoked_subcommand is not None:
         return
@@ -192,14 +207,19 @@ async def migrate(ctx):
     rev = await get_current_db_rev()
 
     if rev is None:
-        click.echo("No migrations was found. Start one using the `up` command.")
+        log.info("No migrations was found. Start one using the `up` command.")
     else:
-        click.echo(
-            f"Name      : {rev.name}\n"
-            f"Version   : {rev.version}\n"
-            f"Direction : {rev.direction}\n"
-            f"Latest run: {rev.timestamp}"
-        )
+        log.info("Current Migration:")
+        log.info(f"Name      : {rev.name}")
+        log.info(f"Version   : {rev.version}")
+        log.info(f"Direction : {rev.direction}")
+        log.info(f"Latest run: {rev.timestamp}")
+
+    available_migrations = await get_available_migrations()
+
+    if available_migrations:
+        for migration in reversed(available_migrations):
+            log.info(f"{str(migration.version).zfill(3)}: {migration.name}")
 
 
 async def update(n: int, is_target: bool = False):
@@ -225,7 +245,7 @@ async def update(n: int, is_target: bool = False):
     if is_target:
         k = n if n > 0 else -n - 1
         if k == cur.version:
-            return click.echo("Current migration's version is already equal to targeted version", err=True)
+            return log.error("Current migration's version is already equal to targeted version")
 
         if n > 0 and n > cur.version:
             n = n - cur.version
@@ -233,14 +253,14 @@ async def update(n: int, is_target: bool = False):
             n = -n - cur.version - 1
         else:
             w = "higher" if n > 0 else "lower"
-            return click.echo(f"Current migration's version is already {w} than targeted version", err=True)
+            return log.error(f"Current migration's version is already {w} than targeted version")
 
     target = cur.version + n
 
     if target < 0:
-        return click.echo("Can't migrate down that far")
+        return log.info("Can't migrate down that far")
     elif target > max(revs.keys())[0]:
-        return click.echo("Can't migrate up that far")
+        return log.info("Can't migrate up that far")
 
     while cur.version != target:
         if cur.version < target:
@@ -265,15 +285,15 @@ async def init():
 async def run(version: int, direction: str):
     """Executes a specific migration."""
     if version < 1:
-        return click.echo("Version can't be less than 1.", err=True)
+        return log.error("Version can't be less than 1.")
 
     if direction not in ("up", "down"):
-        return click.echo("Direction can be either 'up' or 'down'", err=True)
+        return log.error("Direction can be either 'up' or 'down'")
 
     rev = Revisions.revisions().get((version, direction))
 
     if rev is None:
-        return click.echo("Migration with that version/direction doesn't exist.", err=True)
+        return log.error("Migration with that version/direction doesn't exist.")
 
     await run_migration(rev.filename)
 
@@ -288,7 +308,7 @@ async def up(n: Optional[int], target):
         n, _ = max(Revisions.revisions().keys())
         target = True
     if n < 1:
-        return click.echo("Passed argument must be >= 1", err=True)
+        return log.error("Passed argument must be >= 1")
     await update(n, is_target=target)
 
 
@@ -306,7 +326,7 @@ async def down(n: Optional[int], confirm, target):
         n = 1
         target = True
     if n < 1:
-        return click.echo("Passed argument must be >= 1", err=True)
+        return log.error("Passed argument must be >= 1")
     await update(-n, is_target=target)
 
 
