@@ -110,6 +110,7 @@ class SelectableRoleCommands(commands.Cog):
         for i, role_ in enumerate(self.roles[interaction.guild.id]):
             if role_.id == role.id:
                 del self.roles[interaction.guild.id][i]
+                break
 
         await interaction.response.send_message(
             f"Successfully removed {role.mention} from the database!", ephemeral=True
