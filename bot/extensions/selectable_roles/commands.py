@@ -87,6 +87,12 @@ class SelectableRoleCommands(commands.Cog):
     ):
         """Add a selectable role to the database"""
 
+        if not role.is_assignable():
+            return await interaction.response.send_message(
+                "That role is non-assignable by the bot. Please ensure the bot has the necessary permissions.",
+                ephemeral=True,
+            )
+
         await SelectableRole.ensure_exists(interaction.guild.id, role.id, role.name)
         self.update_roles(interaction.guild.id, (role.name, role.id))
         await interaction.response.send_message(f"Successfully added {role.mention} to the database!", ephemeral=True)
