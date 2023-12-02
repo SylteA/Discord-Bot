@@ -75,10 +75,6 @@ class ChallengeCommands(commands.GroupCog, group_name="challenges"):
     def submissions_channel(self) -> discord.TextChannel | None:
         return self.bot.guild.get_channel(settings.challenges.submissions_channel_id)
 
-    @property
-    def games_channel(self) -> discord.TextChannel | None:
-        return self.bot.guild.get_channel(settings.bot.games_channel_id)
-
     @app_commands.command()
     async def clear_winners(self, interaction: core.InteractionType):
         """Clears the winner role from all members that have it."""
@@ -150,7 +146,7 @@ class ChallengeCommands(commands.GroupCog, group_name="challenges"):
         """Send an announcement in the info channel mentioning the winners."""
 
         text = (
-            f"{self.winner_role.mention} 🥞 have been given out, go deposit them in {self.games_channel.mention}."
+            f"{self.winner_role.mention} 🥞 have been given out, go deposit them in <#{settings.bot.games_channel_id}>."
             f"\nAnalysis for the challenge will be available shortly in {self.info_channel.mention}."
         )
         await self.info_channel.send(text, allowed_mentions=discord.AllowedMentions(roles=[self.winner_role]))

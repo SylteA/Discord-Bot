@@ -2,8 +2,6 @@ import re
 from datetime import datetime
 from typing import Literal, Optional
 
-from pydantic import Field
-
 from bot.models import Model
 
 
@@ -12,7 +10,7 @@ class Migration(Model):
     version: int
     direction: Literal["up", "down"]
     name: str
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime | None  # it will be None if the migration hasn't been applied yet
 
     @property
     def filename(self):
