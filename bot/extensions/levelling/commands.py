@@ -489,8 +489,11 @@ class Levelling(commands.Cog):
         """Change the xp multiplier"""
         if 0 < multiplier <= 10:
             self.xp_boost = multiplier
-            query = """UPDATE configs SET xp_boost = $1
-                        WHERE guild_id = $2"""
+            query = """
+                    UPDATE configs
+                       SET xp_boost = $1
+                     WHERE guild_id = $2
+                    """
             await Config.execute(query, multiplier, interaction.guild.id)
             return await interaction.response.send_message(f"XP multiplied by {multiplier}x.")
         else:
@@ -505,8 +508,11 @@ class Levelling(commands.Cog):
             )
         if 0 < xp <= 100:
             self.min_xp = xp
-            query = """UPDATE configs SET min_xp = $1
-                                    WHERE guild_id = $2"""
+            query = """
+                UPDATE configs
+                   SET min_xp = $1
+                 WHERE guild_id = $2
+                    """
             await Config.execute(query, xp, interaction.guild.id)
             return await interaction.response.send_message(f"Min XP gained each message updated to {xp}")
         else:
@@ -521,8 +527,10 @@ class Levelling(commands.Cog):
             )
         if 1 < xp <= 500:
             self.min_xp = xp
-            query = """UPDATE configs SET max_xp = $1
-                                    WHERE guild_id = $2"""
+            query = """
+                UPDATE configs
+                   SET max_xp = $1
+                 WHERE guild_id = $2"""
             await Config.execute(query, xp, interaction.guild.id)
             return await interaction.response.send_message(f"Max XP gained each message updated to {xp}")
         else:
@@ -531,7 +539,9 @@ class Levelling(commands.Cog):
     @config.command(name="info")
     async def current_config(self, interaction: discord.Interaction):
         """Return the current configuration settings"""
-        query = """SELECT * FROM configs where guild_id = $1"""
+        query = """
+            SELECT * FROM configs
+             WHERE guild_id = $1"""
         x = await Config.fetchrow(query, interaction.guild.id)
         return await interaction.response.send_message(x)
 

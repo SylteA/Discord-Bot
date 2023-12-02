@@ -16,7 +16,8 @@ class CustomRoleEvents(commands.Cog):
         self.updated_at: dict[int, datetime] = {}
 
     async def get_custom_roles_logs_channel(self):
-        query = """SELECT * FROM configs WHERE guild_id = $1"""
+        query = """SELECT * FROM configs
+                    WHERE guild_id = $1"""
         data = await Config.fetchrow(query, self.bot.guild.id)
         return self.bot.guild.get_channel(data.custom_role_log_channel_id)
 

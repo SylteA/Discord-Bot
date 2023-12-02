@@ -11,9 +11,10 @@ class Config(Model):
 
     @classmethod
     async def ensure_exists(cls, guild_id: int):
-        query = """INSERT INTO configs (guild_id)
+        query = """
+            INSERT INTO configs (guild_id)
                  VALUES ($1)
             ON CONFLICT (guild_id)
-            DO UPDATE SET guild_id = configs.guild_id
-             RETURNING *"""
+          DO UPDATE SET guild_id = configs.guild_id
+              RETURNING *"""
         return await cls.fetchrow(query, guild_id)

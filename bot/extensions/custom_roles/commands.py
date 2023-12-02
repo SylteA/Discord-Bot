@@ -109,7 +109,9 @@ class CustomRoles(commands.Cog):
     @app_commands.describe(channel="New channel")
     async def log_channel(self, interaction: discord.Interaction, channel: discord.TextChannel):
         """Set custom role log channel"""
-        query = """UPDATE configs SET custom_role_log_channel_id = $1 WHERE guild_id = $2"""
+        query = """UPDATE configs
+                      SET custom_role_log_channel_id = $1
+                    WHERE guild_id = $2"""
         await Config.execute(query, channel.id, interaction.guild.id)
         return await interaction.response.send_message(f"Log Channel set to {channel.mention}")
 
