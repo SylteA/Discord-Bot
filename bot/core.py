@@ -4,13 +4,14 @@ import logging
 import os
 import sys
 import traceback
-from typing import Any
+from typing import Any, Union
 
 import discord
 from discord import app_commands
 from discord.ext import commands, tasks
 
 from bot.config import settings
+from bot.models import Stats
 from bot.services import http, paste
 from bot.services.paste import Document
 from utils.errors import IgnorableException
@@ -88,6 +89,16 @@ class DiscordBot(commands.Bot):
         log.debug(f"{message.channel}: {message.author}: {message.clean_content}")
 
         await self.process_commands(message)
+
+    async def on_app_command_completion(
+        self, interaction: discord.Interaction, command: Union[app_commands.Command, app_commands.ContextMenu]
+    ):
+        query = """INSERT INTO stats (guild_id, cmd_name)
+                        VALUES ($1, $2)
+                   ON CONFLICT (guild_id, cmd_name)
+                 DO UPDATE SET uses = stats.uses+1
+                     RETURNING *"""
+        await Stats.execute(query, interaction.guild.id, command.name)
 
     async def process_commands(self, message: discord.Message, /):
         ctx = await self.get_context(message)
