@@ -10,7 +10,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 from bot import core
 from bot.extensions.levelling import utils
-from bot.models import IgnoredChannel, LevellingRole, LevellingUser
+from bot.models import Config, IgnoredChannel, LevellingRole, LevellingUser
 from bot.models.custom_roles import CustomRole
 from cli import ROOT_DIR
 
@@ -45,12 +45,21 @@ class Levelling(commands.Cog):
         default_permissions=discord.Permissions(administrator=True),
     )
 
+    config = app_commands.Group(
+        parent=admin_commands,
+        name="config",
+        description="Manage the levelling configuration(XP Boost, min/max xp awarded)",
+        default_permissions=discord.Permissions(administrator=True),
+    )
+
     def __init__(self, bot: core.DiscordBot):
         self.bot = bot
 
         self.ignored_channels: dict[int, list[int]] = {}
         self.required_xp = [0]
-        self.xp_boost = 1
+        self.xp_boost: int = 1
+        self.min_xp: int = 15
+        self.max_xp: int = 25
 
         # Initializing fonts
         font = f"{ROOT_DIR.as_posix()}/assets/ABeeZee-Regular.otf"
@@ -78,6 +87,10 @@ class Levelling(commands.Cog):
         for lvl in range(101):
             xp = 5 * (lvl**2) + (50 * lvl) + 100
             self.required_xp.append(xp + self.required_xp[-1])
+        config = await Config.ensure_exists(guild_id=self.bot.guild.id)
+        self.xp_boost = config.xp_boost
+        self.min_xp = config.min_xp
+        self.max_xp = config.max_xp
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -101,8 +114,7 @@ class Levelling(commands.Cog):
               RETURNING *;
         """
 
-        # TODO: Allow each guild to set custom xp range and boost.
-        xp = random.randint(15, 25) * self.xp_boost
+        xp = random.randint(self.min_xp, self.max_xp) * self.xp_boost
         after = await LevellingUser.fetchrow(query, message.guild.id, message.author.id, xp)
 
         if after is None:
@@ -471,6 +483,57 @@ class Levelling(commands.Cog):
             response += "\n| {:<10} | {:<5} |".format(role_name, level)
 
         return await interaction.response.send_message(f"```\n{response}\n```\n")
+
+    @config.command(name="xp_boost")
+    async def xp_boost(self, interaction: discord.Interaction, multiplier: int):
+        """Change the xp multiplier"""
+        if 0 < multiplier <= 10:
+            self.xp_boost = multiplier
+            query = """UPDATE configs SET xp_boost = $1
+                        WHERE guild_id = $2"""
+            await Config.execute(query, multiplier, interaction.guild.id)
+            return await interaction.response.send_message(f"XP multiplied by {multiplier}x.")
+        else:
+            return await interaction.response.send_message("XP multiply range should be between 1 and 10")
+
+    @config.command(name="min_xp")
+    async def min_xp(self, interaction: discord.Interaction, xp: int):
+        """Set Min XP gained per message"""
+        if xp >= self.max_xp:
+            return await interaction.response.send_message(
+                f"Min XP({xp}) can not be greater than or equal to max XP({self.max_xp})"
+            )
+        if 0 < xp <= 100:
+            self.min_xp = xp
+            query = """UPDATE configs SET min_xp = $1
+                                    WHERE guild_id = $2"""
+            await Config.execute(query, xp, interaction.guild.id)
+            return await interaction.response.send_message(f"Min XP gained each message updated to {xp}")
+        else:
+            return await interaction.response.send_message("Min XP range should be between 1 and 100")
+
+    @config.command(name="max_xp")
+    async def max_xp(self, interaction: discord.Interaction, xp: int):
+        """Set Max XP gained per message"""
+        if xp <= self.min_xp:
+            return await interaction.response.send_message(
+                f"Max XP({xp}) can not be less than or equal to min XP({self.min_xp})"
+            )
+        if 1 < xp <= 500:
+            self.min_xp = xp
+            query = """UPDATE configs SET max_xp = $1
+                                    WHERE guild_id = $2"""
+            await Config.execute(query, xp, interaction.guild.id)
+            return await interaction.response.send_message(f"Max XP gained each message updated to {xp}")
+        else:
+            return await interaction.response.send_message("Max XP range should be between 1 and 500")
+
+    @config.command(name="info")
+    async def current_config(self, interaction: discord.Interaction):
+        """Return the current configuration settings"""
+        query = """SELECT * FROM configs where guild_id = $1"""
+        x = await Config.fetchrow(query, interaction.guild.id)
+        return await interaction.response.send_message(x)
 
 
 async def setup(bot: core.DiscordBot):

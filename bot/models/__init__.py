@@ -1,3 +1,4 @@
+from .configs import Config
 from .custom_roles import CustomRole
 from .gconfig import FilterConfig
 from .levelling_ignored_channels import IgnoredChannel
@@ -22,4 +23,5 @@ __all__ = (
     IgnoredChannel,
     LevellingRole,
     CustomRole,
+    Config,
 )  # Fixes F401
