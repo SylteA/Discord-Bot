@@ -5,8 +5,7 @@ import discord
 from discord.ext import commands
 
 from bot import core
-from bot.config import settings
-from bot.models.custom_roles import CustomRole
+from bot.models import Config, CustomRole
 
 
 class CustomRoleEvents(commands.Cog):
@@ -16,9 +15,10 @@ class CustomRoleEvents(commands.Cog):
         self.bot = bot
         self.updated_at: dict[int, datetime] = {}
 
-    @property
-    def custom_roles_logs_channel(self) -> discord.TextChannel | None:
-        return self.bot.guild.get_channel(settings.custom_roles.log_channel_id)
+    async def get_custom_roles_logs_channel(self):
+        query = """SELECT * FROM configs WHERE guild_id = $1"""
+        data = await Config.fetchrow(query, self.bot.guild.id)
+        return self.bot.guild.get_channel(data.custom_role_log_channel_id)
 
     @commands.Cog.listener()
     async def on_guild_role_update(self, before: discord.Role, after: discord.Role):
@@ -54,7 +54,8 @@ class CustomRoleEvents(commands.Cog):
         embed.set_thumbnail(url=user.avatar)
         embed.set_footer(text=f"user_id: {custom_role.user_id}")
 
-        return await self.custom_roles_logs_channel.send(embed=embed)
+        channel = await self.get_custom_roles_logs_channel()
+        return await channel.send(embed=embed)
 
     @commands.Cog.listener()
     async def on_custom_role_update(self, before: CustomRole, after: CustomRole):
@@ -85,4 +86,5 @@ class CustomRoleEvents(commands.Cog):
         embed.set_author(name=user.name, icon_url=user.avatar)
         embed.set_footer(text=f"user_id: {after.user_id}")
 
-        return await self.custom_roles_logs_channel.send(embed=embed)
+        channel = await self.get_custom_roles_logs_channel()
+        return await channel.send(embed=embed)

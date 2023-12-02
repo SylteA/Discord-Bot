@@ -92,7 +92,6 @@ class ErrorHandling(BaseModel):
 
 
 class CustomRoles(BaseModel):
-    log_channel_id: int
     divider_role_id: int
 
 

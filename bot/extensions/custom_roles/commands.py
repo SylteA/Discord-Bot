@@ -6,7 +6,7 @@ from discord.ext import commands
 
 from bot import core
 from bot.config import settings
-from bot.models import CustomRole
+from bot.models import Config, CustomRole
 
 
 class CustomRoles(commands.Cog):
@@ -104,6 +104,14 @@ class CustomRoles(commands.Cog):
             embed=self.role_embed("**Custom Role has been updated**", interaction.guild.get_role(before.role_id)),
             ephemeral=True,
         )
+
+    @app_commands.command(name="set_log_channel")
+    @app_commands.describe(channel="New channel")
+    async def log_channel(self, interaction: discord.Interaction, channel: discord.TextChannel):
+        """Set custom role log channel"""
+        query = """UPDATE configs SET custom_role_log_channel_id = $1 WHERE guild_id = $2"""
+        await Config.execute(query, channel.id, interaction.guild.id)
+        return await interaction.response.send_message(f"Log Channel set to {channel.mention}")
 
 
 async def setup(bot: commands.Bot):
