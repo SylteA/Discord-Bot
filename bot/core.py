@@ -64,7 +64,7 @@ class DiscordBot(commands.Bot):
 
     async def on_ready(self):
         update_health("ready", True)
-    
+
     async def when_online(self):
         log.info("Waiting until bot is ready to load extensions and app commands.")
         await self.wait_until_ready()
