@@ -1,1 +1,1 @@
-DROP TABLE gconfigs, messages, reps, tags, users, polls;
+DROP TABLE messages, reps, tags, users, polls;
