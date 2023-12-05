@@ -25,8 +25,6 @@ class ChessEvents(commands.Cog):
                 if any(e.id == event.id for task, e in self.tasks[guild.id]):
                     continue
 
-                print("adding task")
-
                 self.tasks[guild.id].append((asyncio.create_task(ChessTasks(self.bot).run_task(event)), event))
 
     @commands.Cog.listener()
