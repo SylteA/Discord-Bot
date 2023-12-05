@@ -14,8 +14,8 @@ from bot.config import settings
 from bot.services import http, paste
 from bot.services.paste import Document
 from utils.errors import IgnorableException
-from utils.time import human_timedelta
 from utils.health import update_health
+from utils.time import human_timedelta
 
 log = logging.getLogger(__name__)
 
