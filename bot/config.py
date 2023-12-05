@@ -86,10 +86,6 @@ class ErrorHandling(BaseModel):
     webhook_url: str
 
 
-class CustomRoles(BaseModel):
-    divider_role_id: int
-
-
 class YouTube(BaseModel):
     channel_id: str
     text_channel_id: int
@@ -108,7 +104,6 @@ class Settings(BaseSettings):
     tags: Tags
     hastebin: Hastebin
     errors: ErrorHandling
-    custom_roles: CustomRoles
     youtube: YouTube
 
     class Config:

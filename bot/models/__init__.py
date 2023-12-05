@@ -1,6 +1,6 @@
-from .configs import Config
 from .custom_roles import CustomRole
 from .gconfig import FilterConfig
+from .guild_configs import GuildConfig
 from .levelling_ignored_channels import IgnoredChannel
 from .levelling_roles import LevellingRole
 from .levelling_users import LevellingUser
@@ -23,5 +23,5 @@ __all__ = (
     IgnoredChannel,
     LevellingRole,
     CustomRole,
-    Config,
+    GuildConfig,
 )  # Fixes F401

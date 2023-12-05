@@ -11,6 +11,7 @@ from discord import app_commands
 from discord.ext import commands, tasks
 
 from bot.config import settings
+from bot.models import GuildConfig
 from bot.services import http, paste
 from bot.services.paste import Document
 from utils.errors import IgnorableException
@@ -78,6 +79,25 @@ class DiscordBot(commands.Bot):
 
         log.info("Commands synced.")
         log.info(f"Successfully logged in as {self.user}. In {len(self.guilds)} guilds")
+
+    async def on_ready(self):
+        query = """SELECT * FROM guild_configs"""
+        data = await GuildConfig.fetch(query)
+        for index, guild_id in enumerate(self.guilds):
+            if guild_id.id != data[index].guild_id:
+                query = """
+                INSERT INTO guild_configs (guild_id)
+                     VALUES ($1)
+                """
+                await GuildConfig.execute(query, guild_id.id)
+                log.info(f"Inserted new config for guild: {guild_id.name}, id: {guild_id.id}")
+
+    async def on_guild_join(self, guild):
+        query = """INSERT INTO guild_configs (guild_id)
+                        VALUES ($1)
+                   ON CONFLICT (guild_id)
+                            DO NOTHING"""
+        await GuildConfig.execute(query, guild.id)
 
     async def on_message(self, message):
         await self.wait_until_ready()
