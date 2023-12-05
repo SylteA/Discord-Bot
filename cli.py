@@ -133,8 +133,6 @@ async def main(ctx):
         "bot.extensions.adventofcode",
         "bot.extensions.challenges",
         "bot.extensions.chess",
-        "bot.extensions.readthedocs",
-        "bot.extensions.suggestions",
         "bot.extensions.github",
         "bot.extensions.levelling",
         "bot.extensions.persistent_roles",
