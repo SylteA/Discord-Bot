@@ -14,6 +14,7 @@ from bot.config import settings
 from bot.services import http, paste
 from bot.services.paste import Document
 from utils.errors import IgnorableException
+from utils.health import update_health
 from utils.time import human_timedelta
 
 log = logging.getLogger(__name__)
@@ -52,9 +53,17 @@ class DiscordBot(commands.Bot):
         self.loop.create_task(self.when_online())
         self.presence.start()
 
+        update_health("running", True)
+
         self.tree.on_error = self.on_app_command_error
 
         self.error_webhook = discord.Webhook.from_url(url=settings.errors.webhook_url, session=http.session)
+
+    async def on_disconnect(self):
+        update_health("ready", False)
+
+    async def on_ready(self):
+        update_health("ready", True)
 
     async def when_online(self):
         log.info("Waiting until bot is ready to load extensions and app commands.")
