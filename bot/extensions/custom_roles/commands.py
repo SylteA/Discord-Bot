@@ -130,38 +130,46 @@ class CustomRoles(commands.Cog):
     @app_commands.describe(channel="New channel")
     async def log_channel(self, interaction: discord.Interaction, channel: discord.TextChannel = None):
         """Set custom role log channel"""
-        query = """UPDATE guild_configs
-                      SET custom_role_log_channel_id = $1
-                    WHERE guild_id = $2"""
+        query = """
+            UPDATE guild_configs
+               SET custom_role_log_channel_id = $1
+             WHERE guild_id = $2
+        """
+
         if channel is None:
             await GuildConfig.execute(query, None, interaction.guild.id)
-            return await interaction.response.send_message("No Role Log Channel Set")
+            return await interaction.response.send_message("Cleared log channel selection", ephemeral=True)
 
         await GuildConfig.execute(query, channel.id, interaction.guild.id)
-        return await interaction.response.send_message(f"Log Channel set to {channel.mention}")
+        return await interaction.response.send_message(f"Log channel set to {channel.mention}", ephemeral=True)
 
     @config.command(name="divider-role-id")
     @app_commands.describe(role="divider role")
     async def divider_role(self, interaction: discord.Interaction, role: discord.Role = None):
         """Set Divider role"""
-        query = """UPDATE guild_configs
-                         SET divider_role_id = $1
-                       WHERE guild_id = $2"""
+        query = """
+            UPDATE guild_configs
+               SET divider_role_id = $1
+             WHERE guild_id = $2
+        """
+
         if role is None:
             await GuildConfig.execute(query, None, interaction.guild.id)
-            return await interaction.response.send_message("No Divider Role Set")
+            return await interaction.response.send_message("Cleared divider role selection", ephemeral=True)
 
         await GuildConfig.execute(query, role.id, interaction.guild.id)
-        return await interaction.response.send_message(f"Divider role has been configured to {role.mention}")
+        return await interaction.response.send_message(f"Divider role set to {role.mention}")
 
     @config.command(name="show")
     async def show(self, interaction: discord.Interaction):
         """Return the current custom role configuration"""
         query = """
-                   SELECT * FROM guild_configs
-                    WHERE guild_id = $1
-                    """
+            SELECT *
+              FROM guild_configs
+             WHERE guild_id = $1
+        """
         data = await GuildConfig.fetchrow(query, interaction.guild.id)
+
         embed = discord.Embed(
             title=f"Server Information - {interaction.guild.name}",
             description="Custom Role Configuration",
@@ -170,9 +178,7 @@ class CustomRoles(commands.Cog):
         )
 
         embed.set_thumbnail(url=interaction.guild.icon.url)
-        embed.add_field(
-            name="Custom Role Log Channel", value=interaction.guild.get_channel(data.custom_role_log_channel_id)
-        )
+        embed.add_field(name="Log channel", value=f"<#{data.custom_role_log_channel_id}>")
 
         return await interaction.response.send_message(embed=embed)
 
