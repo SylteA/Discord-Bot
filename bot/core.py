@@ -81,18 +81,19 @@ class DiscordBot(commands.Bot):
         log.info(f"Successfully logged in as {self.user}. In {len(self.guilds)} guilds")
 
     async def on_ready(self):
-        query = """SELECT * FROM guild_configs"""
-        data = await GuildConfig.fetch(query)
-        for index, guild_id in enumerate(self.guilds):
-            if guild_id.id != data[index].guild_id:
-                query = """
-                INSERT INTO guild_configs (guild_id)
-                     VALUES ($1)
-                """
-                await GuildConfig.execute(query, guild_id.id)
-                log.info(f"Inserted new config for guild: {guild_id.name}, id: {guild_id.id}")
+        query = "SELECT COALESCE(array_agg(guild_id), '{}') FROM guild_configs"
 
-    async def on_guild_join(self, guild):
+        stored_ids = await GuildConfig.fetchval(query)
+        missing_ids = [(guild.id,) for guild in self.guilds if guild.id not in stored_ids]
+
+        if missing_ids:
+            query = "INSERT INTO guild_configs (guild_id) VALUES ($1)"
+            await GuildConfig.pool.executemany(query, missing_ids)
+            log.info(f"Inserted new config for {len(missing_ids)} guilds.")
+
+    async def on_guild_join(self, guild: discord.Guild):
+        log.info(f"{self.user.name} has been added to a new guild: {guild.name}")
+
         query = """INSERT INTO guild_configs (guild_id)
                         VALUES ($1)
                    ON CONFLICT (guild_id)
@@ -138,7 +139,7 @@ class DiscordBot(commands.Bot):
         await self.error_webhook.send(embed=embed)
 
     async def on_error(self, event_method: str, *args: Any, **kwargs: Any) -> None:
-        content = "\n".join(traceback.format_exception(*sys.exc_info()))
+        content = "".join(traceback.format_exception(*sys.exc_info()))
         header = f"Ignored exception in event method **{event_method}**"
 
         await self.send_error(content, header)
