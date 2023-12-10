@@ -1,8 +1,9 @@
 import os
+import tempfile
 
 
 def update_health(name: str, value: bool):
-    path = f"/tmp/.health.{name.lower()}"
+    path = os.path.join(tempfile.gettempdir(), f".health.{name.lower()}")
 
     with open(path, "w") as f:
         f.write(str(value))
