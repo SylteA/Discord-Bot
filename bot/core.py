@@ -89,7 +89,6 @@ class DiscordBot(commands.Bot):
         if missing_ids:
             query = "INSERT INTO guild_configs (guild_id) VALUES ($1)"
             await GuildConfig.pool.executemany(query, missing_ids)
-            log.info(f"Inserted new config for {len(missing_ids)} guilds.")
 
     async def on_guild_join(self, guild: discord.Guild):
         log.info(f"{self.user.name} has been added to a new guild: {guild.name}")
