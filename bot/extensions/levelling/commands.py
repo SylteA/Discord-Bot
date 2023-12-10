@@ -111,11 +111,16 @@ class Levelling(commands.Cog):
           RETURNING *, (select random_xp from generate_xp) AS random_xp;
         """
 
-        after = await LevellingUser.fetchrow(query, message.guild.id, message.author.id, convert=False)
-        if after is None:
+        data = await LevellingUser.fetchrow(query, message.guild.id, message.author.id, convert=False)
+
+        if data is None:
             return  # Last message was less than a minute ago.
 
-        self.bot.dispatch("xp_update", after=after)
+        random_xp = dict(data).pop("random_xp")
+        after = LevellingUser.parse_obj(data)
+        before = after.copy(update={"total_xp": after.total_xp - random_xp})
+
+        self.bot.dispatch("xp_update", before=before, after=after)
 
     def generate_rank_image(self, username: str, avatar_bytes: bytes, rank: int, level: int, xp: int, required_xp: int):
         img = Image.new("RGBA", (1000, 240))
@@ -423,10 +428,7 @@ class Levelling(commands.Cog):
 
         required_xp = utils.get_xp_for_level(level)
 
-        await CustomRole.ensure_exists(
-            guild_id=role.guild.id, role_id=role.id, name=role.name, color=str(role.color.value)
-        )
-
+        await CustomRole.ensure_exists(guild_id=role.guild.id, role_id=role.id, name=role.name, color=role.color.value)
         record = await LevellingRole.fetchrow(query, role.guild.id, role.id, required_xp)
 
         if record is None:
@@ -463,7 +465,7 @@ class Levelling(commands.Cog):
 
         rewards = await LevellingRole.fetch(query, interaction.guild.id)
 
-        # TODO: This command needs to be fixed, the max role name length needs to be dynamic
+        # TODO: This table needs to be fixed, the max role name length needs to be dynamic
         response = "| {:<10} | {:<5} |".format("Role Name", "Level")
         response += "\n|" + "-" * 12 + "|" + "-" * 7 + "|"
 
