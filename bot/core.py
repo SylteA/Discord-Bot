@@ -60,12 +60,6 @@ class DiscordBot(commands.Bot):
 
         self.error_webhook = discord.Webhook.from_url(url=settings.errors.webhook_url, session=http.session)
 
-    async def on_disconnect(self):
-        update_health("ready", False)
-
-    async def on_ready(self):
-        update_health("ready", True)
-
     async def when_online(self):
         log.info("Waiting until bot is ready to load extensions and app commands.")
         await self.wait_until_ready()
@@ -89,7 +83,15 @@ class DiscordBot(commands.Bot):
         log.info("Commands synced.")
         log.info(f"Successfully logged in as {self.user}. In {len(self.guilds)} guilds")
 
+    @staticmethod
+    async def on_disconnect():
+        """Called when the"""
+        update_health("ready", False)
+
     async def on_ready(self):
+        """Called when all guilds are cached."""
+        update_health("ready", True)
+
         query = "SELECT COALESCE(array_agg(guild_id), '{}') FROM guild_configs"
 
         stored_ids = await GuildConfig.fetchval(query)
@@ -98,6 +100,7 @@ class DiscordBot(commands.Bot):
         if missing_ids:
             query = "INSERT INTO guild_configs (guild_id) VALUES ($1)"
             await GuildConfig.pool.executemany(query, missing_ids)
+            log.info(f"Inserted new config for {len(missing_ids)} guilds.")
 
     async def on_guild_join(self, guild: discord.Guild):
         log.info(f"{self.user.name} has been added to a new guild: {guild.name}")
