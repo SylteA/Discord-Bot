@@ -1,6 +1,5 @@
 import json
 import logging
-from typing import Dict, List
 
 from pydantic import BaseModel, BaseSettings, PostgresDsn, ValidationError, validator
 
@@ -15,7 +14,7 @@ class AoC(BaseModel):
 
 
 class Bot(BaseModel):
-    commands_channels_ids: List[int]
+    commands_channels_ids: list[int]
     games_channel_id: int  # #bot-games
     token: str
 
@@ -49,7 +48,7 @@ class Guild(BaseModel):
 
 
 class Moderation(BaseModel):
-    admin_roles_ids: List[int]
+    admin_roles_ids: list[int]
     staff_role_id: int
 
     @validator("admin_roles_ids", pre=True)
@@ -61,16 +60,6 @@ class Postgres(BaseModel):
     max_pool_connections: int
     min_pool_connections: int
     uri: PostgresDsn
-
-
-class ReactionRoles(BaseModel):
-    required_role_id: int  # [lvl 20] Developer
-    roles: Dict[int, int]  # Dict[emoji_id, role_id]
-    message_id: int
-
-    @validator("roles", pre=True)
-    def val_func(cls, val):
-        return {int(k): v for k, v in json.loads(val).items()}
 
 
 class Tags(BaseModel):
@@ -105,7 +94,6 @@ class Settings(BaseSettings):
     postgres: Postgres
     guild: Guild
     moderation: Moderation
-    reaction_roles: ReactionRoles
     tags: Tags
     hastebin: Hastebin
     errors: ErrorHandling

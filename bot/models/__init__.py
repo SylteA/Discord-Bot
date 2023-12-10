@@ -7,6 +7,7 @@ from .message import Message
 from .model import Model
 from .persisted_role import PersistedRole
 from .rep import Rep
+from .selectable_roles import SelectableRole
 from .tag import Tag
 from .user import User
 
@@ -22,4 +23,5 @@ __all__ = (
     IgnoredChannel,
     LevellingRole,
     CustomRole,
+    SelectableRole,
 )  # Fixes F401

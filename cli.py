@@ -145,9 +145,9 @@ async def main(ctx):
         "bot.extensions.suggestions",
         "bot.extensions.tags",
         "bot.extensions.youtube",
+        "bot.extensions.selectable_roles",
         "bot.cogs._help",
         "bot.cogs.clashofcode",
-        "bot.cogs.roles",
     )
 
     intents = discord.Intents.all()

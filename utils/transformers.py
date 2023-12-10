@@ -9,12 +9,18 @@ from utils.errors import IgnorableException
 
 
 class MessageTransformer(app_commands.Transformer):
-    async def transform(self, interaction: core.InteractionType, value: str, /):
-        try:
-            parts: list[str] = value.split("/")
+    """
+    Transform any of the given formats to a Message instance:
 
-            # check that there are 2 parts
-            if len(parts) != 2:
+    - 1176092816762486784  # message_id
+    - 1024375283857506436/1176092816762486784  # channel_id/message_id
+    - https://discord.com/channels/1024375277679284315/1024375283857506436/1176092816762486784  # message_url
+    """
+
+    async def transform(self, interaction: core.InteractionType, value: str, /):
+        parts: list[str] = value.split("/")
+        try:
+            if len(parts) == 1:
                 return await interaction.channel.fetch_message(int(value))
 
             message_id = int(parts[-1])
@@ -23,7 +29,11 @@ class MessageTransformer(app_commands.Transformer):
             channel = interaction.guild.get_channel(channel_id)
             return await channel.fetch_message(message_id)
         except (ValueError, TypeError, IndexError, AttributeError):
-            await interaction.response.send_message("Please provide a valid message URL.", ephemeral=True)
+            if len(parts) == 1:
+                message = "Please provide a valid message ID."
+            else:
+                message = "Please provide a valid message URL."
+            await interaction.response.send_message(message, ephemeral=True)
         except discord.HTTPException:
             await interaction.response.send_message("Sorry, I couldn't find that message...", ephemeral=True)
 
