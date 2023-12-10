@@ -11,6 +11,7 @@ from discord import app_commands
 from discord.ext import commands, tasks
 
 from bot.config import settings
+from bot.models import GuildConfig
 from bot.services import http, paste
 from bot.services.paste import Document
 from utils.errors import IgnorableException
@@ -59,12 +60,6 @@ class DiscordBot(commands.Bot):
 
         self.error_webhook = discord.Webhook.from_url(url=settings.errors.webhook_url, session=http.session)
 
-    async def on_disconnect(self):
-        update_health("ready", False)
-
-    async def on_ready(self):
-        update_health("ready", True)
-
     async def when_online(self):
         log.info("Waiting until bot is ready to load extensions and app commands.")
         await self.wait_until_ready()
@@ -87,6 +82,34 @@ class DiscordBot(commands.Bot):
 
         log.info("Commands synced.")
         log.info(f"Successfully logged in as {self.user}. In {len(self.guilds)} guilds")
+
+    @staticmethod
+    async def on_disconnect():
+        """Called when the"""
+        update_health("ready", False)
+
+    async def on_ready(self):
+        """Called when all guilds are cached."""
+        update_health("ready", True)
+
+        query = "SELECT COALESCE(array_agg(guild_id), '{}') FROM guild_configs"
+
+        stored_ids = await GuildConfig.fetchval(query)
+        missing_ids = [(guild.id,) for guild in self.guilds if guild.id not in stored_ids]
+
+        if missing_ids:
+            query = "INSERT INTO guild_configs (guild_id) VALUES ($1)"
+            await GuildConfig.pool.executemany(query, missing_ids)
+            log.info(f"Inserted new config for {len(missing_ids)} guilds.")
+
+    async def on_guild_join(self, guild: discord.Guild):
+        log.info(f"{self.user.name} has been added to a new guild: {guild.name}")
+
+        query = """INSERT INTO guild_configs (guild_id)
+                        VALUES ($1)
+                   ON CONFLICT (guild_id)
+                            DO NOTHING"""
+        await GuildConfig.execute(query, guild.id)
 
     async def on_message(self, message):
         await self.wait_until_ready()
@@ -127,7 +150,7 @@ class DiscordBot(commands.Bot):
         await self.error_webhook.send(embed=embed)
 
     async def on_error(self, event_method: str, *args: Any, **kwargs: Any) -> None:
-        content = "\n".join(traceback.format_exception(*sys.exc_info()))
+        content = "".join(traceback.format_exception(*sys.exc_info()))
         header = f"Ignored exception in event method **{event_method}**"
 
         await self.send_error(content, header)

@@ -27,7 +27,9 @@ class Migration(Model):
 
     async def post(self):
         query = """
-        INSERT INTO migrations (version, direction, name, timestamp)
-            VALUES ($1, $2, $3, $4)
+        INSERT INTO migrations (version, direction, name)
+            VALUES ($1, $2, $3)
+            RETURNING timestamp
         """
-        await self.execute(query, self.version, self.direction, self.name, self.timestamp)
+        self.timestamp = await self.fetchval(query, self.version, self.direction, self.name)
+        return self

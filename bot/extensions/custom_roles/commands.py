@@ -1,15 +1,29 @@
 from __future__ import annotations
 
+import datetime
+
 import discord
 from discord import app_commands, utils
 from discord.ext import commands
 
 from bot import core
-from bot.config import settings
-from bot.models import CustomRole
+from bot.models import CustomRole, GuildConfig
 
 
 class CustomRoles(commands.Cog):
+    custom_roles = app_commands.Group(
+        name="custom_roles",
+        description="Custom Role commands",
+        default_permissions=discord.Permissions(administrator=True),
+    )
+
+    config = app_commands.Group(
+        parent=custom_roles,
+        name="config",
+        description="Set configuration for custom role",
+        default_permissions=discord.Permissions(administrator=True),
+    )
+
     def __init__(self, bot):
         self.bot = bot
 
@@ -50,8 +64,15 @@ class CustomRoles(commands.Cog):
             # Create and assign the role to user
             role = await interaction.guild.create_role(name=name, colour=color or discord.Color.random())
 
-            divider_role = interaction.guild.get_role(settings.custom_roles.divider_role_id)
-            await role.edit(position=divider_role.position + 1)
+            divider_role_query = """
+                            SELECT divider_role_id
+                             FROM guild_configs
+                            WHERE guild_id = $1"""
+            divider_role_id = await GuildConfig.fetchval(divider_role_query, interaction.guild.id)
+
+            if divider_role_id is not None:
+                divider_role = interaction.guild.get_role(divider_role_id)
+                await role.edit(position=divider_role.position + 1)
 
             record = await CustomRole.ensure_exists(
                 guild_id=interaction.guild.id,
@@ -104,6 +125,62 @@ class CustomRoles(commands.Cog):
             embed=self.role_embed("**Custom Role has been updated**", interaction.guild.get_role(before.role_id)),
             ephemeral=True,
         )
+
+    @config.command(name="log-channel")
+    @app_commands.describe(channel="New channel")
+    async def log_channel(self, interaction: discord.Interaction, channel: discord.TextChannel = None):
+        """Set custom role log channel"""
+        query = """
+            UPDATE guild_configs
+               SET custom_role_log_channel_id = $1
+             WHERE guild_id = $2
+        """
+
+        if channel is None:
+            await GuildConfig.execute(query, None, interaction.guild.id)
+            return await interaction.response.send_message("Cleared log channel selection", ephemeral=True)
+
+        await GuildConfig.execute(query, channel.id, interaction.guild.id)
+        return await interaction.response.send_message(f"Log channel set to {channel.mention}", ephemeral=True)
+
+    @config.command(name="divider-role-id")
+    @app_commands.describe(role="divider role")
+    async def divider_role(self, interaction: discord.Interaction, role: discord.Role = None):
+        """Set Divider role"""
+        query = """
+            UPDATE guild_configs
+               SET divider_role_id = $1
+             WHERE guild_id = $2
+        """
+
+        if role is None:
+            await GuildConfig.execute(query, None, interaction.guild.id)
+            return await interaction.response.send_message("Cleared divider role selection", ephemeral=True)
+
+        await GuildConfig.execute(query, role.id, interaction.guild.id)
+        return await interaction.response.send_message(f"Divider role set to {role.mention}")
+
+    @config.command(name="show")
+    async def show(self, interaction: discord.Interaction):
+        """Return the current custom role configuration"""
+        query = """
+            SELECT *
+              FROM guild_configs
+             WHERE guild_id = $1
+        """
+        data = await GuildConfig.fetchrow(query, interaction.guild.id)
+
+        embed = discord.Embed(
+            title=f"Server Information - {interaction.guild.name}",
+            description="Custom Role Configuration",
+            color=discord.Color.blue(),
+            timestamp=datetime.datetime.utcnow(),
+        )
+
+        embed.set_thumbnail(url=interaction.guild.icon.url)
+        embed.add_field(name="Log channel", value=f"<#{data.custom_role_log_channel_id}>")
+
+        return await interaction.response.send_message(embed=embed)
 
 
 async def setup(bot: commands.Bot):

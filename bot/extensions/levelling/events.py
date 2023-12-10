@@ -11,11 +11,11 @@ class LevellingEvents(commands.Cog):
         self.bot = bot
 
     @commands.Cog.listener()
-    async def on_xp_update(self, before: LevellingUser, after: LevellingUser):
-        if after.total_xp == before.total_xp:
+    async def on_xp_update(self, after: LevellingUser):
+        if after.total_xp == after.total_xp - after.random_xp:
             return
 
-        elif after.total_xp > before.total_xp:
+        elif after.total_xp > after.total_xp - after.random_xp:
             query = """
                 SELECT COALESCE(array_agg(role_id), '{}')
                   FROM levelling_roles lr
