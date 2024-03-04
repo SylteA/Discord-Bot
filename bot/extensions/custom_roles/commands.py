@@ -59,7 +59,11 @@ class CustomRoles(commands.Cog):
 
         if before is None:
             if name is None:
-                return await interaction.response.send_message("You don't have a custom role yet!", ephemeral=True)
+                return await interaction.response.send_message(
+                    "You don't have a custom role yet, specify a name to create one!", ephemeral=True
+                )
+
+            await interaction.response.defer(thinking=True, ephemeral=True)
 
             # Create and assign the role to user
             role = await interaction.guild.create_role(name=name, colour=color or discord.Color.random())
@@ -90,7 +94,7 @@ class CustomRoles(commands.Cog):
                 role_ids=[role.id],
             )
 
-            return await interaction.response.send_message(
+            return await interaction.followup.send(
                 embed=self.role_embed("**Custom Role has been assigned**", role),
                 ephemeral=True,
             )
