@@ -12,7 +12,7 @@ class LevellingEvents(commands.Cog):
 
     @commands.Cog.listener()
     async def on_xp_update(self, before: LevellingUser, after: LevellingUser):
-        if after.total_xp == before.total_xp:
+        if after.total_xp == before.random_xp:
             return
 
         elif after.total_xp > before.total_xp:

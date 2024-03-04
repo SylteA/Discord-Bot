@@ -1,4 +1,5 @@
 import re
+import traceback
 import xml.etree.ElementTree as ET
 from datetime import datetime
 
@@ -8,7 +9,7 @@ from pydantic import BaseModel
 
 from bot import core
 from bot.config import settings
-from bot.services import http
+from bot.services import http, paste
 
 YOUTUBE_URL = re.compile(r"(?P<url>https?://www\.youtube\.com/watch\?v=[\w-]+)")
 RSS_FEED_BASE_URL = "https://www.youtube.com/feeds/videos.xml"
@@ -77,7 +78,11 @@ class YoutubeTasks(commands.Cog):
 
             embed = message.embeds[0]
             embed.set_image(url=thumbnail_url)
-            await message.edit(embed=embed)
+
+            try:
+                await message.edit(embed=embed)
+            except discord.NotFound:
+                pass
 
             self.old_thumbnails.remove((message, thumbnail_url))
 
@@ -87,7 +92,16 @@ class YoutubeTasks(commands.Cog):
 
         async with http.session.get(url) as response:
             data = await response.text()
-            tree = ET.fromstring(data)
+
+            try:
+                tree = ET.fromstring(data)
+            except ET.ParseError as e:
+                content = "".join(traceback.format_exception(e))
+                header = "Ignored exception when parsing rss feed."
+                document = await paste.create(content=data)
+
+                return await self.bot.send_error(content, header, invoked_details_document=document)
+
             ns = "{http://www.w3.org/2005/Atom}"
             md = "{http://search.yahoo.com/mrss/}"
 

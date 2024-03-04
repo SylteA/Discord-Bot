@@ -2,8 +2,6 @@ import re
 from datetime import datetime
 from typing import Literal, Optional
 
-from pydantic import Field
-
 from bot.models import Model
 
 
@@ -12,7 +10,7 @@ class Migration(Model):
     version: int
     direction: Literal["up", "down"]
     name: str
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime | None  # it will be None if the migration hasn't been applied yet
 
     @property
     def filename(self):
@@ -29,7 +27,9 @@ class Migration(Model):
 
     async def post(self):
         query = """
-        INSERT INTO migrations (version, direction, name, timestamp)
-            VALUES ($1, $2, $3, $4)
+        INSERT INTO migrations (version, direction, name)
+            VALUES ($1, $2, $3)
+            RETURNING timestamp
         """
-        await self.execute(query, self.version, self.direction, self.name, self.timestamp)
+        self.timestamp = await self.fetchval(query, self.version, self.direction, self.name)
+        return self

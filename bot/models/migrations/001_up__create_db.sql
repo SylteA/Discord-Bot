@@ -26,15 +26,6 @@ CREATE TABLE IF NOT EXISTS reps
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
-CREATE TABLE IF NOT EXISTS gconfigs
-(
-    guild_id           BIGINT PRIMARY KEY,
-    blacklist_urls     CHARACTER VARYING[],
-    whitelist_channels BIGINT[],
-    reasons            JSON,
-    enabled            BOOLEAN DEFAULT TRUE
-);
-
 CREATE TABLE IF NOT EXISTS tags
 (
     guild_id   BIGINT,
