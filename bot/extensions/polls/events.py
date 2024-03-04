@@ -14,7 +14,11 @@ class PollEvents(commands.Cog):
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
         channel: discord.TextChannel = self.bot.get_channel(payload.channel_id)
-        message: discord.Message = await channel.fetch_message(payload.message_id)
+
+        try:
+            message: discord.Message = await channel.fetch_message(payload.message_id)
+        except discord.NotFound:
+            return
 
         if payload.user_id == self.bot.user.id:
             return
