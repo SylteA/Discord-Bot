@@ -31,7 +31,7 @@ jobs:
       # action. As pre-commit does not support user installs, we set
       # PIP_USER=0 to not do a user install.
       - name: Run pre-commit hooks
-        run: export PIP_USER=0; SKIP=flake8 pre-commit run --all-files
+        run: export PIP_USER=0; SKIP=flake8 poetry run pre-commit run --all-files
 
       # Run flake8 and have it format the linting errors in the format of
       # the GitHub Workflow command to register error annotations. This
