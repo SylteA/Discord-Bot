@@ -16,22 +16,27 @@ jobs:
       PIPENV_HIDE_EMOJIS: 1
       PIPENV_NOSPIN: 1
 
-      PYTHON_VERSION: "3.11"
+      PYTHON_VERSION: "3.10"
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Install Python Dependencies
-        uses: HassanAbouelela/actions/setup-python@setup-python_v1.4.2
+      - name: Set up Python
+        uses: actions/setup-python@v2
         with:
-          python_version: ${{ env.PYTHON_VERSION }}
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies using poetry
+        run: |
+          pip install poetry
+          poetry install --only dev
 
       # We will not run `flake8` here, as we will use a separate flake8
       # action. As pre-commit does not support user installs, we set
       # PIP_USER=0 to not do a user install.
       - name: Run pre-commit hooks
-        run: export PIP_USER=0; SKIP=flake8 poetry run pre-commit run --all-files
+        run: export PIP_USER=0; SKIP=flake8 pre-commit run --all-files
 
       # Run flake8 and have it format the linting errors in the format of
       # the GitHub Workflow command to register error annotations. This
