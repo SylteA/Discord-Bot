@@ -1,3 +1,4 @@
+import logging
 import re
 import traceback
 import xml.etree.ElementTree as ET
@@ -13,6 +14,9 @@ from bot.services import http, paste
 
 YOUTUBE_URL = re.compile(r"(?P<url>https?://www\.youtube\.com/watch\?v=[\w-]+)")
 RSS_FEED_BASE_URL = "https://www.youtube.com/feeds/videos.xml"
+
+
+log = logging.getLogger(__name__)
 
 
 class Video(BaseModel):
@@ -99,6 +103,8 @@ class YoutubeTasks(commands.Cog):
                 content = "".join(traceback.format_exception(e))
                 header = "Ignored exception when parsing rss feed."
                 document = await paste.create(content=data)
+
+                log.error(header, exc_info=e)
 
                 return await self.bot.send_error(content, header, invoked_details_document=document)
 
