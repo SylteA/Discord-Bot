@@ -1,7 +1,9 @@
 import asyncio
+import json
 import logging
 from typing import ClassVar, List, Type, TypeVar, Union
 
+import asyncpg
 from asyncpg import Connection, Pool, Record, connect, create_pool
 from pydantic import BaseModel
 
@@ -32,8 +34,11 @@ class Model(BaseModel):
         loop: asyncio.AbstractEventLoop = None,
         **kwargs,
     ) -> None:
+        async def init(con: asyncpg.Connection) -> None:
+            await con.set_type_codec("json", schema="pg_catalog", encoder=json.dumps, decoder=json.loads)
+
         cls.pool = await create_pool(
-            uri, min_size=min_con, max_size=max_con, loop=loop, record_class=CustomRecord, **kwargs
+            uri, min_size=min_con, max_size=max_con, loop=loop, record_class=CustomRecord, init=init, **kwargs
         )
         log.info(f"Established a pool with {min_con} - {max_con} connections\n")
 

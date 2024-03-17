@@ -11,7 +11,7 @@ from discord import app_commands
 from discord.ext import commands, tasks
 
 from bot.config import settings
-from bot.models import GuildConfig
+from bot.models import GuildConfig, Model
 from bot.services import http, paste
 from bot.services.paste import Document
 from utils.errors import IgnorableException
@@ -51,7 +51,7 @@ class DiscordBot(commands.Bot):
 
     async def setup_hook(self) -> None:
         """Connect DB before bot is ready to assure that no calls are made before its ready"""
-        self.loop.create_task(self.when_online())
+        _ = self.loop.create_task(self.when_online())
         self.presence.start()
 
         update_health("running", True)
@@ -130,6 +130,36 @@ class DiscordBot(commands.Bot):
         log.info(f"{ctx.author} invoking command: {ctx.clean_prefix}{ctx.command.qualified_name}")
         await self.invoke(ctx)
 
+    async def on_app_command_completion(
+        self, interaction: discord.Interaction, command: app_commands.Command | app_commands.ContextMenu
+    ):
+        try:
+            if isinstance(command, app_commands.ContextMenu):
+                log.warning("ContextMenu finished but not handled by stats.")
+                return
+
+            log.info(f"{interaction.user.name} used command {command.qualified_name} -> {interaction.data}")
+
+            query = """
+                INSERT INTO command_usage
+                (user_id, guild_id, channel_id, interaction_id, command_id, command_name, options)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7)
+            """
+
+            res = await Model.pool.execute(
+                query,
+                interaction.user.id,
+                interaction.guild_id,
+                interaction.channel_id,
+                interaction.id,
+                int(interaction.data["id"]),  # noqa
+                command.qualified_name,
+                interaction.data["options"],
+            )
+            log.info(f"Command usage inserted {res}")
+        except Exception as e:
+            await self.on_error("on_app_command_completion", e)
+
     async def send_error(self, content: str, header: str, invoked_details_document: Document = None) -> None:
         def wrap(code: str) -> str:
             code = code.replace("`", "\u200b`")
@@ -181,7 +211,7 @@ class DiscordBot(commands.Bot):
     @tasks.loop(hours=24)
     async def presence(self):
         await self.wait_until_ready()
-        await self.change_presence(activity=discord.Game(name='use the prefix "tim."'))
+        await self.change_presence(activity=discord.Game(name="Now using slash commands!"))
 
 
 InteractionType = discord.Interaction[DiscordBot]

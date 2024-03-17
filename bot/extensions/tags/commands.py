@@ -175,6 +175,21 @@ class Tags(commands.Cog, group_name="tag"):
         await interaction.response.send_modal(MakeTagModal(cog=self))
 
     @tags.command()
+    @app_commands.autocomplete(name=fetch_similar_tags)
+    @app_commands.describe(name="The name of the tag to show.")
+    async def info(self, interaction: core.InteractionType, name: str):
+        """Shows information about the tag with the given name."""
+        tag = await Tag.fetch_by_name(guild_id=interaction.guild.id, name=name)
+
+        if tag is None:
+            return await interaction.response.send_message("There is no tag with that name", ephemeral=True)
+
+        author = self.bot.get_user(tag.author_id)
+        author = str(author) if isinstance(author, discord.User) else f"(ID: {tag.author_id})"
+        text = f"Tag: {name}\n\n```prolog\nCreator: {author}\n   Uses: {tag.uses}\n```"
+        await interaction.response.send_message(content=text, ephemeral=True)
+
+    @tags.command()
     @app_commands.autocomplete(name=staff_tag_autocomplete)
     @app_commands.describe(name="The name of the tag to edit.")
     async def edit(self, interaction: core.InteractionType, name: str):
