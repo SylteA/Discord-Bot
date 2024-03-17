@@ -119,8 +119,6 @@ class DiscordBot(commands.Bot):
         if message.author.bot:
             return
 
-        raise ValueError("Test")
-
         log.debug(f"{message.channel}: {message.author}: {message.clean_content}")
 
         await self.process_commands(message)
