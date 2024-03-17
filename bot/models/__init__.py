@@ -1,3 +1,4 @@
+from .command_usage import CommandUsage
 from .custom_roles import CustomRole
 from .guild_configs import GuildConfig
 from .levelling_ignored_channels import IgnoredChannel
@@ -16,6 +17,7 @@ __all__ = (
     Rep,
     Tag,
     User,
+    CommandUsage,
     LevellingUser,
     PersistedRole,
     IgnoredChannel,
