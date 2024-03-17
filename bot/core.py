@@ -23,6 +23,8 @@ log = logging.getLogger(__name__)
 os.environ.update(JISHAKU_NO_UNDERSCORE="True", JISHAKU_NO_DM_TRACEBACK="True", JISHAKU_HIDE="True")
 ALLOWED_MENTIONS = discord.AllowedMentions(everyone=False, roles=False, users=False)
 
+RUNNING_IN_KUBERNETES = os.environ.get("KUBERNETES_SERVICE_HOST") is not None
+
 
 class DiscordBot(commands.Bot):
     def __init__(self, prefixes: tuple[str, ...], extensions: tuple[str, ...], intents: discord.Intents):
@@ -146,7 +148,7 @@ class DiscordBot(commands.Bot):
                     VALUES ($1, $2, $3, $4, $5, $6, $7)
             """
 
-            res = await Model.pool.execute(
+            await Model.pool.execute(
                 query,
                 interaction.user.id,
                 interaction.guild_id,
@@ -156,11 +158,13 @@ class DiscordBot(commands.Bot):
                 command.qualified_name,
                 interaction.data["options"],
             )
-            log.info(f"Command usage inserted {res}")
         except Exception as e:
             await self.on_error("on_app_command_completion", e)
 
     async def send_error(self, content: str, header: str, invoked_details_document: Document = None) -> None:
+        if not RUNNING_IN_KUBERNETES:
+            return
+
         def wrap(code: str) -> str:
             code = code.replace("`", "\u200b`")
             return f"```py\n{code}\n```"
@@ -180,10 +184,12 @@ class DiscordBot(commands.Bot):
         await self.error_webhook.send(embed=embed)
 
     async def on_error(self, event_method: str, *args: Any, **kwargs: Any) -> None:
-        content = "".join(traceback.format_exception(*sys.exc_info()))
+        error = sys.exc_info()
+        content = "".join(traceback.format_exception(*error))
         header = f"Ignored exception in event method **{event_method}**"
 
         await self.send_error(content, header)
+        log.error(f"Ignored exception in event method {event_method}", exc_info=error)
 
     async def on_app_command_error(self, interaction: "InteractionType", error: app_commands.AppCommandError):
         """Handle errors in app commands."""
