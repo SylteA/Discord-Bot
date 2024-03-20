@@ -23,7 +23,7 @@ async-lru = "^2.0.4"
 
 [tool.poetry.group.dev.dependencies]
 isort = "^5.12.0"
-black = {extras = ["d"], version = "^23.7.0"}
+black = {extras = ["d"], version = "^24.3.0"}
 flake8 = "^6.0.0"
 pre-commit = "^3.3.2"
 
