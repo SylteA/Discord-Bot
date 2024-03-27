@@ -156,7 +156,7 @@ class DiscordBot(commands.Bot):
                 interaction.id,
                 int(interaction.data["id"]),  # noqa
                 command.qualified_name,
-                interaction.data["options"],
+                interaction.data.get("options", {}),
             )
         except Exception as e:
             await self.on_error("on_app_command_completion", e)
@@ -211,6 +211,7 @@ class DiscordBot(commands.Bot):
             f"in channel **{interaction.channel.name}**"
         )
         invoked_details_document = await paste.create(str(json.dumps(interaction.data, indent=2)))
+
         await self.send_error(content, header, invoked_details_document)
         log.error("Ignoring unhandled exception", exc_info=error)
 
