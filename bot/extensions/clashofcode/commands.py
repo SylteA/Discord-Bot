@@ -18,6 +18,14 @@ class ClashOfCode(commands.GroupCog, group_name="coc"):
         self._create_coc_view = CreateCocView(timeout=None)
         self.bot.add_view(self._create_coc_view)
 
+    async def interaction_check(self, interaction: core.InteractionType):
+        if interaction.channel_id != settings.coc.channel_id:
+            await interaction.response.send_message(
+                "You need to be in the Clash Of Code channel to use this command", ephemeral=True
+            )
+            return False
+        return True
+
     @app_commands.command()
     async def new(self, interaction: core.InteractionType):
         """Create a new coc for the session"""
@@ -70,15 +78,3 @@ class ClashOfCode(commands.GroupCog, group_name="coc"):
             f"Clash session has been closed by {interaction.user.mention}. See you later",
             allowed_mentions=discord.AllowedMentions(users=True),
         )
-
-    async def interaction_check(self, interaction: core.InteractionType):
-        if interaction.channel_id != settings.coc.channel_id:
-            await interaction.response.send_message(
-                "You need to be in the Clash Of Code channel to use this command", ephemeral=True
-            )
-            return False
-        return True
-
-
-async def setup(bot: core.DiscordBot):
-    await bot.add_cog(ClashOfCode(bot=bot))
