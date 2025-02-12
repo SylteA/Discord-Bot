@@ -10,32 +10,13 @@ class ClashOfCodeHelper:
 
 coc_helper = ClashOfCodeHelper()
 coc_client = codingame.Client(is_async=True)
-
+# fmt: off
 languages = [
-    "Bash",
-    "C",
-    "C#",
-    "C++",
-    "Clojure",
-    "D",
-    "Dart",
-    "Go",
-    "Groovy",
-    "Haskell",
-    "Java",
-    "Javascript",
-    "Kotlin",
-    "Lua",
-    "ObjectiveC",
-    "OCaml",
-    "Pascal",
-    "Perl",
-    "PHP",
-    "Python3",
-    "Ruby",
-    "Rust",
-    "Scala",
-    "Swift",
-    "TypeScript",
+    "Bash",  "C",          "C#",     "C++",    "Clojure",
+    "D",     "Dart",       "Go",     "Groovy", "Haskell",
+    "Java",  "Javascript", "Kotlin", "Lua",    "ObjectiveC",
+    "OCaml", "Pascal",     "Perl",   "PHP",    "Python3",
+    "Ruby",  "Rust",       "Scala",  "Swift",  "TypeScript",
 ]
+# fmt: on
 modes = ["FASTEST", "SHORTEST", "REVERSE"]
