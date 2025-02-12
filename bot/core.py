@@ -1,21 +1,29 @@
 import datetime
+import json
 import logging
 import os
+import sys
 import traceback
+from typing import Any
 
 import discord
 from discord import app_commands
 from discord.ext import commands, tasks
 
 from bot.config import settings
+from bot.models import GuildConfig, Model
 from bot.services import http, paste
+from bot.services.paste import Document
 from utils.errors import IgnorableException
+from utils.health import update_health
 from utils.time import human_timedelta
 
 log = logging.getLogger(__name__)
 
 os.environ.update(JISHAKU_NO_UNDERSCORE="True", JISHAKU_NO_DM_TRACEBACK="True", JISHAKU_HIDE="True")
 ALLOWED_MENTIONS = discord.AllowedMentions(everyone=False, roles=False, users=False)
+
+RUNNING_IN_KUBERNETES = os.environ.get("KUBERNETES_SERVICE_HOST") is not None
 
 
 class DiscordBot(commands.Bot):
@@ -45,8 +53,10 @@ class DiscordBot(commands.Bot):
 
     async def setup_hook(self) -> None:
         """Connect DB before bot is ready to assure that no calls are made before its ready"""
-        self.loop.create_task(self.when_online())
+        _ = self.loop.create_task(self.when_online())
         self.presence.start()
+
+        update_health("running", True)
 
         self.tree.on_error = self.on_app_command_error
 
@@ -75,6 +85,34 @@ class DiscordBot(commands.Bot):
         log.info("Commands synced.")
         log.info(f"Successfully logged in as {self.user}. In {len(self.guilds)} guilds")
 
+    @staticmethod
+    async def on_disconnect():
+        """Called when the"""
+        update_health("ready", False)
+
+    async def on_ready(self):
+        """Called when all guilds are cached."""
+        update_health("ready", True)
+
+        query = "SELECT COALESCE(array_agg(guild_id), '{}') FROM guild_configs"
+
+        stored_ids = await GuildConfig.fetchval(query)
+        missing_ids = [(guild.id,) for guild in self.guilds if guild.id not in stored_ids]
+
+        if missing_ids:
+            query = "INSERT INTO guild_configs (guild_id) VALUES ($1)"
+            await GuildConfig.pool.executemany(query, missing_ids)
+            log.info(f"Inserted new config for {len(missing_ids)} guilds.")
+
+    async def on_guild_join(self, guild: discord.Guild):
+        log.info(f"{self.user.name} has been added to a new guild: {guild.name}")
+
+        query = """INSERT INTO guild_configs (guild_id)
+                        VALUES ($1)
+                   ON CONFLICT (guild_id)
+                            DO NOTHING"""
+        await GuildConfig.execute(query, guild.id)
+
     async def on_message(self, message):
         await self.wait_until_ready()
 
@@ -94,27 +132,38 @@ class DiscordBot(commands.Bot):
         log.info(f"{ctx.author} invoking command: {ctx.clean_prefix}{ctx.command.qualified_name}")
         await self.invoke(ctx)
 
-    async def on_app_command_error(self, interaction: "InteractionType", error: app_commands.AppCommandError):
-        """Handle errors in app commands."""
+    async def on_app_command_completion(
+        self, interaction: discord.Interaction, command: app_commands.Command | app_commands.ContextMenu
+    ):
+        try:
+            if isinstance(command, app_commands.ContextMenu):
+                log.warning("ContextMenu finished but not handled by stats.")
+                return
 
-        if isinstance(error.__cause__, IgnorableException):
+            log.info(f"{interaction.user.name} used command {command.qualified_name} -> {interaction.data}")
+
+            query = """
+                INSERT INTO command_usage
+                (user_id, guild_id, channel_id, interaction_id, command_id, command_name, options)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7)
+            """
+
+            await Model.pool.execute(
+                query,
+                interaction.user.id,
+                interaction.guild_id,
+                interaction.channel_id,
+                interaction.id,
+                int(interaction.data["id"]),  # noqa
+                command.qualified_name,
+                interaction.data.get("options", {}),
+            )
+        except Exception as e:
+            await self.on_error("on_app_command_completion", e)
+
+    async def send_error(self, content: str, header: str, invoked_details_document: Document = None) -> None:
+        if not RUNNING_IN_KUBERNETES:
             return
-
-        if interaction.command is None:
-            log.error("Ignoring exception in command tree.", exc_info=error)
-            return
-
-        if isinstance(error, app_commands.CheckFailure):
-            log.info(f"{interaction.user} failed to use the command {interaction.command.qualified_name}")
-            return
-
-        await self.publish_error(interaction=interaction, error=error)
-        log.error("Ignoring unhandled exception", exc_info=error)
-
-    async def publish_error(self, interaction: "InteractionType", error: app_commands.AppCommandError) -> None:
-        """Publishes the error to our error webhook."""
-        content = "\n".join(traceback.format_exception(type(error), error, error.__traceback__))
-        header = f"Ignored exception in command **{interaction.command.qualified_name}**"
 
         def wrap(code: str) -> str:
             code = code.replace("`", "\u200b`")
@@ -129,12 +178,47 @@ class DiscordBot(commands.Bot):
         embed = discord.Embed(
             title=header, description=content, color=discord.Color.red(), timestamp=discord.utils.utcnow()
         )
+        if invoked_details_document:
+            embed.add_field(name="Command Details: ", value=invoked_details_document.url, inline=True)
+
         await self.error_webhook.send(embed=embed)
+
+    async def on_error(self, event_method: str, *args: Any, **kwargs: Any) -> None:
+        error = sys.exc_info()
+        content = "".join(traceback.format_exception(*error))
+        header = f"Ignored exception in event method **{event_method}**"
+
+        await self.send_error(content, header)
+        log.error(f"Ignored exception in event method {event_method}", exc_info=error)
+
+    async def on_app_command_error(self, interaction: "InteractionType", error: app_commands.AppCommandError):
+        """Handle errors in app commands."""
+
+        if isinstance(error.__cause__, IgnorableException):
+            return
+
+        if interaction.command is None:
+            log.error("Ignoring exception in command tree.", exc_info=error)
+            return
+
+        if isinstance(error, app_commands.CheckFailure):
+            log.info(f"{interaction.user} failed to use the command {interaction.command.qualified_name}")
+            return
+
+        content = "".join(traceback.format_exception(type(error), error, error.__traceback__))
+        header = (
+            f"Ignored exception in command **{interaction.command.qualified_name}** Invoked by **{interaction.user}** "
+            f"in channel **{interaction.channel.name}**"
+        )
+        invoked_details_document = await paste.create(str(json.dumps(interaction.data, indent=2)))
+
+        await self.send_error(content, header, invoked_details_document)
+        log.error("Ignoring unhandled exception", exc_info=error)
 
     @tasks.loop(hours=24)
     async def presence(self):
         await self.wait_until_ready()
-        await self.change_presence(activity=discord.Game(name='use the prefix "tim."'))
+        await self.change_presence(activity=discord.Game(name="Now using slash commands!"))
 
 
 InteractionType = discord.Interaction[DiscordBot]

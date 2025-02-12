@@ -1,4 +1,6 @@
-from .gconfig import FilterConfig
+from .command_usage import CommandUsage
+from .custom_roles import CustomRole
+from .guild_configs import GuildConfig
 from .levelling_ignored_channels import IgnoredChannel
 from .levelling_roles import LevellingRole
 from .levelling_users import LevellingUser
@@ -11,13 +13,15 @@ from .user import User
 
 __all__ = (
     Model,
-    FilterConfig,
     Message,
     Rep,
     Tag,
     User,
+    CommandUsage,
     LevellingUser,
     PersistedRole,
     IgnoredChannel,
     LevellingRole,
+    CustomRole,
+    GuildConfig,
 )  # Fixes F401

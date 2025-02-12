@@ -10,6 +10,7 @@ log = logging.getLogger(__name__)
 class AoC(BaseModel):
     channel_id: int
     role_id: int
+    leaderboard_code: str
     session_cookie: str
 
 
@@ -57,13 +58,6 @@ class Moderation(BaseModel):
         return json.loads(v)
 
 
-class Notification(BaseModel):
-    api_key: str  # Youtube Data AP - API Key: https://developers.google.com/youtub/docs
-    channel_id: int
-    role_id: int
-    webhook: str
-
-
 class Postgres(BaseModel):
     max_pool_connections: int
     min_pool_connections: int
@@ -85,17 +79,18 @@ class Tags(BaseModel):
     required_role_id: int  # [lvl 30] Engineer
 
 
-class Timathon(BaseModel):
-    channel_id: int
-    participant_role_id: int
-
-
 class Hastebin(BaseModel):
     base_url: str
 
 
 class ErrorHandling(BaseModel):
     webhook_url: str
+
+
+class YouTube(BaseModel):
+    channel_id: str
+    text_channel_id: int
+    role_id: int
 
 
 class Settings(BaseSettings):
@@ -106,12 +101,11 @@ class Settings(BaseSettings):
     postgres: Postgres
     guild: Guild
     moderation: Moderation
-    notification: Notification  # For tim's YouTube channel (currently unused)
     reaction_roles: ReactionRoles
     tags: Tags
-    timathon: Timathon
     hastebin: Hastebin
     errors: ErrorHandling
+    youtube: YouTube
 
     class Config:
         env_file = ".env"

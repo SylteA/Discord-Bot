@@ -1,6 +1,6 @@
 import asyncio
+import datetime
 import logging
-import random
 from io import BytesIO
 
 import discord
@@ -10,7 +10,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 from bot import core
 from bot.extensions.levelling import utils
-from bot.models import IgnoredChannel, LevellingRole, LevellingUser
+from bot.models import GuildConfig, IgnoredChannel, LevellingRole, LevellingUser
 from bot.models.custom_roles import CustomRole
 from cli import ROOT_DIR
 
@@ -45,12 +45,18 @@ class Levelling(commands.Cog):
         default_permissions=discord.Permissions(administrator=True),
     )
 
+    config = app_commands.Group(
+        parent=admin_commands,
+        name="config",
+        description="Manage the levelling configuration(XP Boost, min/max xp awarded)",
+        default_permissions=discord.Permissions(administrator=True),
+    )
+
     def __init__(self, bot: core.DiscordBot):
         self.bot = bot
 
         self.ignored_channels: dict[int, list[int]] = {}
         self.required_xp = [0]
-        self.xp_boost = 1
 
         # Initializing fonts
         font = f"{ROOT_DIR.as_posix()}/assets/ABeeZee-Regular.otf"
@@ -89,32 +95,38 @@ class Levelling(commands.Cog):
                 return
 
         query = """
-            INSERT INTO levelling_users (guild_id, user_id, total_xp)
-                 VALUES ($1, $2, $3)
-            ON CONFLICT (guild_id, user_id)
-              DO UPDATE SET
-               total_xp = levelling_users.total_xp + $3,
-               last_msg = create_snowflake()
-                  WHERE levelling_users.guild_id = $1
-                    AND levelling_users.user_id = $2
-                    AND snowflake_to_timestamp(levelling_users.last_msg) < NOW() - INTERVAL '1 min'
-              RETURNING *;
+               WITH generate_xp
+                 AS (SELECT floor( random() * (gc.max_xp - gc.min_xp) + gc.min_xp ) * gc.xp_boost as random_xp
+                       FROM guild_configs  gc
+                      WHERE gc.guild_id = $1)
+        INSERT INTO levelling_users (guild_id, user_id, total_xp)
+             VALUES ($1, $2, (SELECT random_xp FROM generate_xp))
+        ON CONFLICT (guild_id, user_id)
+          DO UPDATE SET
+           total_xp = levelling_users.total_xp + (SELECT random_xp FROM generate_xp),
+           last_msg = create_snowflake()
+              WHERE levelling_users.guild_id = $1
+                AND levelling_users.user_id = $2
+                AND snowflake_to_timestamp(levelling_users.last_msg) < NOW() - INTERVAL '1 min'
+          RETURNING *, (select random_xp from generate_xp) AS random_xp;
         """
 
-        # TODO: Allow each guild to set custom xp range and boost.
-        xp = random.randint(5, 25) * self.xp_boost
-        after = await LevellingUser.fetchrow(query, message.guild.id, message.author.id, xp)
+        data = await LevellingUser.fetchrow(query, message.guild.id, message.author.id, convert=False)
 
-        if after is None:
+        if data is None:
             return  # Last message was less than a minute ago.
 
-        before = after.copy(update={"total_xp": after.total_xp - xp})
+        random_xp = dict(data).pop("random_xp")
+        after = LevellingUser.parse_obj(data)
+        before = after.copy(update={"total_xp": after.total_xp - random_xp})
 
         self.bot.dispatch("xp_update", before=before, after=after)
 
     def generate_rank_image(self, username: str, avatar_bytes: bytes, rank: int, level: int, xp: int, required_xp: int):
         img = Image.new("RGBA", (1000, 240))
         logo = Image.open(BytesIO(avatar_bytes)).resize((200, 200))
+        if logo.mode != "RGBA":
+            logo = logo.convert("RGBA")
 
         # Paste the default background image onto the new image
         img.paste(self.background, (0, 0))
@@ -281,8 +293,13 @@ class Levelling(commands.Cog):
 
             return await interaction.response.send_message("That user is not ranked yet...", ephemeral=True)
 
+        await interaction.response.defer()
+
         # Fetch the user's avatar as bytes
-        avatar_bytes = await member.avatar.with_format("png").read()
+        try:
+            avatar_bytes = await member.display_avatar.with_format("png").read()
+        except discord.errors.NotFound:
+            avatar_bytes = await member.default_avatar.with_format("png").read()
 
         level = utils.get_level_for_xp(record.total_xp)
         prev_xp = utils.get_xp_for_level(level)
@@ -296,7 +313,7 @@ class Levelling(commands.Cog):
         )
 
         # Send result as image
-        await interaction.response.send_message(
+        await interaction.followup.send(
             file=discord.File(result, filename="rank.png"),
             allowed_mentions=discord.AllowedMentions.none(),
         )
@@ -413,10 +430,7 @@ class Levelling(commands.Cog):
 
         required_xp = utils.get_xp_for_level(level)
 
-        await CustomRole.ensure_exists(
-            guild_id=role.guild.id, role_id=role.id, name=role.name, color=str(role.color.value)
-        )
-
+        await CustomRole.ensure_exists(guild_id=role.guild.id, role_id=role.id, name=role.name, color=role.color.value)
         record = await LevellingRole.fetchrow(query, role.guild.id, role.id, required_xp)
 
         if record is None:
@@ -453,7 +467,7 @@ class Levelling(commands.Cog):
 
         rewards = await LevellingRole.fetch(query, interaction.guild.id)
 
-        # TODO: This command needs to be fixed, the max role name length needs to be dynamic
+        # TODO: This table needs to be fixed, the max role name length needs to be dynamic
         response = "| {:<10} | {:<5} |".format("Role Name", "Level")
         response += "\n|" + "-" * 12 + "|" + "-" * 7 + "|"
 
@@ -466,6 +480,72 @@ class Levelling(commands.Cog):
             response += "\n| {:<10} | {:<5} |".format(role_name, level)
 
         return await interaction.response.send_message(f"```\n{response}\n```\n")
+
+    @config.command(name="xp_boost")
+    async def xp_boost(self, interaction: discord.Interaction, multiplier: int):
+        """Change the xp multiplier"""
+        if multiplier < 0 or multiplier > 10:
+            return await interaction.response.send_message("XP multiply range should be between 1 and 10.")
+
+        query = """
+                UPDATE guild_configs
+                   SET xp_boost = $1
+                 WHERE guild_id = $2
+                """
+        await GuildConfig.execute(query, multiplier, interaction.guild.id)
+        return await interaction.response.send_message(f"XP multiplied by {multiplier}x.")
+
+    @config.command(name="min_xp")
+    async def min_xp(self, interaction: discord.Interaction, xp: int):
+        """Set Min XP gained per message"""
+        if xp < 0 or xp > 100:
+            return await interaction.response.send_message("Min XP range should be between 1 and 100")
+        query = """
+            UPDATE guild_configs
+               SET min_xp = $1
+             WHERE guild_id = $2 AND max_xp >= $1
+                """
+        data = await GuildConfig.execute(query, xp, interaction.guild.id)
+        if data == "UPDATE 1":
+            return await interaction.response.send_message(f"Min XP gained each message has been updated to {xp}.")
+        return await interaction.response.send_message("Min XP can not be greater than max XP.")
+
+    @config.command(name="max_xp")
+    async def max_xp(self, interaction: discord.Interaction, xp: int):
+        """Set Max XP gained per message"""
+        if xp < 0 or xp > 100:
+            return await interaction.response.send_message("Max XP range should be between 1 and 100")
+        query = """
+                   UPDATE guild_configs
+                      SET max_xp = $1
+                    WHERE guild_id = $2 AND min_xp < $1
+                       """
+        data = await GuildConfig.execute(query, xp, interaction.guild.id)
+        if data == "UPDATE 1":
+            return await interaction.response.send_message(f"Max XP gained each message has been updated to {xp}.")
+        return await interaction.response.send_message("Max XP can not be less than min XP.")
+
+    @config.command(name="show")
+    async def show(self, interaction: discord.Interaction):
+        """Return the current levelling configuration"""
+        query = """
+            SELECT * FROM guild_configs
+             WHERE guild_id = $1
+             """
+        data = await GuildConfig.fetchrow(query, interaction.guild.id)
+        embed = discord.Embed(
+            title=f"Server Information - {interaction.guild.name}",
+            description="Levelling Configuration",
+            color=discord.Color.blue(),
+            timestamp=datetime.datetime.utcnow(),
+        )
+
+        embed.set_thumbnail(url=interaction.guild.icon.url)
+        embed.add_field(name="Minimum XP", value=data.min_xp)
+        embed.add_field(name="Maximum XP", value=data.max_xp)
+        embed.add_field(name="XP Boost", value=data.xp_boost)
+
+        return await interaction.response.send_message(embed=embed)
 
 
 async def setup(bot: core.DiscordBot):

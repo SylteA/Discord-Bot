@@ -36,7 +36,9 @@ class CreateCocView(ui.View):
     async def select_languages(self, interaction: core.InteractionType, _select: ui.Select):
         await interaction.response.defer()
 
-    @discord.ui.button(label="Select All", style=discord.ButtonStyle.blurple, emoji="🟢", custom_id=SELECT_ALL_CUSTOM_ID)
+    @discord.ui.button(
+        label="Select All", style=discord.ButtonStyle.blurple, emoji="🟢", custom_id=SELECT_ALL_CUSTOM_ID
+    )
     async def select_all_languages(self, interaction: core.InteractionType, _button: ui.Button):
         modes_select = discord.utils.get(self.children, custom_id=self.MODES_CUSTOM_ID)
         for option in modes_select.options:

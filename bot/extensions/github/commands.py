@@ -37,10 +37,10 @@ class GitHub(commands.Cog):
         title = f"# Source code for command: [/{command.qualified_name}](<{self.get_github_url(callback)}>)"
         response = f"{title}\n```py\n{first_page}"
 
-        if len(source) > max_page_size:
-            response += "\n...  # Result was truncated, view github for full source."
-
         response += "\n```"
+
+        if len(source) > max_page_size:
+            response += "\n### Result was truncated, view github for full source."
 
         return await interaction.response.send_message(response)
 
