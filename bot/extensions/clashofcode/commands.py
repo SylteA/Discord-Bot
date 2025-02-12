@@ -10,6 +10,7 @@ from bot.extensions.clashofcode.utils import coc_client, coc_helper
 from bot.extensions.clashofcode.views import CreateCocView
 
 
+@app_commands.default_permissions(administrator=True)
 class ClashOfCode(commands.GroupCog, group_name="coc"):
     def __init__(self, bot: core.DiscordBot):
         self.bot = bot
@@ -18,7 +19,6 @@ class ClashOfCode(commands.GroupCog, group_name="coc"):
         self.bot.add_view(self._create_coc_view)
 
     @app_commands.command()
-    @app_commands.default_permissions()
     async def new(self, interaction: core.InteractionType):
         """Create a new coc for the session"""
 
@@ -29,7 +29,6 @@ class ClashOfCode(commands.GroupCog, group_name="coc"):
         )
 
     @app_commands.command()
-    @app_commands.default_permissions()
     async def start(self, interaction: core.InteractionType):
         """Starts the current clash"""
 
@@ -57,7 +56,6 @@ class ClashOfCode(commands.GroupCog, group_name="coc"):
         )
 
     @app_commands.command()
-    @app_commands.default_permissions()
     async def end(self, interaction: core.InteractionType):
         """Ends the current coc session"""
 
