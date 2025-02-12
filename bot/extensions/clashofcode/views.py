@@ -86,7 +86,7 @@ class CreateCocView(ui.View):
         if not selected_modes:
             selected_modes = modes
 
-        await interaction.response.defer()
+        await interaction.response.defer(thinking=True)
         await interaction.delete_original_response()
 
         data = await coc_client.request(
@@ -145,7 +145,7 @@ class CreateCocView(ui.View):
                     [
                         test_session_handle,
                         {
-                            "code": "",
+                            "code": "Ignore me, I'm just a bot.",
                             "programmingLanguageId": language,
                         },
                         None,
