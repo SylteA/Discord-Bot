@@ -1,3 +1,5 @@
+import logging
+
 import discord
 from aiohttp import ContentTypeError
 from codingame.http import HTTPError
@@ -8,6 +10,8 @@ from bot import core
 from bot.config import settings
 from bot.extensions.clashofcode.utils import coc_client, coc_helper
 from bot.extensions.clashofcode.views import CreateCocView
+
+log = logging.getLogger(__name__)
 
 
 @app_commands.default_permissions(administrator=True)
@@ -53,7 +57,8 @@ class ClashOfCode(commands.GroupCog, group_name="coc"):
             await coc_client.request(
                 "ClashOfCode", "startClashByHandle", [coc_client.codingamer.id, coc_helper.clash.public_handle]
             )
-        except HTTPError:
+        except HTTPError as e:
+            log.info("Handled error in /coc start : %s\n%s", e.reason, e.data)
             return await interaction.response.send_message(
                 "An error occurred while starting the clash. Please try again later", ephemeral=True
             )
