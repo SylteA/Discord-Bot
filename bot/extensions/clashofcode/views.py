@@ -91,16 +91,17 @@ class CreateCocView(ui.View):
         await interaction.response.defer(thinking=True)
         await interaction.delete_original_response()
 
+        # A session already exists, and it was recently created
+        if coc_helper.session and coc_helper.last_clash + 60 * 5 > int(time.time()):
+            await interaction.followup.send("A session has already been made!", ephemeral=True)
+            return
+
         data = await coc_client.request(
             "ClashOfCode",
             "createPrivateClash",
             [coc_client.codingamer.id, selected_languages, selected_modes],
         )
         handle = data["publicHandle"]
-
-        # Check if it has been too long since the last clash
-        if coc_helper.session and coc_helper.last_clash + 1800 < int(time.time()):
-            coc_helper.session = False
 
         await interaction.channel.send(
             (
@@ -118,6 +119,7 @@ class CreateCocView(ui.View):
 
         clash = await coc_client.get_clash_of_code(handle)
         coc_helper.clash = clash
+
         while not clash.started:
             await asyncio.sleep(10)  # wait 10s to avoid flooding the API
             clash = await coc_client.get_clash_of_code(handle)
@@ -163,6 +165,8 @@ class CreateCocView(ui.View):
             if len(clash.players) != len(players):
                 players = [player.pseudo for player in clash.players]
                 await start_message.edit(embed=em(clash.mode, ", ".join(players)))
+
+        coc_helper.session = False
 
         embed = discord.Embed(
             title="**Clash finished**",
