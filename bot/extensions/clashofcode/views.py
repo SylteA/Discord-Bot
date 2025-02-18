@@ -124,7 +124,7 @@ class CreateCocView(ui.View):
             await asyncio.sleep(10)  # wait 10s to avoid flooding the API
             clash = await coc_client.get_clash_of_code(handle)
 
-        players = [player.pseudo for player in clash.players]
+        players = [player.pseudo for player in clash.players if player.id != coc_client.codingamer.id]
         start_message = await interaction.channel.send(embed=em(clash.mode, ", ".join(players)))
 
         test_session_handle = None
@@ -162,8 +162,8 @@ class CreateCocView(ui.View):
             await asyncio.sleep(10)  # wait 10s to avoid flooding the API
             clash = await coc_client.get_clash_of_code(handle)
 
-            if len(clash.players) != len(players):
-                players = [player.pseudo for player in clash.players]
+            if len(clash.players) - 1 != len(players):  # -1 for the bot
+                players = [player.pseudo for player in clash.players if player.id != coc_client.codingamer.id]
                 await start_message.edit(embed=em(clash.mode, ", ".join(players)))
 
         coc_helper.session = False
@@ -177,6 +177,7 @@ class CreateCocView(ui.View):
                     + (f"Code length: {p.code_length}, " if clash.mode == "SHORTEST" else "")
                     + f"Score: {p.score}%, Time: {p.duration.seconds // 60}:{p.duration.seconds % 60:02})"
                     for p in sorted(clash.players, key=lambda p: p.rank)
+                    if p.id != coc_client.codingamer.id
                 ]
             ),
         )
