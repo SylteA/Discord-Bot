@@ -3,6 +3,7 @@ import logging
 import time
 
 import discord
+from aiohttp import ContentTypeError
 from codingame.http import HTTPError
 from discord import ui
 
@@ -142,21 +143,29 @@ class CreateCocView(ui.View):
                 language = "Python3"
 
             try:
-                # Submit an empty solution to not hold up the clash once everyone has submitted
+                # Submit a solution to not hold up the clash once everyone has submitted
                 await coc_client.request(
                     "TestSession",
                     "submit",
                     [
                         test_session_handle,
                         {
-                            "code": "Ignore me, I'm just a bot.",
+                            "code": "Ignore me, I am just a bot.",
                             "programmingLanguageId": language,
                         },
                         None,
                     ],
                 )
+                await coc_client.request(
+                    "ClashOfCode",
+                    "shareCodinGamerSolutionByHandle",
+                    [coc_client.codingamer.id, handle],
+                )
             except HTTPError as e:
                 log.error(f"Failed to submit solution to {handle}:", exc_info=e)
+            except ContentTypeError:
+                # Issue with the codingame library always assuming the response is JSON
+                pass
 
         while not clash.finished:
             await asyncio.sleep(10)  # wait 10s to avoid flooding the API
