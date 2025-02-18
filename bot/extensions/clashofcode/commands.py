@@ -60,7 +60,7 @@ class ClashOfCode(commands.GroupCog, group_name="coc"):
 
         await interaction.response.send_message(
             "Clash started!",
-            ephemeral=True,
+            ephemeral=False,
         )
 
     @app_commands.command()
