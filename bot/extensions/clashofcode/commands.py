@@ -18,6 +18,9 @@ class ClashOfCode(commands.GroupCog, group_name="coc"):
         self._create_coc_view = CreateCocView(timeout=None)
         self.bot.add_view(self._create_coc_view)
 
+    async def cog_load(self):
+        await coc_client.login(remember_me_cookie=settings.coc.session_cookie)
+
     async def interaction_check(self, interaction: core.InteractionType):
         if interaction.channel_id != settings.coc.channel_id:
             await interaction.response.send_message(
