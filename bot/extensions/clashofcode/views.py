@@ -104,7 +104,7 @@ class CreateCocView(ui.View):
         )
         handle = data["publicHandle"]
 
-        await interaction.channel.send(
+        msg = await interaction.channel.send(
             (
                 f"**Hey, {interaction.user.mention} is hosting a Clash Of Code game!**\n"
                 f"Mode{'s' if len(selected_modes) > 1 else ''}: {', '.join(selected_modes).title()}\n"
@@ -121,9 +121,29 @@ class CreateCocView(ui.View):
         clash = await coc_client.get_clash_of_code(handle)
         coc_helper.clash = clash
 
-        while not clash.started:
+        tries = 45
+        while not clash.started and tries > 0:
             await asyncio.sleep(10)  # wait 10s to avoid flooding the API
             clash = await coc_client.get_clash_of_code(handle)
+            tries -= 1
+
+        if not clash.started:
+            coc_helper.session = False
+            await msg.reply("Canceling clash due to lack of participants.")
+
+            try:
+                await coc_client.request(
+                    "ClashOfCode",
+                    "leaveClashByHandle",
+                    [coc_client.codingamer.id, handle],
+                )
+            except HTTPError as e:
+                log.error(f"Failed to leave clash: {handle}", exc_info=e)
+            except ContentTypeError:
+                # Issue with the codingame library always assuming the response is JSON
+                pass
+
+            return
 
         players = [player.pseudo for player in clash.players if player.id != coc_client.codingamer.id]
         start_message = await interaction.channel.send(embed=em(clash.mode, ", ".join(players)))
@@ -191,4 +211,4 @@ class CreateCocView(ui.View):
             ),
         )
 
-        await interaction.channel.send(embed=embed)
+        await msg.reply(embed=embed)
