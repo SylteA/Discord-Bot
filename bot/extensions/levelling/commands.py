@@ -293,6 +293,8 @@ class Levelling(commands.Cog):
 
             return await interaction.response.send_message("That user is not ranked yet...", ephemeral=True)
 
+        await interaction.response.defer()
+
         # Fetch the user's avatar as bytes
         try:
             avatar_bytes = await member.display_avatar.with_format("png").read()
@@ -311,7 +313,7 @@ class Levelling(commands.Cog):
         )
 
         # Send result as image
-        await interaction.response.send_message(
+        await interaction.followup.send(
             file=discord.File(result, filename="rank.png"),
             allowed_mentions=discord.AllowedMentions.none(),
         )

@@ -141,6 +141,7 @@ async def main(ctx):
         "bot.extensions.persistent_roles",
         "bot.extensions.custom_roles",
         "bot.extensions.polls",
+        "bot.extensions.clashofcode",
         "bot.extensions.readthedocs",
         "bot.extensions.suggestions",
         "bot.extensions.tags",
