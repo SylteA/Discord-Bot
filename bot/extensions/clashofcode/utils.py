@@ -6,7 +6,12 @@ class ClashOfCodeHelper:
         self.session = False
         self.clash = None
         self.last_clash = 0
-
+        self.host: discord.Member | None = None
+        self.session_role: discord.Role | None = None
+        self.message: discord.Message | None = None
+        self.languages: list[str] | None = None
+        self.modes: list[str] | None = None
+        self.handle: str | None = None
 
 coc_helper = ClashOfCodeHelper()
 coc_client = codingame.Client(is_async=True)
