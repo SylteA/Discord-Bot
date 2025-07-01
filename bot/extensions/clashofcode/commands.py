@@ -186,6 +186,38 @@ class ClashOfCode(commands.GroupCog, group_name="coc"):
             ephemeral=True,
         )
 
+    @app_commands.command()
+    @app_commands.checks.cooldown(1, 10.0)
+    async def ping(self, interaction: core.InteractionType):
+        """Assigns/Removes coc notification role."""
+
+        ping_role = interaction.guild.get_role(settings.coc.role_id)
+
+        if not ping_role:
+            return await interaction.response.send_message("The CoC notification role was not found.")
+
+        await interaction.response.defer(ephemeral=True)
+
+        if ping_role in interaction.user.roles:
+            try:
+                await interaction.user.remove_roles(ping_role)
+                await interaction.followup.send(
+                    "Clash of Code session notifications **disabled**.\n"
+                    "The CoC role has been removed — you will no longer receive session alerts.",
+                    ephemeral=True,
+                )
+            except discord.HTTPException as e:
+                log.error(f"Failed to remove role from {interaction.user.display_name}", exc_info=e)
+        else:
+            try:
+                await interaction.user.add_roles(ping_role)
+                await interaction.followup.send(
+                    "Clash of Code session notifications **enabled**.\nYou've been assigned the CoC role.",
+                    ephemeral=True,
+                )
+            except discord.HTTPException as e:
+                log.error(f"Failed to add role to {interaction.user.display_name}", exc_info=e)
+
     async def cog_app_command_error(self, interaction: core.InteractionType, error: app_commands.AppCommandError):
         if isinstance(error, app_commands.CommandOnCooldown):
             seconds = int(error.retry_after)
