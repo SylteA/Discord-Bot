@@ -7,10 +7,3 @@ CREATE TABLE IF NOT EXISTS guild_configs
     custom_role_log_channel_id  BIGINT,
     divider_role_id             BIGINT
 );
-
-
-ALTER TABLE migrations ALTER COLUMN id SET NOT NULL;
-ALTER TABLE migrations ALTER COLUMN version SET NOT NULL;
-ALTER TABLE migrations ALTER COLUMN direction SET NOT NULL;
-ALTER TABLE migrations ALTER COLUMN name SET NOT NULL;
-ALTER TABLE migrations ALTER COLUMN timestamp SET NOT NULL;
