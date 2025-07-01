@@ -1,18 +1,16 @@
-import asyncio
 import logging
-import time
 
 import discord
 from aiohttp import ContentTypeError
 from codingame.http import HTTPError
-from discord import app_commands, ui
+from discord import app_commands
 from discord.app_commands import Cooldown
 from discord.ext import commands
 
 from bot import core
 from bot.config import settings
 from bot.extensions.clashofcode.utils import coc_client, coc_helper
-from bot.extensions.clashofcode.views import CocMessageView, CreateCocView, em
+from bot.extensions.clashofcode.views import CocMessageView
 
 log = logging.getLogger(__name__)
 
@@ -72,7 +70,8 @@ class ClashOfCode(commands.GroupCog, group_name="coc"):
         msg = await interaction.channel.send(
             (
                 f"**Hey, {ping_role.mention}, {interaction.user.mention} is hosting a Clash Of Code session!**\n"
-                f"The host can use the 'Create Game' button to start a clash. Everyone else can join the session to get pinged!"
+                f"The host can use the 'Create Game' button to start a clash. "
+                f"Everyone else can join the session to get pinged!"
             ),
             allowed_mentions=discord.AllowedMentions(roles=True, users=True),
             view=view,
