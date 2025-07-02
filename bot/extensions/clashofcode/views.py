@@ -5,7 +5,6 @@ import time
 import discord
 from aiohttp import ContentTypeError
 from codingame.http import HTTPError
-from discord import ui
 
 from bot import core
 from bot.config import settings
@@ -21,7 +20,50 @@ def em(mode: str, players: str):
     return embed
 
 
-class CreateCocView(ui.View):
+async def resolve_member(guild: discord.Guild, name: str) -> discord.Member | None:
+    """Case-insensitive search for a member in a guild by name or display name."""
+    return discord.utils.find(
+        lambda m: m.display_name.lower() == name.lower() or m.name.lower() == name.lower(), guild.members
+    )
+
+
+class CocMessageView(discord.ui.View):
+    JOIN_LEAVE_CUSTOM_ID = "extensions:clashofcode:join_leave"
+
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(
+        label="Join/Leave Session",
+        style=discord.ButtonStyle.primary,
+        custom_id=JOIN_LEAVE_CUSTOM_ID,
+    )
+    async def join_leave_session(self, interaction: core.InteractionType, button: discord.ui.Button):
+        if not coc_helper.session:
+            button.disabled = True
+            await interaction.response.edit_message(view=self)
+            return await interaction.followup.send("This clash of code session has already ended.", ephemeral=True)
+
+        session_role = interaction.guild.get_role(settings.coc.session_role_id)
+        if not session_role:
+            await interaction.response.send_message("The session role could not be found.", ephemeral=True)
+            return
+
+        if session_role in interaction.user.roles:
+            try:
+                await interaction.user.remove_roles(session_role)
+                await interaction.response.send_message("You have left the session.", ephemeral=True)
+            except discord.HTTPException:
+                await interaction.response.send_message("Failed to leave the session.", ephemeral=True)
+        else:
+            try:
+                await interaction.user.add_roles(session_role)
+                await interaction.response.send_message("You have joined the session.", ephemeral=True)
+            except discord.HTTPException:
+                await interaction.response.send_message("Failed to join the session.", ephemeral=True)
+
+
+class CreateCocView(discord.ui.View):
     LANGUAGES_CUSTOM_ID = "extensions:clashofcode:languages"
     MODES_CUSTOM_ID = "extensions:clashofcode:modes"
     SELECT_ALL_CUSTOM_ID = "extensions:clashofcode:select_all"
@@ -34,13 +76,13 @@ class CreateCocView(ui.View):
         options=[discord.SelectOption(label=lang, default=True) for lang in languages],
         max_values=len(languages),
     )
-    async def select_languages(self, interaction: core.InteractionType, _select: ui.Select):
+    async def select_languages(self, interaction: core.InteractionType, _select: discord.ui.Select):
         await interaction.response.defer()
 
     @discord.ui.button(
         label="Select All", style=discord.ButtonStyle.blurple, emoji="🟢", custom_id=SELECT_ALL_CUSTOM_ID
     )
-    async def select_all_languages(self, interaction: core.InteractionType, _button: ui.Button):
+    async def select_all_languages(self, interaction: core.InteractionType, _button: discord.ui.Button):
         modes_select = discord.utils.get(self.children, custom_id=self.MODES_CUSTOM_ID)
         for option in modes_select.options:
             option.default = not modes_select.values or option.label in modes_select.values
@@ -53,7 +95,7 @@ class CreateCocView(ui.View):
     @discord.ui.button(
         label="Deselect All", style=discord.ButtonStyle.blurple, emoji="🔴", custom_id=DESELECT_ALL_CUSTOM_ID
     )
-    async def deselect_all_languages(self, interaction: core.InteractionType, _button: ui.Button):
+    async def deselect_all_languages(self, interaction: core.InteractionType, _button: discord.ui.Button):
         languages_select = discord.utils.get(self.children, custom_id=self.LANGUAGES_CUSTOM_ID)
         modes_select = discord.utils.get(self.children, custom_id=self.MODES_CUSTOM_ID)
         for option in languages_select.options:
@@ -74,13 +116,19 @@ class CreateCocView(ui.View):
         options=[discord.SelectOption(label=mode, default=True) for mode in modes],
         max_values=len(modes),
     )
-    async def select_modes(self, interaction: core.InteractionType, _select: ui.Select):
+    async def select_modes(self, interaction: core.InteractionType, _select: discord.ui.Select):
         await interaction.response.defer()
 
     @discord.ui.button(
-        label="Create Clash of Code", style=discord.ButtonStyle.green, emoji="📝", custom_id=CREATE_CUSTOM_ID, row=3
+        label="Create Game", style=discord.ButtonStyle.green, emoji="📝", custom_id=CREATE_CUSTOM_ID, row=3
     )
-    async def create_coc(self, interaction: core.InteractionType, _button: ui.Button):
+    async def create_coc(self, interaction: core.InteractionType, _button: discord.ui.Button):
+        is_staff = settings.moderation.staff_role_id in [role.id for role in interaction.user.roles]
+        if interaction.user != coc_helper.host and not is_staff:
+            return await interaction.response.send_message(
+                "Only the session host or a staff member can create a game.", ephemeral=True
+            )
+
         selected_languages = discord.utils.get(self.children, custom_id=self.LANGUAGES_CUSTOM_ID).values
         selected_modes = discord.utils.get(self.children, custom_id=self.MODES_CUSTOM_ID).values
 
@@ -93,9 +141,8 @@ class CreateCocView(ui.View):
         await interaction.delete_original_response()
 
         # A session already exists, and it was recently created
-        if coc_helper.session and coc_helper.last_clash + 60 * 5 > int(time.time()):
-            await interaction.followup.send("A session has already been made!", ephemeral=True)
-            return
+        if coc_helper.handle and coc_helper.last_clash + 60 * 5 > int(time.time()):
+            return await interaction.followup.send("A game has already been created!", ephemeral=True)
 
         data = await coc_client.request(
             "ClashOfCode",
@@ -103,6 +150,7 @@ class CreateCocView(ui.View):
             [coc_client.codingamer.id, selected_languages, selected_modes],
         )
         handle = data["publicHandle"]
+        coc_helper.handle = handle
 
         msg = await interaction.channel.send(
             (
@@ -110,12 +158,11 @@ class CreateCocView(ui.View):
                 f"Mode{'s' if len(selected_modes) > 1 else ''}: {', '.join(selected_modes).title()}\n"
                 f"Programming languages: {', '.join(selected_languages) if selected_languages else 'All'}\n"
                 f"Join here: <https://www.codingame.com/clashofcode/clash/{handle}>\n"
-                f"{f'<@&{settings.coc.role_id}>' if not coc_helper.session else ''}"
+                f"<@&{settings.coc.session_role_id}>"
             ),
             allowed_mentions=discord.AllowedMentions(users=True, roles=True),
         )
 
-        coc_helper.session = True
         coc_helper.last_clash = time.time()
 
         clash = await coc_client.get_clash_of_code(handle)
@@ -128,7 +175,8 @@ class CreateCocView(ui.View):
             tries -= 1
 
         if not clash.started:
-            coc_helper.session = False
+            coc_helper.clash = None
+            coc_helper.handle = None
             await msg.reply("Canceling clash due to lack of participants.")
 
             try:
@@ -195,7 +243,8 @@ class CreateCocView(ui.View):
                 players = [player.pseudo for player in clash.players if player.id != coc_client.codingamer.id]
                 await start_message.edit(embed=em(clash.mode, ", ".join(players)))
 
-        coc_helper.session = False
+        coc_helper.clash = None
+        coc_helper.handle = None
 
         embed = discord.Embed(
             title="**Clash finished**",
