@@ -78,6 +78,13 @@ class ClashOfCode(commands.GroupCog, group_name="coc"):
             allowed_mentions=discord.AllowedMentions(roles=True, users=True),
             view=view,
         )
+        try:
+            await msg.pin()
+        except discord.NotFound:
+            pass  # Somehow it got deleted ? just ignore it
+        except discord.HTTPException as e:
+            log.error(f"Failed to pin coc session message {msg.id}", exc_info=e)
+
         coc_helper.message = msg
 
     @coc_session.command()
@@ -113,6 +120,13 @@ class ClashOfCode(commands.GroupCog, group_name="coc"):
                     await member.remove_roles(session_role)
                 except discord.HTTPException as e:
                     log.error(f"Failed to remove role from {member.display_name}", exc_info=e)
+
+        try:
+            await coc_helper.message.unpin()
+        except discord.NotFound:
+            pass  # Somehow it got deleted ? just ignore it
+        except discord.HTTPException as e:
+            log.error(f"Failed to unpin coc session message {coc_helper.message.id}", exc_info=e)
 
         coc_helper.last_clash = 0
         coc_helper.session = False
