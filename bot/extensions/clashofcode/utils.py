@@ -1,4 +1,9 @@
+import typing
+
 import codingame
+
+if typing.TYPE_CHECKING:
+    import discord
 
 
 class ClashOfCodeHelper:
@@ -6,6 +11,11 @@ class ClashOfCodeHelper:
         self.session = False
         self.clash = None
         self.last_clash = 0
+        self.host: discord.Member | None = None
+        self.message: discord.Message | None = None
+        self.languages: list[str] | None = None
+        self.modes: list[str] | None = None
+        self.handle: str | None = None
 
 
 coc_helper = ClashOfCodeHelper()
